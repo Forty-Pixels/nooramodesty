@@ -15,12 +15,12 @@ const TheLook = () => {
 
         {/* Simplified Grid mirroring Carousel layout but without internal titles/arrows */}
         <div className="w-full overflow-hidden mb-4 md:mb-6">
-          <div className="flex -mx-1 md:-mx-2">
+          <div className="flex flex-wrap -mx-1 md:-mx-2">
           {theLook.map((product) => (
             <Link 
               key={product._id} 
               href={`/product/${product.slug}`}
-              className="w-1/3 px-1 md:px-2 block group cursor-pointer"
+              className="w-1/2 md:w-1/4 px-1 md:px-2 mb-4 md:mb-8 block group cursor-pointer"
             >
               <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
                 <Image
@@ -28,7 +28,7 @@ const TheLook = () => {
                   alt={product.title}
                   fill
                   className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                  sizes="33vw"
+                  sizes="(max-width: 768px) 50vw, 25vw"
                 />
               </div>
             </Link>

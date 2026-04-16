@@ -42,6 +42,20 @@ export const abayas: Product[] = [
         slug: "product-six",
         mainImage: "/landing-page/abayas/abaya3.png",
         category: "abayas"
+    },
+    {
+        _id: "abaya-7",
+        title: "PRODUCT SEVEN",
+        slug: "product-seven",
+        mainImage: "/landing-page/abayas/abaya1.png",
+        category: "abayas"
+    },
+    {
+        _id: "abaya-8",
+        title: "PRODUCT EIGHT",
+        slug: "product-eight",
+        mainImage: "/landing-page/abayas/abaya2.png",
+        category: "abayas"
     }
 ];
 
@@ -86,6 +100,20 @@ export const cordSets: Product[] = [
         title: "PRODUCT SIX",
         slug: "cord-set-six",
         mainImage: "/landing-page/cord-sets/cord-set3.png",
+        category: "cord-sets"
+    },
+    {
+        _id: "cord-set-7",
+        title: "PRODUCT SEVEN",
+        slug: "cord-set-seven",
+        mainImage: "/landing-page/cord-sets/cord-set1.png",
+        category: "cord-sets"
+    },
+    {
+        _id: "cord-set-8",
+        title: "PRODUCT EIGHT",
+        slug: "cord-set-eight",
+        mainImage: "/landing-page/cord-sets/cord-set2.png",
         category: "cord-sets"
     }
 ];
@@ -132,6 +160,20 @@ export const tops: Product[] = [
         slug: "top-six",
         mainImage: "/landing-page/tops/tops3.png",
         category: "tops"
+    },
+    {
+        _id: "top-7",
+        title: "PRODUCT SEVEN",
+        slug: "top-seven",
+        mainImage: "/landing-page/tops/tops1.png",
+        category: "tops"
+    },
+    {
+        _id: "top-8",
+        title: "PRODUCT EIGHT",
+        slug: "top-eight",
+        mainImage: "/landing-page/tops/tops2.png",
+        category: "tops"
     }
 ];
 
@@ -155,6 +197,41 @@ export const theLook: Product[] = [
         title: "THE LOOK THREE",
         slug: "look-three",
         mainImage: "/landing-page/the-look/thelook-3.png",
+        category: "the-look"
+    },
+    {
+        _id: "look-4",
+        title: "THE LOOK FOUR",
+        slug: "look-four",
+        mainImage: "/landing-page/the-look/thelook-1.png",
+        category: "the-look"
+    },
+    {
+        _id: "look-5",
+        title: "THE LOOK FIVE",
+        slug: "look-five",
+        mainImage: "/landing-page/the-look/thelook-2.png",
+        category: "the-look"
+    },
+    {
+        _id: "look-6",
+        title: "THE LOOK SIX",
+        slug: "look-six",
+        mainImage: "/landing-page/the-look/thelook-3.png",
+        category: "the-look"
+    },
+    {
+        _id: "look-7",
+        title: "THE LOOK SEVEN",
+        slug: "look-seven",
+        mainImage: "/landing-page/the-look/thelook-1.png",
+        category: "the-look"
+    },
+    {
+        _id: "look-8",
+        title: "THE LOOK EIGHT",
+        slug: "look-eight",
+        mainImage: "/landing-page/the-look/thelook-2.png",
         category: "the-look"
     }
 ];

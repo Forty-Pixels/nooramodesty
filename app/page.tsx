@@ -4,8 +4,6 @@ import CordSetCarousel from "@/components/LandingPage/CordSetCarousel";
 import MediaGridOne from "@/components/LandingPage/MediaGridOne";
 import TopsCarousel from "@/components/LandingPage/TopsCarousel";
 import MediaGridTwo from "@/components/LandingPage/MediaGridTwo";
-import TheLook from "@/components/LandingPage/TheLook";
-
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -15,7 +13,6 @@ export default function Home() {
       <MediaGridOne />
       <TopsCarousel />
       <MediaGridTwo />
-      <TheLook />
     </div>
   );
 }

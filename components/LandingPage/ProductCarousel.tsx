@@ -19,7 +19,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
 
   useEffect(() => {
     const handleResize = () => {
-      setItemsPerPage(window.innerWidth < 768 ? 1 : 3);
+      setItemsPerPage(window.innerWidth < 768 ? 2 : 4);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -56,7 +56,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
                 <Link 
                   key={product._id} 
                   href={`/product/${product.slug}`}
-                  className="flex-shrink-0 w-full md:w-1/3 px-1 md:px-2 block group cursor-pointer"
+                  className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group cursor-pointer"
                 >
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
                     <Image
@@ -64,7 +64,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
                       alt={product.title}
                       fill
                       className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 33vw"
+                      sizes="(max-width: 768px) 50vw, 25vw"
                     />
                   </div>
                   <div className="mt-4 flex items-start justify-between pl-1 md:pl-2">
