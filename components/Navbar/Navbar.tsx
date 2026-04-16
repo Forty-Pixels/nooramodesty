@@ -11,11 +11,11 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className={`sticky top-0 z-50 w-full transition-colors duration-500 ${isMenuOpen ? "bg-white text-black" : "bg-[#8D8377] text-white"}`}>
+    <header className={`sticky top-0 z-50 w-full transition-colors duration-500 ${isMenuOpen ? "bg-white text-black" : "bg-black text-white"}`}>
 
-      {/* Brown background block for Logo when menu is open */}
+      {/* Black background block for Logo when menu is open */}
       <div
-        className={`absolute inset-y-0 left-0 bg-[#8D8377] transition-opacity duration-500 z-0 
+        className={`absolute inset-y-0 left-0 bg-black transition-opacity duration-500 z-0 
           w-[60%] md:w-[35%] lg:w-[25%] 
           ${isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
         `}
