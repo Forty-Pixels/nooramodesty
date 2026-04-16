@@ -1,0 +1,103 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Product } from "@/types/product";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+interface ProductCarouselProps {
+  title: string;
+  products: Product[];
+}
+
+const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(3);
+  const totalProducts = products.length;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerPage(window.innerWidth < 768 ? 1 : 3);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const maxIndex = totalProducts - itemsPerPage;
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
+  };
+
+  return (
+    <section className="pt-10 pb-2 md:pt-16 md:pb-4 bg-[#f6f5f3]">
+      <div className="w-full flex flex-col items-center">
+        {/* Section Heading */}
+        <h2 className="text-[0.8rem] md:text-sm font-bold tracking-[0.5em] uppercase text-black mb-6 md:mb-8 text-center px-4 md:px-6">
+          {title}
+        </h2>
+
+        {/* Carousel Container */}
+        <div className="relative w-full overflow-hidden mb-4 md:mb-6 flex justify-center">
+          <div className="w-full">
+            <motion.div
+              className="flex -mx-1 md:-mx-2"
+              animate={{ x: `-${currentIndex * (100 / itemsPerPage)}%` }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              {products.map((product) => (
+                <Link 
+                  key={product._id} 
+                  href={`/product/${product.slug}`}
+                  className="flex-shrink-0 w-full md:w-1/3 px-1 md:px-2 block group cursor-pointer"
+                >
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
+                    <Image
+                      src={product.mainImage}
+                      alt={product.title}
+                      fill
+                      className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  </div>
+                  <div className="mt-4 flex items-start justify-between pl-1 md:pl-2">
+                    <h3 className="text-[0.65rem] md:text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black">
+                      {product.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Navigation Controls - Highly compact bottom-right alignment */}
+        <div className="w-full flex justify-end gap-2 pl-4 md:pl-6 pr-8 md:pr-12 -mt-5 md:-mt-8 relative z-10 transition-all duration-300">
+          <button
+            onClick={prevSlide}
+            className="w-10 h-10 md:w-12 md:h-12 bg-[#8D8377] text-white flex items-center justify-center hover:bg-[#7a7166] transition-colors cursor-pointer shadow-sm"
+            aria-label="Previous product"
+          >
+            <ChevronLeft size={20} strokeWidth={1.5} />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="w-10 h-10 md:w-12 md:h-12 bg-[#8D8377] text-white flex items-center justify-center hover:bg-[#7a7166] transition-colors cursor-pointer shadow-sm"
+            aria-label="Next product"
+          >
+            <ChevronRight size={20} strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ProductCarousel;
