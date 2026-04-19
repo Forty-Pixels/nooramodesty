@@ -46,25 +46,25 @@ const Hero: React.FC<HeroProps> = ({
                 </div>
             </div>
 
-            {/* Center Absolute Logo - Sized to match design (Maximum impact) */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none mix-blend-multiply md:mix-blend-normal flex flex-col items-center w-full max-w-sm md:max-w-none">
-                <div className="relative w-48 h-64 md:w-72 md:h-96">
+            {/* Center Absolute Logo - Scaled for better mobile proportions */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none mix-blend-multiply md:mix-blend-normal flex flex-col items-center w-full max-w-xs md:max-w-none">
+                <div className="relative w-32 h-44 md:w-72 md:h-96">
                     <Image
                         src={centerLogoSrc}
                         alt="Noora Modesty Center Monogram"
                         fill
-                        sizes="(max-width: 768px) 12rem, 18rem"
+                        sizes="(max-width: 768px) 8rem, 18rem"
                         className="object-contain"
                         priority
                     />
                 </div>
             </div>
 
-            {/* Shop Button overlay - Positioned lower and much smaller */}
-            <div className="absolute bottom-6 md:bottom-10 left-1/2 transform -translate-x-1/2 z-20">
+            {/* Shop Button overlay - More compact white background box for mobile visibility */}
+            <div className="absolute bottom-10 md:bottom-10 left-1/2 transform -translate-x-1/2 z-20 w-fit">
                 <Link
                     href="/shop"
-                    className="group relative inline-flex items-center justify-center px-4 py-1 font-bold text-[0.65rem] md:text-[0.7rem] tracking-[0.4em] text-black uppercase overflow-hidden"
+                    className="group relative inline-flex items-center justify-center px-6 py-2 md:px-4 md:py-1 bg-white md:bg-transparent font-bold text-[0.7rem] md:text-[0.7rem] tracking-[0.4em] text-black uppercase overflow-hidden transition-all duration-300 shadow-md md:shadow-none border border-black/5 md:border-none"
                 >
                     <span className="absolute inset-0 w-full h-full bg-black transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0"></span>
                     <span className="relative z-10 group-hover:text-white transition-colors duration-300 ease-out">SHOP</span>
