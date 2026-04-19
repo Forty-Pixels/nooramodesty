@@ -78,8 +78,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
           </div>
         </div>
 
-        {/* Navigation Controls - Highly compact bottom-right alignment */}
-        <div className="w-full flex justify-end gap-2 pl-4 md:pl-6 pr-8 md:pr-12 -mt-5 md:-mt-8 relative z-10 transition-all duration-300">
+        {/* Navigation Controls - Responsive bottom-right alignment */}
+        <div className="w-full flex justify-end gap-2 pl-4 md:pl-6 pr-6 md:pr-10 mt-2 md:mt-4 relative z-10 transition-all duration-300">
           <button
             onClick={prevSlide}
             className="w-10 h-10 md:w-12 md:h-12 bg-[#8D8377] text-white flex items-center justify-center hover:bg-[#7a7166] transition-colors cursor-pointer shadow-sm"
