@@ -47,12 +47,17 @@ const ProductListingCard: React.FC<ProductListingCardProps> = ({ product }) => {
       </div>
 
       {/* Product Details - Compact as in design */}
-      <div className="py-2.5 px-3 bg-white">
+      <div className="py-2.5 px-3 bg-white flex flex-col gap-0.5">
         <Link href={`/product/${product.slug}`}>
           <h3 className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.2em] uppercase text-black hover:opacity-70 transition-opacity">
             {product.title}
           </h3>
         </Link>
+        {product.price && (
+          <p className="text-[0.55rem] md:text-[0.6rem] text-black font-medium tracking-wider">
+            LKR {product.price.toLocaleString()}
+          </p>
+        )}
       </div>
     </div>
   );
