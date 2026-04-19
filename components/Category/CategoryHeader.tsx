@@ -2,13 +2,19 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const categories = [
   { name: "ABAYAS", slug: "abayas" },
   { name: "CORD SETS", slug: "cord-sets" },
   { name: "TOPS", slug: "tops" },
 ];
+
+const subCategoriesMap: Record<string, string[]> = {
+  abayas: ["embroidered", "coat", "wedding"],
+  "cord-sets": ["embroidered", "long", "one-piece", "printed"],
+  tops: ["embroidered", "plain", "printed"],
+};
 
 const HoverLink = ({ href, children, className = "", onClick, isActive }: { href: string, children: React.ReactNode, className?: string, onClick?: () => void, isActive?: boolean }) => (
   <Link
@@ -25,11 +31,18 @@ const HoverLink = ({ href, children, className = "", onClick, isActive }: { href
 
 const CategoryHeader = () => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSub = searchParams.get("style");
+  
+  // Find which main category is active
+  const activeMain = categories.find(cat => pathname.includes(cat.slug))?.slug;
+  const currentSubCats = activeMain ? subCategoriesMap[activeMain] : [];
 
   return (
-    <div className="w-full bg-white py-6 md:py-8">
+    <div className="w-full bg-white pt-6 pb-8 md:pt-8 md:pb-12 border-b border-gray-50">
       <div className="mx-auto max-w-7xl px-6 md:px-10">
-        <div className="flex justify-center items-center gap-2 md:gap-10">
+        {/* Main Categories Row */}
+        <div className="flex justify-center items-center gap-2 md:gap-10 mb-6 md:mb-10">
           {categories.map((cat) => {
             const isActive = pathname.includes(cat.slug);
             return (
@@ -44,6 +57,30 @@ const CategoryHeader = () => {
             );
           })}
         </div>
+
+        {/* Sub-Categories Row (Refine) */}
+        {currentSubCats.length > 0 && (
+          <div className="flex justify-center items-center flex-wrap gap-4 md:gap-12 transition-all duration-500">
+            <Link 
+              href={pathname}
+              className={`text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 py-1 ${!currentSub ? "text-black border-b border-black" : "text-gray-400 hover:text-black"}`}
+            >
+              ALL
+            </Link>
+            {currentSubCats.map((sub) => {
+              const isActive = currentSub === sub;
+              return (
+                <Link
+                  key={sub}
+                  href={`${pathname}?style=${sub}`}
+                  className={`text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 py-1 ${isActive ? "text-black border-b border-black" : "text-gray-400 hover:text-black"}`}
+                >
+                  {sub.replace("-", " ")}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
