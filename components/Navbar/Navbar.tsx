@@ -85,7 +85,7 @@ const Navbar = () => {
                 </div>
             </div>
 
-            <MegaMenu isOpen={isMenuOpen} />
+            <MegaMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         </header>
     );
 };

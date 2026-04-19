@@ -1,4 +1,7 @@
 import React from "react";
+import CategoryHeader from "@/components/Category/CategoryHeader";
+import ListingGrid from "@/components/Category/ListingGrid";
+import { abayas, cordSets, tops } from "@/data/products";
 
 export default async function CategoryPage({
     params,
@@ -6,16 +9,30 @@ export default async function CategoryPage({
     params: Promise<{ slug: string[] }>;
 }) {
     const { slug } = await params;
-    const categoryName = slug[slug.length - 1].replace(/-/g, " ");
+    const categoryPath = slug[0]; // Gets 'abayas', 'cord-sets', or 'tops'
+
+    // Determine which product list to show
+    let products = abayas;
+    if (categoryPath === "cord-sets") products = cordSets;
+    if (categoryPath === "tops") products = tops;
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-            <h1 className="text-3xl md:text-4xl font-light uppercase tracking-widest mb-4">
-                {categoryName}
-            </h1>
-            <p className="text-gray-500 max-w-md uppercase text-xs tracking-[0.2em]">
-                Explore our curated collection of {categoryName}. Products arriving soon.
-            </p>
-        </div>
+        <main className="flex flex-col min-h-screen bg-white">
+            {/* Secondary Category Navigation */}
+            <CategoryHeader />
+            
+            {/* Product Listing Grid */}
+            <div className="w-full">
+                <ListingGrid products={products} />
+            </div>
+        </main>
     );
+}
+
+export function generateStaticParams() {
+    return [
+        { slug: ["abayas"] },
+        { slug: ["cord-sets"] },
+        { slug: ["tops"] },
+    ];
 }
