@@ -1,0 +1,64 @@
+import { abayas, cordSets, tops, theLook } from "@/data/products";
+import { ProductGallery } from "@/components/ProductDetails/ProductGallery";
+import { ProductInfo } from "@/components/ProductDetails/ProductInfo";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+
+interface PageProps {
+    params: Promise<{ slug: string }>;
+}
+
+export default async function ProductPage({ params }: PageProps) {
+    const { slug } = await params;
+    const allProducts = [...abayas, ...cordSets, ...tops, ...theLook];
+    const product = allProducts.find((p) => p.slug === slug);
+
+    if (!product) {
+        notFound();
+    }
+
+    const relatedProducts = allProducts
+        .filter((p) => p.category === product.category && p._id !== product._id)
+        .slice(0, 6);
+
+    return (
+        <div className="bg-white min-h-screen font-sans">
+            <div className="max-w-[1440px] mx-auto px-6 md:px-12 py-6 md:py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-10 items-start">
+                    {/* Left: Gallery (6 columns) */}
+                    <div className="lg:col-span-6 max-w-[760px]">
+                        <ProductGallery images={product.images || [product.mainImage]} />
+                    </div>
+
+                    {/* Right: Info (6 columns) */}
+                    <div className="lg:col-span-6 lg:pl-8">
+                        <ProductInfo product={product} />
+                    </div>
+                </div>
+
+                {/* Related Products Row (Bottom) */}
+                <div className="mt-32">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {relatedProducts.map((p) => (
+                            <Link key={p._id} href={`/product/${p.slug}`} className="group space-y-3">
+                                <div className="relative aspect-[3/4] overflow-hidden bg-gray-50">
+                                    <Image
+                                        src={p.mainImage}
+                                        alt={p.title}
+                                        fill
+                                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-[10px] uppercase tracking-widest font-bold truncate text-black">{p.title}</h3>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
