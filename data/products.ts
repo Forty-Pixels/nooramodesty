@@ -56,7 +56,7 @@ export const abayas: Product[] = [
             gsm: 150,
             composition: "Satin Crepe",
             properties: ["Lustrous Finish", "Wrinkle Resistant", "Heavy Fall"],
-            macroImage: "/product-details-page/nidha-macro.png"
+            macroImage: "/product-details-page/satin-macro.png"
         }
     },
     { 
@@ -114,7 +114,7 @@ export const abayas: Product[] = [
             gsm: 160,
             composition: "Textured Crepe",
             properties: ["Matte Finish", "Breathable", "Opaque"],
-            macroImage: "/product-details-page/nidha-macro.png"
+            macroImage: "/product-details-page/satin-macro.png"
         }
     },
     { 
@@ -143,7 +143,7 @@ export const abayas: Product[] = [
             gsm: 170,
             composition: "Soft Linen",
             properties: ["Cooling", "Natural Fiber", "Eco-Friendly"],
-            macroImage: "/product-details-page/nidha-macro.png"
+            macroImage: "/product-details-page/linen-macro.png"
         }
     },
     { 
@@ -172,7 +172,7 @@ export const abayas: Product[] = [
             gsm: 130,
             composition: "Silk Mix",
             properties: ["Ultra Soft", "High Sheen", "Flowy"],
-            macroImage: "/product-details-page/nidha-macro.png"
+            macroImage: "/product-details-page/silk-macro.png"
         }
     },
     { 
@@ -230,7 +230,7 @@ export const abayas: Product[] = [
             gsm: 120,
             composition: "Chiffon Mix",
             properties: ["Sheer Detail", "Extremely Light", "Cooling"],
-            macroImage: "/product-details-page/nidha-macro.png"
+            macroImage: "/product-details-page/chiffon-macro.png"
         }
     },
     { _id: "abaya-9", title: "PRODUCT NINE", slug: "abaya-nine", mainImage: "/product-page/abayas/image-1.png", category: "abayas", subCategory: "wedding", price: 18900 },
@@ -243,43 +243,45 @@ export const abayas: Product[] = [
     { _id: "abaya-16", title: "PRODUCT SIXTEEN", slug: "abaya-sixteen", mainImage: "/product-page/abayas/image-8.png", category: "abayas", subCategory: "embroidered", price: 17900 },
 ];
 
-export const cordSets: Product[] = [
-    { _id: "cord-set-1", title: "PRODUCT ONE", slug: "cord-set-one", mainImage: "/landing-page/cord-sets/cord-set1.png", category: "cord-sets", subCategory: "embroidered", price: 12500 },
-    { _id: "cord-set-2", title: "PRODUCT TWO", slug: "cord-set-two", mainImage: "/landing-page/cord-sets/cord-set2.png", category: "cord-sets", subCategory: "long", price: 14000 },
-    { _id: "cord-set-3", title: "PRODUCT THREE", slug: "cord-set-three", mainImage: "/landing-page/cord-sets/cord-set3.png", category: "cord-sets", subCategory: "one-piece", price: 15500 },
-    { _id: "cord-set-4", title: "PRODUCT FOUR", slug: "cord-set-four", mainImage: "/landing-page/cord-sets/cord-set1.png", category: "cord-sets", subCategory: "printed", price: 11800 },
-    { _id: "cord-set-5", title: "PRODUCT FIVE", slug: "cord-set-five", mainImage: "/landing-page/cord-sets/cord-set2.png", category: "cord-sets", subCategory: "embroidered", price: 13500 },
-    { _id: "cord-set-6", title: "PRODUCT SIX", slug: "cord-set-six", mainImage: "/landing-page/cord-sets/cord-set3.png", category: "cord-sets", subCategory: "long", price: 16000 },
-    { _id: "cord-set-7", title: "PRODUCT SEVEN", slug: "cord-set-seven", mainImage: "/landing-page/cord-sets/cord-set1.png", category: "cord-sets", subCategory: "one-piece", price: 12900 },
-    { _id: "cord-set-8", title: "PRODUCT EIGHT", slug: "cord-set-eight", mainImage: "/landing-page/cord-sets/cord-set2.png", category: "cord-sets", subCategory: "printed", price: 14500 },
-    { _id: "cord-set-9", title: "PRODUCT NINE", slug: "cord-set-nine", mainImage: "/landing-page/cord-sets/cord-set3.png", category: "cord-sets", subCategory: "embroidered", price: 11500 },
-    { _id: "cord-set-10", title: "PRODUCT TEN", slug: "cord-set-ten", mainImage: "/landing-page/cord-sets/cord-set1.png", category: "cord-sets", subCategory: "long", price: 13800 },
-    { _id: "cord-set-11", title: "PRODUCT ELEVEN", slug: "cord-set-eleven", mainImage: "/landing-page/cord-sets/cord-set2.png", category: "cord-sets", subCategory: "one-piece", price: 14800 },
-    { _id: "cord-set-12", title: "PRODUCT TWELVE", slug: "cord-set-twelve", mainImage: "/landing-page/cord-sets/cord-set3.png", category: "cord-sets", subCategory: "printed", price: 15800 },
-    { _id: "cord-set-13", title: "PRODUCT THIRTEEN", slug: "cord-set-thirteen", mainImage: "/landing-page/cord-sets/cord-set1.png", category: "cord-sets", subCategory: "embroidered", price: 12200 },
-    { _id: "cord-set-14", title: "PRODUCT FOURTEEN", slug: "cord-set-fourteen", mainImage: "/landing-page/cord-sets/cord-set2.png", category: "cord-sets", subCategory: "long", price: 14200 },
-    { _id: "cord-set-15", title: "PRODUCT FIFTEEN", slug: "cord-set-fifteen", mainImage: "/landing-page/cord-sets/cord-set3.png", category: "cord-sets", subCategory: "one-piece", price: 16200 },
-    { _id: "cord-set-16", title: "PRODUCT SIXTEEN", slug: "cord-set-sixteen", mainImage: "/landing-page/cord-sets/cord-set1.png", category: "cord-sets", subCategory: "printed", price: 11900 },
-];
+const generateRichProduct = (id: string, category: string, index: number): Product => {
+    const isCordSet = category === "cord-sets";
+    const mainImages = isCordSet ? ["/landing-page/cord-sets/cord-set1.png", "/landing-page/cord-sets/cord-set2.png", "/landing-page/cord-sets/cord-set3.png"] : ["/landing-page/tops/tops1.png", "/landing-page/tops/tops2.png", "/landing-page/tops/tops3.png"];
+    const subCategories = isCordSet ? ["embroidered", "long", "one-piece", "printed"] : ["embroidered", "plain", "printed"];
+    
+    return {
+        _id: id,
+        title: `PRODUCT ${index + 1}`,
+        slug: `${id.replace('-set', '')}-rich-${index}`,
+        mainImage: mainImages[index % 3],
+        category: category as any,
+        subCategory: subCategories[index % subCategories.length] as any,
+        price: 10000 + (index * 500),
+        type: `${category.charAt(0).toUpperCase()}${category.slice(1)} Essential`,
+        color: "Multi",
+        collection: "All-Season Wear",
+        description: "A versatile piece designed for comfort and style. Features premium fabric and a tailored fit for the modern woman.",
+        colors: ["#888C8D", "#000000", "#D2B48C", "#708090"],
+        sizes: ["S", "M", "L", "XL"],
+        images: [
+            mainImages[index % 3],
+            mainImages[(index + 1) % 3],
+            mainImages[(index + 2) % 3],
+            "/product-details-page/image-1.png",
+            "/product-details-page/image-2.png",
+            "/product-details-page/image-3.png",
+        ],
+        materialSpecs: {
+            gsm: 150 + (index * 5),
+            composition: "Premium Blend",
+            properties: ["Breathable", "Soft Touch", "High Durability"],
+            macroImage: "/product-details-page/cotton-macro.png"
+        }
+    };
+};
 
-export const tops: Product[] = [
-    { _id: "top-1", title: "PRODUCT ONE", slug: "top-one", mainImage: "/landing-page/tops/tops1.png", category: "tops", subCategory: "embroidered", price: 4500 },
-    { _id: "top-2", title: "PRODUCT TWO", slug: "top-two", mainImage: "/landing-page/tops/tops2.png", category: "tops", subCategory: "plain", price: 5800 },
-    { _id: "top-3", title: "PRODUCT THREE", slug: "top-three", mainImage: "/landing-page/tops/tops3.png", category: "tops", subCategory: "printed", price: 6500 },
-    { _id: "top-4", title: "PRODUCT FOUR", slug: "top-four", mainImage: "/landing-page/tops/tops1.png", category: "tops", subCategory: "embroidered", price: 4200 },
-    { _id: "top-5", title: "PRODUCT FIVE", slug: "top-five", mainImage: "/landing-page/tops/tops2.png", category: "tops", subCategory: "plain", price: 7200 },
-    { _id: "top-6", title: "PRODUCT SIX", slug: "top-six", mainImage: "/landing-page/tops/tops3.png", category: "tops", subCategory: "printed", price: 4900 },
-    { _id: "top-7", title: "PRODUCT SEVEN", slug: "top-seven", mainImage: "/landing-page/tops/tops1.png", category: "tops", subCategory: "embroidered", price: 5500 },
-    { _id: "top-8", title: "PRODUCT EIGHT", slug: "top-eight", mainImage: "/landing-page/tops/tops2.png", category: "tops", subCategory: "plain", price: 6200 },
-    { _id: "top-9", title: "PRODUCT NINE", slug: "top-nine", mainImage: "/landing-page/tops/tops3.png", category: "tops", subCategory: "printed", price: 4800 },
-    { _id: "top-10", title: "PRODUCT TEN", slug: "top-ten", mainImage: "/landing-page/tops/tops1.png", category: "tops", subCategory: "embroidered", price: 5200 },
-    { _id: "top-11", title: "PRODUCT ELEVEN", slug: "top-eleven", mainImage: "/landing-page/tops/tops2.png", category: "tops", subCategory: "plain", price: 6800 },
-    { _id: "top-12", title: "PRODUCT TWELVE", slug: "top-twelve", mainImage: "/landing-page/tops/tops3.png", category: "tops", subCategory: "printed", price: 7500 },
-    { _id: "top-13", title: "PRODUCT THIRTEEN", slug: "top-thirteen", mainImage: "/landing-page/tops/tops1.png", category: "tops", subCategory: "embroidered", price: 4400 },
-    { _id: "top-14", title: "PRODUCT FOURTEEN", slug: "top-fourteen", mainImage: "/landing-page/tops/tops2.png", category: "tops", subCategory: "plain", price: 5900 },
-    { _id: "top-15", title: "PRODUCT FIFTEEN", slug: "top-fifteen", mainImage: "/landing-page/tops/tops3.png", category: "tops", subCategory: "printed", price: 6400 },
-    { _id: "top-16", title: "PRODUCT SIXTEEN", slug: "top-sixteen", mainImage: "/landing-page/tops/tops1.png", category: "tops", subCategory: "embroidered", price: 5100 },
-];
+export const cordSets: Product[] = Array.from({ length: 16 }, (_, i) => generateRichProduct(`cord-set-${i + 1}`, "cord-sets", i));
+
+export const tops: Product[] = Array.from({ length: 16 }, (_, i) => generateRichProduct(`top-${i + 1}`, "tops", i));
 
 export const theLook: Product[] = [
     { _id: "look-1", title: "THE LOOK ONE", slug: "look-one", mainImage: "/landing-page/the-look/thelook-1.png", category: "the-look", price: 35000 },
