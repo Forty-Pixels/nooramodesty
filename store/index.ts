@@ -8,16 +8,27 @@ interface CartItem {
   quantity: number;
 }
 
-interface CartState {
+interface WishlistItem {
+  _id: string;
+  title: string;
+  price: number;
+  image: string;
+  slug: string;
+}
+
+interface AppState {
   items: CartItem[];
+  wishlistItems: WishlistItem[];
   addItem: (product: CartItem) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  toggleWishlist: (product: WishlistItem) => void;
 }
 
-const useCartStore = create<CartState>((set) => ({
+const useCartStore = create<AppState>((set) => ({
   items: [],
+  wishlistItems: [],
   addItem: (product) =>
     set((state) => {
       const existingItem = state.items.find((item) => item._id === product._id);
@@ -43,6 +54,16 @@ const useCartStore = create<CartState>((set) => ({
       ),
     })),
   clearCart: () => set({ items: [] }),
+  toggleWishlist: (product) =>
+    set((state) => {
+      const isWishlisted = state.wishlistItems.find((item) => item._id === product._id);
+      if (isWishlisted) {
+        return {
+          wishlistItems: state.wishlistItems.filter((item) => item._id !== product._id),
+        };
+      }
+      return { wishlistItems: [...state.wishlistItems, product] };
+    }),
 }));
 
 export default useCartStore;

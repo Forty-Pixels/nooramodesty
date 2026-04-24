@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Product } from "@/types/product";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import useCartStore from "@/store";
 
 interface ProductCarouselProps {
   title: string;
@@ -16,6 +17,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(3);
   const totalProducts = products.length;
+  const { toggleWishlist, wishlistItems } = useCartStore();
 
   useEffect(() => {
     const handleResize = () => {
@@ -52,28 +54,58 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
               animate={{ x: `-${currentIndex * (100 / itemsPerPage)}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {products.map((product) => (
-                <Link 
-                  key={product._id} 
-                  href={`/product/${product.slug}`}
-                  className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group cursor-pointer"
-                >
-                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
-                    <Image
-                      src={product.mainImage}
-                      alt={product.title}
-                      fill
-                      className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                    />
+              {products.map((product) => {
+                const isWishlisted = wishlistItems.some(item => item._id === product._id);
+                return (
+                  <div 
+                    key={product._id} 
+                    className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group relative"
+                  >
+                    <Link href={`/product/${product.slug}`} className="block">
+                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
+                        <Image
+                          src={product.mainImage}
+                          alt={product.title}
+                          fill
+                          className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                        />
+                      </div>
+                    </Link>
+
+                    {/* Wishlist Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleWishlist({
+                            _id: product._id,
+                            title: product.title,
+                            price: product.price,
+                            image: product.mainImage,
+                            slug: product.slug,
+                        });
+                      }}
+                      className="absolute top-4 right-4 z-10 p-1 hover:scale-110 transition-transform cursor-pointer"
+                    >
+                      <Heart
+                        size={18}
+                        className={`transition-all duration-300 ${
+                          isWishlisted ? "fill-[#8B8378] text-[#8B8378]" : "text-white drop-shadow-sm"
+                        }`}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+
+                    <Link href={`/product/${product.slug}`} className="block">
+                      <div className="mt-4 flex items-start justify-between pl-1 md:pl-2">
+                        <h3 className="text-[0.65rem] md:text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black">
+                          {product.title}
+                        </h3>
+                      </div>
+                    </Link>
                   </div>
-                  <div className="mt-4 flex items-start justify-between pl-1 md:pl-2">
-                    <h3 className="text-[0.65rem] md:text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black">
-                      {product.title}
-                    </h3>
-                  </div>
-                </Link>
-              ))}
+                );
+              })}
             </motion.div>
           </div>
         </div>

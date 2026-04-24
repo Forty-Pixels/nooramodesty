@@ -61,8 +61,9 @@ const AccordionItem = ({ title, children, isOpen, onClick, onClose }: { title: s
 const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
     const [activeAccordion, setActiveAccordion] = useState<string | null>("Abayas");
     const [isMobile, setIsMobile] = useState(false);
-    const { items } = useCartStore();
+    const { items, wishlistItems } = useCartStore();
     const cartCount = items?.length || 0;
+    const wishlistCount = wishlistItems?.length || 0;
 
     React.useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -106,7 +107,14 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <HoverLink href="/account" className="text-[1.05rem] uppercase font-medium" onClick={onClose}>ACCOUNT</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
-                            <HoverLink href="/wishlist" className="text-[1.05rem] uppercase font-medium" onClick={onClose}>WISH-LIST</HoverLink>
+                            <Link 
+                                href="/wishlist" 
+                                onClick={onClose}
+                                className="group relative flex items-center justify-between w-full pr-4"
+                            >
+                                <span className="text-[1.05rem] uppercase font-medium">WISH-LIST</span>
+                                {wishlistCount > 0 && <span className="text-xs text-gray-400 font-bold">({wishlistCount})</span>}
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -148,7 +156,14 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             </div>
                             
                             <div className="py-4 border-b border-gray-100">
-                                <HoverLink href="/wishlist" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3">Wish-list</HoverLink>
+                                <Link 
+                                    href="/wishlist" 
+                                    onClick={onClose} 
+                                    className="flex items-center justify-between group px-1"
+                                >
+                                    <span className="font-medium text-[1.1rem] uppercase tracking-wider">Wish-list</span>
+                                    {wishlistCount > 0 && <span className="text-sm text-gray-500 font-bold">({wishlistCount})</span>}
+                                </Link>
                             </div>
 
                             <div className="py-6">

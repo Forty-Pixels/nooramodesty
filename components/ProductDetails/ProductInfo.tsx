@@ -4,6 +4,7 @@ import { Product } from "@/types/product";
 import { useState } from "react";
 import Image from "next/image";
 import useCartStore from "@/store";
+import { Heart, Send } from "lucide-react";
 
 interface ProductInfoProps {
     product: Product;
@@ -15,7 +16,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
     
-    const { addItem } = useCartStore();
+    const { addItem, toggleWishlist, wishlistItems } = useCartStore();
+    const isWishlisted = wishlistItems.some(item => item._id === product._id);
 
     const toggleAccordion = (id: string) => {
         setOpenAccordion(openAccordion === id ? null : id);
@@ -33,13 +35,36 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         setTimeout(() => setIsAdded(false), 2000);
     };
 
+    const handleToggleWishlist = () => {
+        toggleWishlist({
+            _id: product._id,
+            title: product.title,
+            price: product.price,
+            image: product.mainImage,
+            slug: product.slug,
+        });
+    };
+
     return (
         <div className="flex flex-col gap-3 text-[#1A1A1A] font-sans h-full">
             {/* Header */}
             <div className="space-y-1">
-                <h1 className="text-xl font-bold tracking-wider uppercase">
-                    {product.title}
-                </h1>
+                <div className="flex justify-between items-start">
+                    <h1 className="text-xl font-bold tracking-wider uppercase">
+                        {product.title}
+                    </h1>
+                    <button 
+                        onClick={handleToggleWishlist}
+                        className="p-2 -mt-1 group transition-colors"
+                        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                    >
+                        <Heart 
+                            size={22} 
+                            className={`transition-all duration-300 ${isWishlisted ? "fill-[#8B8378] text-[#8B8378]" : "text-black hover:scale-110"}`} 
+                            strokeWidth={1.5}
+                        />
+                    </button>
+                </div>
                 <p className="text-lg font-bold">
                     LKR {product.price.toLocaleString()}
                 </p>

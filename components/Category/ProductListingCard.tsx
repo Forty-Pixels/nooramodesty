@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { Product } from "@/types/product";
+import useCartStore from "@/store";
 
 interface ProductListingCardProps {
   product: Product;
 }
 
 const ProductListingCard: React.FC<ProductListingCardProps> = ({ product }) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { toggleWishlist, wishlistItems } = useCartStore();
+  const isWishlisted = wishlistItems.some(item => item._id === product._id);
 
   return (
     <div className="group flex flex-col w-full relative">
@@ -31,7 +33,13 @@ const ProductListingCard: React.FC<ProductListingCardProps> = ({ product }) => {
         <button
           onClick={(e) => {
             e.preventDefault();
-            setIsWishlisted(!isWishlisted);
+            toggleWishlist({
+                _id: product._id,
+                title: product.title,
+                price: product.price,
+                image: product.mainImage,
+                slug: product.slug,
+            });
           }}
           className="absolute top-4 right-4 z-10 p-1 hover:scale-110 transition-transform cursor-pointer"
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -39,8 +47,8 @@ const ProductListingCard: React.FC<ProductListingCardProps> = ({ product }) => {
           <Heart
             size={22}
             strokeWidth={1.2}
-            className={`transition-colors duration-300 ${
-              isWishlisted ? "fill-red-500 text-red-500" : "text-white"
+            className={`transition-all duration-300 ${
+              isWishlisted ? "fill-[#8B8378] text-[#8B8378]" : "text-white"
             }`}
           />
         </button>
