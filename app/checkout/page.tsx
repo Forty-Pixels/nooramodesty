@@ -7,8 +7,9 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, ChevronRight, Lock, Truck, CreditCard, ShieldCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { products } from "@/data/products";
+import { Suspense } from "react";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
     const { items, clearCart } = useCartStore();
     const searchParams = useSearchParams();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -283,5 +284,17 @@ export default function CheckoutPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#f6f5f3] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
     );
 }
