@@ -50,7 +50,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     };
 
     const handleBuyNow = () => {
-        router.push(`/checkout?buyNowId=${product._id}&color=${encodeURIComponent(selectedColor)}&size=${encodeURIComponent(selectedSize)}`);
+        router.push(`/checkout?buyNowId=${product._id}&color=${encodeURIComponent(selectedColor || "")}&size=${encodeURIComponent(selectedSize || "")}`);
     };
 
     return (
