@@ -293,3 +293,5 @@ export const theLook: Product[] = [
     { _id: "look-7", title: "THE LOOK SEVEN", slug: "look-seven", mainImage: "/landing-page/the-look/thelook-1.png", category: "the-look", price: 36000 },
     { _id: "look-8", title: "THE LOOK EIGHT", slug: "look-eight", mainImage: "/landing-page/the-look/thelook-2.png", category: "the-look", price: 41000 },
 ];
+
+export const products = [...abayas, ...cordSets, ...tops, ...theLook];

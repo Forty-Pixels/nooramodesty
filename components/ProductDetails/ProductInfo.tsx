@@ -5,6 +5,7 @@ import { useState } from "react";
 import Image from "next/image";
 import useCartStore from "@/store";
 import { Heart, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface ProductInfoProps {
     product: Product;
@@ -18,6 +19,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     
     const { addItem, toggleWishlist, wishlistItems } = useCartStore();
     const isWishlisted = wishlistItems.some(item => item._id === product._id);
+    const router = useRouter();
 
     const toggleAccordion = (id: string) => {
         setOpenAccordion(openAccordion === id ? null : id);
@@ -43,6 +45,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             image: product.mainImage,
             slug: product.slug,
         });
+    };
+
+    const handleBuyNow = () => {
+        router.push(`/checkout?buyNowId=${product._id}&color=${selectedColor}&size=${selectedSize}`);
     };
 
     return (
@@ -137,7 +143,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
             {/* Actions */}
             <div className="mt-5 flex items-center gap-4">
-                <button className="w-44 h-11 bg-[#8B8378] hover:bg-[#7a7166] text-white text-[11px] font-bold uppercase tracking-widest transition-all">
+                <button 
+                    onClick={handleBuyNow}
+                    className="w-44 h-11 bg-[#8B8378] hover:bg-[#7a7166] text-white text-[11px] font-bold uppercase tracking-widest transition-all"
+                >
                     Buy Now
                 </button>
                 <button 

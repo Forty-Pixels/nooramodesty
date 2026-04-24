@@ -104,7 +104,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <HoverLink href="/category/tops/printed" className="text-sm text-gray-700" onClick={onClose}>Printed</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
-                            <HoverLink href="/account" className="text-[1.05rem] uppercase font-medium" onClick={onClose}>ACCOUNT</HoverLink>
+                            <HoverLink href="/login" className="text-[1.05rem] uppercase font-medium" onClick={onClose}>ACCOUNT</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
                             <Link 
@@ -152,7 +152,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             </AccordionItem>
                             
                             <div className="py-4 border-b border-gray-100">
-                                <HoverLink href="/account" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3">Account</HoverLink>
+                                <HoverLink href="/login" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3">Account</HoverLink>
                             </div>
                             
                             <div className="py-4 border-b border-gray-100">
