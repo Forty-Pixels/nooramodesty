@@ -63,7 +63,7 @@ const Hero: React.FC<HeroProps> = ({
             {/* Shop Button overlay - More compact white background box for mobile visibility */}
             <div className="absolute bottom-10 md:bottom-10 left-1/2 transform -translate-x-1/2 z-20 w-fit">
                 <Link
-                    href="/shop"
+                    href="/category/abayas"
                     className="group relative inline-flex items-center justify-center px-6 py-2 md:px-4 md:py-1 bg-white md:bg-transparent font-bold text-[0.7rem] md:text-[0.7rem] tracking-[0.4em] text-black uppercase overflow-hidden transition-all duration-300 shadow-md md:shadow-none border border-black/5 md:border-none"
                 >
                     <span className="absolute inset-0 w-full h-full bg-black transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0"></span>
