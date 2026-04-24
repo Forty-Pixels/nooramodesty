@@ -7,6 +7,8 @@ interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  color?: string;
+  size?: string;
 }
 
 interface WishlistItem {

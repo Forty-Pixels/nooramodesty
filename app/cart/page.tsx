@@ -71,9 +71,23 @@ export default function CartPage() {
                                                 <h3 className="text-xs md:text-sm font-bold uppercase tracking-widest text-black mb-1">
                                                     {item.title}
                                                 </h3>
-                                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">
-                                                    Style: {item._id.split('-')[1] || 'Standard'} • Size: {item._id.split('-')[2] || 'Default'}
-                                                </p>
+                                                <div className="flex flex-col gap-1 text-[10px] uppercase tracking-widest font-medium text-gray-400">
+                                                    {item.color && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span>Color:</span>
+                                                            <div 
+                                                                className="w-2.5 h-2.5 rounded-full border border-black/10" 
+                                                                style={{ backgroundColor: item.color }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {item.size && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span>Size:</span>
+                                                            <span className="text-black font-bold">{item.size}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                             <button 
                                                 onClick={() => removeItem(item._id)}

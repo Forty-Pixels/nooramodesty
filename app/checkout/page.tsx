@@ -10,17 +10,30 @@ import { products } from "@/data/products";
 import { Suspense } from "react";
 
 function CheckoutContent() {
-    const { items, clearCart } = useCartStore();
+    const { items, clearCart, updateQuantity } = useCartStore();
     const searchParams = useSearchParams();
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [buyNowQty, setBuyNowQty] = useState(1);
 
     // Buy Now Logic
     const buyNowId = searchParams.get("buyNowId");
     const buyNowColor = searchParams.get("color");
     const buyNowSize = searchParams.get("size");
 
-    let checkoutItems = items;
+    let checkoutItems = items.map(item => {
+        // If it's an old item missing size/color, try to find defaults
+        if (!item.size || !item.color) {
+            const baseId = item._id.split('-')[0];
+            const product = products.find(p => p._id === baseId);
+            return {
+                ...item,
+                size: item.size || product?.sizes?.[0] || "",
+                color: item.color || product?.colors?.[0] || ""
+            };
+        }
+        return item;
+    });
 
     if (buyNowId) {
         const product = products.find(p => p._id === buyNowId);
@@ -30,10 +43,23 @@ function CheckoutContent() {
                 title: product.title,
                 price: product.price,
                 image: product.mainImage,
-                quantity: 1
+                quantity: buyNowQty,
+                color: buyNowColor || product.colors?.[0] || "",
+                size: buyNowSize || product.sizes?.[0] || ""
             }];
         }
     }
+
+    const handleUpdateQuantity = (id: string, delta: number) => {
+        if (buyNowId) {
+            setBuyNowQty(prev => Math.max(1, prev + delta));
+        } else {
+            const item = items.find(i => i._id === id);
+            if (item) {
+                updateQuantity(id, Math.max(1, item.quantity + delta));
+            }
+        }
+    };
 
     const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const shipping = subtotal > 50000 ? 0 : 1500;
@@ -243,22 +269,57 @@ function CheckoutContent() {
                     <div className="space-y-8 mb-10">
                         {checkoutItems.map((item) => (
                             <div key={item._id} className="flex gap-5">
-                                <div className="relative w-20 aspect-[3/4] bg-[#f6f5f3] overflow-hidden group">
-                                    <Image
-                                        src={item.image}
-                                        alt={item.title}
-                                        fill
-                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-black text-white text-[9px] font-bold flex items-center justify-center rounded-full z-10 border-2 border-white">
-                                        {item.quantity}
-                                    </span>
+                                <div className="relative w-20 aspect-[3/4]">
+                                    <div className="absolute inset-0 bg-[#f6f5f3] overflow-hidden group">
+                                        <Image
+                                            src={item.image}
+                                            alt={item.title}
+                                            fill
+                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center gap-1">
                                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-black">
                                         {item.title}
                                     </h3>
-                                    <p className="text-[10px] text-gray-400 font-medium">LKR {item.price.toLocaleString()}</p>
+                                    <div className="flex flex-col gap-0.5 mt-1">
+                                        <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest text-gray-400">
+                                            {item.color && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>Color:</span>
+                                                    <div 
+                                                        className="w-2 h-2 rounded-full border border-black/5" 
+                                                        style={{ backgroundColor: item.color }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-gray-400">
+                                            {item.size && (
+                                                <>
+                                                    <span>Size:</span>
+                                                    <span className="text-black font-bold">{item.size}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <button 
+                                            onClick={() => handleUpdateQuantity(item._id, -1)}
+                                            className="w-5 h-5 flex items-center justify-center border border-black/10 rounded-full hover:bg-black hover:text-white transition-all text-[10px] cursor-pointer"
+                                        >
+                                            -
+                                        </button>
+                                        <span className="text-[10px] font-bold w-4 text-center">{item.quantity}</span>
+                                        <button 
+                                            onClick={() => handleUpdateQuantity(item._id, 1)}
+                                            className="w-5 h-5 flex items-center justify-center border border-black/10 rounded-full hover:bg-black hover:text-white transition-all text-[10px] cursor-pointer"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="flex items-center text-[10px] font-bold">
                                     LKR {(item.price * item.quantity).toLocaleString()}

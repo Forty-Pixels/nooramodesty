@@ -261,7 +261,7 @@ const generateRichProduct = (id: string, category: string, index: number): Produ
         collection: "All-Season Wear",
         description: "A versatile piece designed for comfort and style. Features premium fabric and a tailored fit for the modern woman.",
         colors: ["#888C8D", "#000000", "#D2B48C", "#708090"],
-        sizes: ["S", "M", "L", "XL"],
+        sizes: ["54", "56", "58"],
         images: [
             mainImages[index % 3],
             mainImages[(index + 1) % 3],

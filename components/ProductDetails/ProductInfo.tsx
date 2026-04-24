@@ -32,6 +32,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             price: product.price,
             image: product.mainImage,
             quantity: 1,
+            color: selectedColor,
+            size: selectedSize
         });
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
@@ -48,7 +50,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     };
 
     const handleBuyNow = () => {
-        router.push(`/checkout?buyNowId=${product._id}&color=${selectedColor}&size=${selectedSize}`);
+        router.push(`/checkout?buyNowId=${product._id}&color=${encodeURIComponent(selectedColor)}&size=${encodeURIComponent(selectedSize)}`);
     };
 
     return (
