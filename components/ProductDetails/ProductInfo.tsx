@@ -3,6 +3,7 @@
 import { Product } from "@/types/product";
 import { useState } from "react";
 import Image from "next/image";
+import useCartStore from "@/store";
 
 interface ProductInfoProps {
     product: Product;
@@ -12,9 +13,24 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0]);
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+    const [isAdded, setIsAdded] = useState(false);
+    
+    const { addItem } = useCartStore();
 
     const toggleAccordion = (id: string) => {
         setOpenAccordion(openAccordion === id ? null : id);
+    };
+
+    const handleAddToBag = () => {
+        addItem({
+            _id: `${product._id}-${selectedColor}-${selectedSize}`,
+            title: product.title,
+            price: product.price,
+            image: product.mainImage,
+            quantity: 1,
+        });
+        setIsAdded(true);
+        setTimeout(() => setIsAdded(false), 2000);
     };
 
     return (
@@ -99,8 +115,16 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 <button className="w-44 h-11 bg-[#8B8378] hover:bg-[#7a7166] text-white text-[11px] font-bold uppercase tracking-widest transition-all">
                     Buy Now
                 </button>
-                <button className="w-44 h-11 bg-white border border-[#8B8378] text-[#8B8378] hover:bg-gray-50 text-[11px] font-bold uppercase tracking-widest transition-all">
-                    Add to Bag
+                <button 
+                    onClick={handleAddToBag}
+                    className="w-44 h-11 bg-white border border-[#8B8378] text-[#8B8378] hover:bg-gray-50 text-[11px] font-bold uppercase tracking-widest transition-all relative overflow-hidden"
+                >
+                    <span className={`absolute inset-0 flex items-center justify-center bg-[#8B8378] text-white transition-transform duration-300 ${isAdded ? "translate-y-0" : "translate-y-full"}`}>
+                        ADDED TO BAG
+                    </span>
+                    <span className={`${isAdded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
+                        Add to Bag
+                    </span>
                 </button>
                 <button className="w-11 h-11 border border-gray-300 hover:border-black transition-all flex items-center justify-center group">
                     <svg 
