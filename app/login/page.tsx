@@ -93,7 +93,7 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <button className="group w-full bg-black text-white py-5 text-[10px] font-bold uppercase tracking-[0.4em] flex items-center justify-center gap-3 hover:bg-zinc-800 transition-all active:scale-[0.98]">
+                    <button className="group w-full bg-black text-white py-5 text-[10px] font-bold uppercase tracking-[0.4em] flex items-center justify-center gap-3 hover:bg-zinc-800 transition-all active:scale-[0.98] cursor-pointer">
                         {mode === "login" ? "Sign In" : "Create Account"}
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </button>
@@ -120,7 +120,7 @@ export default function LoginPage() {
                         <div className="h-[1px] grow bg-black/5"></div>
                     </div>
                     <div className="w-full">
-                        <button className="w-full flex items-center justify-center gap-3 py-4 px-6 border border-black/5 bg-white hover:bg-gray-50 transition-colors group">
+                        <button className="w-full flex items-center justify-center gap-3 py-4 px-6 border border-black/5 bg-white hover:bg-gray-50 transition-colors group cursor-pointer">
                             <svg className="w-4 h-4" viewBox="0 0 24 24">
                                 <path
                                     fill="#4285F4"

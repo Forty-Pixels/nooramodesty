@@ -228,7 +228,7 @@ export default function CheckoutPage() {
                     <button
                         onClick={handlePlaceOrder}
                         disabled={isProcessing}
-                        className="w-full bg-black text-white py-6 text-[11px] font-bold uppercase tracking-[0.4em] mt-8 hover:bg-zinc-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-xl shadow-black/10"
+                        className="w-full bg-black text-white py-6 text-[11px] font-bold uppercase tracking-[0.4em] mt-8 hover:bg-zinc-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-xl shadow-black/10 cursor-pointer"
                     >
                         {isProcessing ? "Processing..." : "Complete Purchase"}
                         {!isProcessing && <ArrowRight size={16} />}
