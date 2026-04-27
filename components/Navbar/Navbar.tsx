@@ -72,6 +72,11 @@ const Navbar = () => {
                                 <CartClientIcon />
                             </div>
 
+                            {/* Mobile: Cart Icon */}
+                            <div className="md:hidden">
+                                <CartClientIcon variant="minimal" />
+                            </div>
+
                             {/* Mobile: Hamburger Menu icon */}
                             <button
                                 onClick={() => setIsMenuOpen(true)}
