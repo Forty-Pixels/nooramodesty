@@ -283,6 +283,13 @@ export const cordSets: Product[] = Array.from({ length: 16 }, (_, i) => generate
 
 export const tops: Product[] = Array.from({ length: 16 }, (_, i) => generateRichProduct(`top-${i + 1}`, "tops", i));
 
+export const occasionWear: Product[] = Array.from({ length: 16 }, (_, i) => {
+    const subCategories = ["abayas", "overcoats", "tops", "sets"];
+    const product = generateRichProduct(`occasion-${i + 1}`, "occasion-wear", i);
+    product.subCategory = subCategories[i % subCategories.length] as any;
+    return product;
+});
+
 export const theLook: Product[] = [
     { _id: "look-1", title: "THE LOOK ONE", slug: "look-one", mainImage: "/landing-page/the-look/thelook-1.png", category: "the-look", price: 35000 },
     { _id: "look-2", title: "THE LOOK TWO", slug: "look-two", mainImage: "/landing-page/the-look/thelook-2.png", category: "the-look", price: 42000 },
@@ -294,4 +301,4 @@ export const theLook: Product[] = [
     { _id: "look-8", title: "THE LOOK EIGHT", slug: "look-eight", mainImage: "/landing-page/the-look/thelook-2.png", category: "the-look", price: 41000 },
 ];
 
-export const products = [...abayas, ...cordSets, ...tops, ...theLook];
+export const products = [...abayas, ...cordSets, ...tops, ...occasionWear, ...theLook];

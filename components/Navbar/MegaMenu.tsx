@@ -88,7 +88,6 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <HoverLink href="/category/abayas" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Abayas</HoverLink>
                             <HoverLink href="/category/abayas/embroidered" className="text-sm text-gray-700" onClick={onClose}>Embroidered</HoverLink>
                             <HoverLink href="/category/abayas/coat" className="text-sm text-gray-700" onClick={onClose}>Coat</HoverLink>
-                            <HoverLink href="/category/abayas/wedding" className="text-sm text-gray-700" onClick={onClose}>Wedding wear</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
                             <HoverLink href="/category/cord-sets" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Cord sets</HoverLink>
@@ -104,17 +103,18 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <HoverLink href="/category/tops/printed" className="text-sm text-gray-700" onClick={onClose}>Printed</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
-                            <HoverLink href="/login" className="text-[1.05rem] uppercase font-medium" onClick={onClose}>ACCOUNT</HoverLink>
+                            <HoverLink href="/category/occasion-wear" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Occasion Wear</HoverLink>
+                            <HoverLink href="/category/occasion-wear/abayas" className="text-sm text-gray-700" onClick={onClose}>Abayas</HoverLink>
+                            <HoverLink href="/category/occasion-wear/overcoats" className="text-sm text-gray-700" onClick={onClose}>Overcoats</HoverLink>
+                            <HoverLink href="/category/occasion-wear/tops" className="text-sm text-gray-700" onClick={onClose}>Tops</HoverLink>
+                            <HoverLink href="/category/occasion-wear/sets" className="text-sm text-gray-700" onClick={onClose}>Sets</HoverLink>
                         </div>
-                        <div className="flex flex-col gap-3">
-                            <Link 
-                                href="/wishlist" 
-                                onClick={onClose}
-                                className="group relative flex items-center justify-between w-full pr-4"
-                            >
-                                <span className="text-[1.05rem] uppercase font-medium">WISH-LIST</span>
-                                {wishlistCount > 0 && <span className="text-xs text-gray-400 font-bold">({wishlistCount})</span>}
-                            </Link>
+                        <div className="flex flex-col gap-4">
+                            <HoverLink href="/login" className="text-[1.05rem] uppercase font-medium !px-3 !py-1" onClick={onClose}>ACCOUNT</HoverLink>
+                            <HoverLink href="/wishlist" onClick={onClose} className="text-[1.05rem] uppercase font-medium whitespace-nowrap !px-3 !py-1">
+                                WISH-LIST
+                                {wishlistCount > 0 && <span className="text-xs text-gray-400 group-hover:text-gray-300 font-bold ml-2 transition-colors duration-300">({wishlistCount})</span>}
+                            </HoverLink>
                         </div>
                     </div>
                 </div>
@@ -137,7 +137,6 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <AccordionItem title="Abayas" isOpen={activeAccordion === "Abayas"} onClick={() => toggleAccordion("Abayas")} onClose={onClose}>
                                 <Link href="/category/abayas/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
                                 <Link href="/category/abayas/coat" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Coat</Link>
-                                <Link href="/category/abayas/wedding" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Wedding wear</Link>
                             </AccordionItem>
                             <AccordionItem title="Cord sets" isOpen={activeAccordion === "Cord sets"} onClick={() => toggleAccordion("Cord sets")} onClose={onClose}>
                                 <Link href="/category/cord-sets/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
@@ -149,6 +148,12 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                                 <Link href="/category/tops/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
                                 <Link href="/category/tops/plain" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Plain</Link>
                                 <Link href="/category/tops/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
+                            </AccordionItem>
+                            <AccordionItem title="Occasion Wear" isOpen={activeAccordion === "Occasion Wear"} onClick={() => toggleAccordion("Occasion Wear")} onClose={onClose}>
+                                <Link href="/category/occasion-wear/abayas" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Abayas</Link>
+                                <Link href="/category/occasion-wear/overcoats" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Overcoats</Link>
+                                <Link href="/category/occasion-wear/tops" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Tops</Link>
+                                <Link href="/category/occasion-wear/sets" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Sets</Link>
                             </AccordionItem>
                             
                             <div className="py-4 border-b border-gray-100">

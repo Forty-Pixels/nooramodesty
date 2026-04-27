@@ -8,12 +8,14 @@ const categories = [
   { name: "ABAYAS", slug: "abayas" },
   { name: "CORD SETS", slug: "cord-sets" },
   { name: "TOPS", slug: "tops" },
+  { name: "OCCASION WEAR", slug: "occasion-wear" },
 ];
 
 const subCategoriesMap: Record<string, string[]> = {
-  abayas: ["embroidered", "coat", "wedding"],
+  abayas: ["embroidered", "coat"],
   "cord-sets": ["embroidered", "long", "one-piece", "printed"],
   tops: ["embroidered", "plain", "printed"],
+  "occasion-wear": ["abayas", "overcoats", "tops", "sets"],
 };
 
 const HoverLink = ({ href, children, className = "", onClick, isActive }: { href: string, children: React.ReactNode, className?: string, onClick?: () => void, isActive?: boolean }) => (
@@ -35,12 +37,13 @@ const CategoryHeader = () => {
   
   // Detect current sub-category from path (/category/abayas/coat) or query (?style=coat)
   const pathnameParts = pathname.split("/");
-  const subFromPath = pathnameParts[3]; // The segment after category slug
+  const mainFromPath = pathnameParts[2]; // The segment after /category/
+  const subFromPath = pathnameParts[3]; // The segment after main category slug
   const subFromQuery = searchParams.get("style");
   const currentSub = subFromPath || subFromQuery;
   
-  // Find which main category is active
-  const activeMain = categories.find(cat => pathname.includes(cat.slug))?.slug;
+  // Find which main category is active by exact match with the path segment
+  const activeMain = categories.find(cat => cat.slug === mainFromPath)?.slug;
   const currentSubCats = activeMain ? subCategoriesMap[activeMain] : [];
 
   // Base path for sub-categories should be /category/[activeMain]
@@ -52,7 +55,7 @@ const CategoryHeader = () => {
         {/* Main Categories Row */}
         <div className="flex justify-center items-center gap-2 md:gap-10 mb-6 md:mb-10">
           {categories.map((cat) => {
-            const isActive = pathname.includes(cat.slug);
+            const isActive = cat.slug === activeMain;
             return (
               <HoverLink
                 key={cat.slug}

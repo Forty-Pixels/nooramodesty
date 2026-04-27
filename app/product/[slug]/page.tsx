@@ -1,4 +1,4 @@
-import { abayas, cordSets, tops, theLook } from "@/data/products";
+import { products } from "@/data/products";
 import { ProductGallery } from "@/components/ProductDetails/ProductGallery";
 import { ProductInfo } from "@/components/ProductDetails/ProductInfo";
 import { notFound } from "next/navigation";
@@ -11,7 +11,7 @@ interface PageProps {
 
 export default async function ProductPage({ params }: PageProps) {
     const { slug } = await params;
-    const allProducts = [...abayas, ...cordSets, ...tops, ...theLook];
+    const allProducts = products;
     const product = allProducts.find((p) => p.slug === slug);
 
     if (!product) {
