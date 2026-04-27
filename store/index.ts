@@ -9,6 +9,7 @@ interface CartItem {
   quantity: number;
   color?: string;
   size?: string;
+  customNote?: string;
 }
 
 interface WishlistItem {

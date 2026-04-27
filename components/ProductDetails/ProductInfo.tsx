@@ -14,6 +14,9 @@ interface ProductInfoProps {
 export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0]);
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
+    const [showCustomModal, setShowCustomModal] = useState(false);
+    const [customMeasurements, setCustomMeasurements] = useState({ length: "", sleeve: "", shoulder: "" });
+    const [isCustomSize, setIsCustomSize] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
     
@@ -25,15 +28,24 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         setOpenAccordion(openAccordion === id ? null : id);
     };
 
+    const getCustomNote = () => {
+        if (!isCustomSize) return undefined;
+        return `Customer Measurements — Length: ${customMeasurements.length}", Sleeve: ${customMeasurements.sleeve}", Shoulder: ${customMeasurements.shoulder}"`;
+    };
+
     const handleAddToBag = () => {
+        const customNote = getCustomNote();
+        const size = isCustomSize ? "Custom" : selectedSize;
+        
         addItem({
-            _id: `${product._id}-${selectedColor}-${selectedSize}`,
+            _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             title: product.title,
             price: product.price,
             image: product.mainImage,
             quantity: 1,
             color: selectedColor,
-            size: selectedSize
+            size: size,
+            customNote: customNote
         });
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
@@ -50,7 +62,15 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     };
 
     const handleBuyNow = () => {
-        router.push(`/checkout?buyNowId=${product._id}&color=${encodeURIComponent(selectedColor || "")}&size=${encodeURIComponent(selectedSize || "")}`);
+        const customNote = getCustomNote();
+        const size = isCustomSize ? "Custom" : selectedSize;
+        router.push(`/checkout?buyNowId=${product._id}&color=${encodeURIComponent(selectedColor || "")}&size=${encodeURIComponent(size || "")}${customNote ? `&customNote=${encodeURIComponent(customNote)}` : ""}`);
+    };
+
+    const handleCustomSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCustomSize(true);
+        setShowCustomModal(false);
     };
 
     return (
@@ -129,9 +149,12 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         {product.sizes?.map((s) => (
                             <button
                                 key={s}
-                                onClick={() => setSelectedSize(s)}
+                                onClick={() => {
+                                    setSelectedSize(s);
+                                    setIsCustomSize(false);
+                                }}
                                 className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 ${
-                                    selectedSize === s 
+                                    selectedSize === s && !isCustomSize
                                     ? "bg-[#8B8378] text-white border-[#8B8378]" 
                                     : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
                                 }`}
@@ -139,9 +162,94 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 {s}
                             </button>
                         ))}
+                        <button
+                            onClick={() => setShowCustomModal(true)}
+                            className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
+                                isCustomSize
+                                ? "bg-black text-white border-black" 
+                                : "bg-white text-black border-gray-200 hover:border-black"
+                            }`}
+                            title="Enter custom measurements"
+                        >
+                            +
+                        </button>
                     </div>
+                    {isCustomSize && (
+                        <p className="text-[8px] text-[#8B8378] uppercase tracking-widest font-bold mt-1">
+                            Using Custom Measurements
+                        </p>
+                    )}
                 </div>
             </div>
+
+            {/* Measurement Modal */}
+            {showCustomModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+                    <div className="bg-white w-full max-w-sm p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
+                        <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
+                            <h3 className="text-sm font-bold uppercase tracking-[0.2em]">Enter Your Measurements</h3>
+                            <button onClick={() => setShowCustomModal(false)} className="text-gray-400 hover:text-black">✕</button>
+                        </div>
+                        
+                        <form onSubmit={handleCustomSubmit} className="space-y-6">
+                            <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Length (Inches)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.1"
+                                        required
+                                        value={customMeasurements.length}
+                                        onChange={(e) => setCustomMeasurements({...customMeasurements, length: e.target.value})}
+                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
+                                        placeholder="e.g. 55"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Sleeve (Inches)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.1"
+                                        required
+                                        value={customMeasurements.sleeve}
+                                        onChange={(e) => setCustomMeasurements({...customMeasurements, sleeve: e.target.value})}
+                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
+                                        placeholder="e.g. 28"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Shoulder (Inches)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.1"
+                                        required
+                                        value={customMeasurements.shoulder}
+                                        onChange={(e) => setCustomMeasurements({...customMeasurements, shoulder: e.target.value})}
+                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
+                                        placeholder="e.g. 16.5"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 pt-4">
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowCustomModal(false)}
+                                    className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest bg-black text-white hover:bg-zinc-800 transition-all"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Actions */}
             <div className="mt-5 flex items-center gap-4">

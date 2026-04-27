@@ -20,6 +20,7 @@ function CheckoutContent() {
     const buyNowId = searchParams.get("buyNowId");
     const buyNowColor = searchParams.get("color");
     const buyNowSize = searchParams.get("size");
+    const buyNowNote = searchParams.get("customNote");
 
     let checkoutItems = items.map(item => {
         // If it's an old item missing size/color, try to find defaults
@@ -39,13 +40,14 @@ function CheckoutContent() {
         const product = products.find(p => p._id === buyNowId);
         if (product) {
             checkoutItems = [{
-                _id: `${product._id}-${buyNowColor}-${buyNowSize}`,
+                _id: `${product._id}-${buyNowColor}-${buyNowSize}-${buyNowNote ? encodeURIComponent(buyNowNote) : ""}`,
                 title: product.title,
                 price: product.price,
                 image: product.mainImage,
                 quantity: buyNowQty,
                 color: buyNowColor || product.colors?.[0] || "",
-                size: buyNowSize || product.sizes?.[0] || ""
+                size: buyNowSize || product.sizes?.[0] || "",
+                customNote: buyNowNote || undefined
             }];
         }
     }
@@ -303,6 +305,11 @@ function CheckoutContent() {
                                                 </>
                                             )}
                                         </div>
+                                        {item.customNote && (
+                                            <p className="text-[8px] leading-relaxed text-[#8B8378] font-bold">
+                                                {item.customNote}
+                                            </p>
+                                        )}
                                     </div>
                                     
                                     <div className="flex items-center gap-3 mt-2">

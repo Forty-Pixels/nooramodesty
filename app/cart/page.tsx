@@ -87,6 +87,11 @@ export default function CartPage() {
                                                             <span className="text-black font-bold">{item.size}</span>
                                                         </div>
                                                     )}
+                                                    {item.customNote && (
+                                                        <p className="text-[9px] leading-relaxed text-[#8B8378] font-bold mt-1">
+                                                            {item.customNote}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                             <button 
