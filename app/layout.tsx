@@ -25,6 +25,8 @@ export const metadata: Metadata = {
   description: "Experience the elegance of premium modest fashion. Curated abayas, cord sets, and tops designed for the modern woman.",
 };
 
+import PageTransitionProvider from "@/components/Providers/PageTransitionProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,8 +39,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <Navbar />
-        <main className="flex-grow">
-          {children}
+        <main className="flex-grow overflow-hidden">
+          <PageTransitionProvider>
+            {children}
+          </PageTransitionProvider>
         </main>
         <Footer />
       </body>
