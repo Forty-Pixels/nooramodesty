@@ -32,11 +32,19 @@ const HoverLink = ({ href, children, className = "", onClick, isActive }: { href
 const CategoryHeader = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentSub = searchParams.get("style");
+  
+  // Detect current sub-category from path (/category/abayas/coat) or query (?style=coat)
+  const pathnameParts = pathname.split("/");
+  const subFromPath = pathnameParts[3]; // The segment after category slug
+  const subFromQuery = searchParams.get("style");
+  const currentSub = subFromPath || subFromQuery;
   
   // Find which main category is active
   const activeMain = categories.find(cat => pathname.includes(cat.slug))?.slug;
   const currentSubCats = activeMain ? subCategoriesMap[activeMain] : [];
+
+  // Base path for sub-categories should be /category/[activeMain]
+  const basePath = `/category/${activeMain}`;
 
   return (
     <div className="w-full bg-white pt-6 pb-8 md:pt-8 md:pb-12 border-b border-gray-50">
@@ -62,7 +70,7 @@ const CategoryHeader = () => {
         {currentSubCats.length > 0 && (
           <div className="flex justify-center items-center flex-wrap gap-4 md:gap-12 transition-all duration-500">
             <Link 
-              href={pathname}
+              href={basePath}
               className={`text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 py-1 ${!currentSub ? "text-black border-b border-black" : "text-gray-400 hover:text-black"}`}
             >
               ALL
@@ -72,7 +80,7 @@ const CategoryHeader = () => {
               return (
                 <Link
                   key={sub}
-                  href={`${pathname}?style=${sub}`}
+                  href={`${basePath}/${sub}`}
                   className={`text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 py-1 ${isActive ? "text-black border-b border-black" : "text-gray-400 hover:text-black"}`}
                 >
                   {sub.replace("-", " ")}

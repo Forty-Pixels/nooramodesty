@@ -11,8 +11,13 @@ export default async function CategoryPage({
     searchParams: Promise<{ style?: string }>;
 }) {
     const { slug } = await params;
-    const { style } = await searchParams;
-    const categoryPath = slug[0]; // Gets 'abayas', 'cord-sets', or 'tops'
+    const { style: styleQuery } = await searchParams;
+    
+    const categoryPath = slug[0]; // 'abayas', 'cord-sets', 'tops'
+    const subCategoryPath = slug[1]; // optional: 'embroidered', etc.
+    
+    // Active style is either from path (/category/abayas/coat) or query (?style=coat)
+    const activeStyle = subCategoryPath || styleQuery;
 
     // Determine which product list to show
     let products = abayas;
@@ -20,8 +25,8 @@ export default async function CategoryPage({
     if (categoryPath === "tops") products = tops;
 
     // Filter by sub-category (style) if active
-    if (style) {
-        products = products.filter(p => p.subCategory === style);
+    if (activeStyle) {
+        products = products.filter(p => p.subCategory === activeStyle);
     }
 
     return (
