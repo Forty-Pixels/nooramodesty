@@ -15,7 +15,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0]);
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
     const [showCustomModal, setShowCustomModal] = useState(false);
-    const [customMeasurements, setCustomMeasurements] = useState({ length: "", sleeve: "", shoulder: "" });
+    const [customMeasurements, setCustomMeasurements] = useState({ length: "", bustHip: "", sleeve: "" });
     const [isCustomSize, setIsCustomSize] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
@@ -30,7 +30,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
     const getCustomNote = () => {
         if (!isCustomSize) return undefined;
-        return `Customer Measurements — Length: ${customMeasurements.length}", Sleeve: ${customMeasurements.sleeve}", Shoulder: ${customMeasurements.shoulder}"`;
+        return `Custom — Length: ${customMeasurements.length}", Bust & Hip: ${customMeasurements.bustHip}", Sleeve: ${customMeasurements.sleeve}"`;
     };
 
     const handleAddToBag = () => {
@@ -194,7 +194,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         <form onSubmit={handleCustomSubmit} className="space-y-6">
                             <div className="space-y-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Length (Inches)</label>
+                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Abaya Length (Shoulder to floor)</label>
                                     <input 
                                         type="number" 
                                         step="0.1"
@@ -206,7 +206,18 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Sleeve (Inches)</label>
+                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Bust & Hip (Full round)</label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        value={customMeasurements.bustHip}
+                                        onChange={(e) => setCustomMeasurements({...customMeasurements, bustHip: e.target.value})}
+                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
+                                        placeholder="e.g. 36, 40"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Sleeve Length (Neck to wrist)</label>
                                     <input 
                                         type="number" 
                                         step="0.1"
@@ -215,18 +226,6 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                         onChange={(e) => setCustomMeasurements({...customMeasurements, sleeve: e.target.value})}
                                         className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
                                         placeholder="e.g. 28"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Shoulder (Inches)</label>
-                                    <input 
-                                        type="number" 
-                                        step="0.1"
-                                        required
-                                        value={customMeasurements.shoulder}
-                                        onChange={(e) => setCustomMeasurements({...customMeasurements, shoulder: e.target.value})}
-                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
-                                        placeholder="e.g. 16.5"
                                     />
                                 </div>
                             </div>
