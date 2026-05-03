@@ -103,6 +103,9 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <HoverLink href="/category/tops/printed" className="text-sm text-gray-700" onClick={onClose}>Printed</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
+                            <HoverLink href="/category/dresses" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Dresses</HoverLink>
+                        </div>
+                        <div className="flex flex-col gap-3">
                             <HoverLink href="/category/occasion-wear" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Occasion Wear</HoverLink>
                             <HoverLink href="/category/occasion-wear/abayas" className="text-sm text-gray-700" onClick={onClose}>Abayas</HoverLink>
                             <HoverLink href="/category/occasion-wear/overcoats" className="text-sm text-gray-700" onClick={onClose}>Overcoats</HoverLink>
@@ -148,6 +151,9 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                                 <Link href="/category/tops/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
                                 <Link href="/category/tops/plain" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Plain</Link>
                                 <Link href="/category/tops/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
+                            </AccordionItem>
+                            <AccordionItem title="Dresses" isOpen={activeAccordion === "Dresses"} onClick={() => toggleAccordion("Dresses")} onClose={onClose}>
+                                {/* No subcategories for now */}
                             </AccordionItem>
                             <AccordionItem title="Occasion Wear" isOpen={activeAccordion === "Occasion Wear"} onClick={() => toggleAccordion("Occasion Wear")} onClose={onClose}>
                                 <Link href="/category/occasion-wear/abayas" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Abayas</Link>

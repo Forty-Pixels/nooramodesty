@@ -9,6 +9,7 @@ const categories = [
   { name: "CORD SETS", slug: "cord-sets" },
   { name: "TOPS", slug: "tops" },
   { name: "OCCASION WEAR", slug: "occasion-wear" },
+  { name: "DRESSES", slug: "dresses" },
 ];
 
 const subCategoriesMap: Record<string, string[]> = {
@@ -44,7 +45,7 @@ const CategoryHeader = () => {
   
   // Find which main category is active by exact match with the path segment
   const activeMain = categories.find(cat => cat.slug === mainFromPath)?.slug;
-  const currentSubCats = activeMain ? subCategoriesMap[activeMain] : [];
+  const currentSubCats = activeMain ? (subCategoriesMap[activeMain] || []) : [];
 
   // Base path for sub-categories should be /category/[activeMain]
   const basePath = `/category/${activeMain}`;
@@ -52,8 +53,8 @@ const CategoryHeader = () => {
   return (
     <div className="w-full bg-white pt-6 pb-8 md:pt-8 md:pb-12 border-b border-gray-50">
       <div className="mx-auto max-w-7xl px-6 md:px-10">
-        {/* Main Categories Row */}
-        <div className="flex justify-center items-center gap-2 md:gap-10 mb-6 md:mb-10">
+        {/* Main Categories Row - Multi-row on mobile */}
+        <div className="flex justify-center items-center flex-wrap gap-x-4 gap-y-3 md:gap-x-10 mb-6 md:mb-10 px-4 md:px-0">
           {categories.map((cat) => {
             const isActive = cat.slug === activeMain;
             return (
@@ -69,9 +70,9 @@ const CategoryHeader = () => {
           })}
         </div>
 
-        {/* Sub-Categories Row (Refine) */}
+        {/* Sub-Categories Row (Refine) - Multi-row on mobile */}
         {currentSubCats.length > 0 && (
-          <div className="flex justify-center items-center flex-wrap gap-4 md:gap-12 transition-all duration-500">
+          <div className="flex justify-center items-center flex-wrap gap-x-6 gap-y-2 md:gap-x-12 transition-all duration-500">
             <Link 
               href={basePath}
               className={`text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 py-1 ${!currentSub ? "text-black border-b border-black" : "text-gray-400 hover:text-black"}`}

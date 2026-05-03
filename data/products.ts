@@ -283,6 +283,69 @@ export const cordSets: Product[] = Array.from({ length: 16 }, (_, i) => generate
 
 export const tops: Product[] = Array.from({ length: 16 }, (_, i) => generateRichProduct(`top-${i + 1}`, "tops", i));
 
+export const dresses: Product[] = [
+    { 
+        _id: "dress-1", 
+        title: "ELEGANT MAXI DRESS", 
+        slug: "elegant-maxi-dress", 
+        mainImage: "/product-details-page/image-6.png", 
+        category: "dresses", 
+        subCategory: "maxi", 
+        price: 18500,
+        type: "Maxi Dress",
+        color: "Lavender",
+        collection: "Evening Collection",
+        description: "A flowy, elegant maxi dress perfect for special occasions. Made from premium silk-mix fabric.",
+        colors: ["#E6E6FA", "#000000"],
+        sizes: ["S", "M", "L"],
+    },
+    { 
+        _id: "dress-2", 
+        title: "SATIN SLIP DRESS", 
+        slug: "satin-slip-dress", 
+        mainImage: "/product-details-page/image-2.png", 
+        category: "dresses", 
+        subCategory: "satin", 
+        price: 14500,
+        type: "Slip Dress",
+        color: "Rose Pink",
+        collection: "Luxury Essentials",
+        description: "A sleek satin slip dress that can be dressed up or down. Features a flattering silhouette.",
+        colors: ["#FFB6C1", "#000000"],
+        sizes: ["S", "M", "L"],
+    },
+    { 
+        _id: "dress-3", 
+        title: "FLORAL PRINT DRESS", 
+        slug: "floral-print-dress", 
+        mainImage: "/product-page/abayas/image-7.png", 
+        category: "dresses", 
+        subCategory: "printed", 
+        price: 16000,
+        type: "Midi Dress",
+        color: "Multi",
+        collection: "Spring Vibe",
+        description: "A vibrant floral print dress with a cinched waist. Perfect for daytime outings.",
+        colors: ["#FFFFFF", "#F0E68C"],
+        sizes: ["S", "M", "L"],
+    },
+    { 
+        _id: "dress-4", 
+        title: "MODEST WRAP DRESS", 
+        slug: "modest-wrap-dress", 
+        mainImage: "/product-details-page/image-1.png", 
+        category: "dresses", 
+        subCategory: "wrap", 
+        price: 17800,
+        type: "Wrap Dress",
+        color: "Charcoal",
+        collection: "Daily Comfort",
+        description: "A comfortable and modest wrap dress made from soft jersey fabric. Features long sleeves.",
+        colors: ["#36454F", "#000000"],
+        sizes: ["S", "M", "L"],
+    },
+];
+
 export const occasionWear: Product[] = Array.from({ length: 16 }, (_, i) => {
     const subCategories = ["abayas", "overcoats", "tops", "sets"];
     const product = generateRichProduct(`occasion-${i + 1}`, "occasion-wear", i);
@@ -301,4 +364,4 @@ export const theLook: Product[] = [
     { _id: "look-8", title: "THE LOOK EIGHT", slug: "look-eight", mainImage: "/landing-page/the-look/thelook-2.png", category: "the-look", price: 41000 },
 ];
 
-export const products = [...abayas, ...cordSets, ...tops, ...occasionWear, ...theLook];
+export const products = [...abayas, ...cordSets, ...tops, ...dresses, ...occasionWear, ...theLook];
