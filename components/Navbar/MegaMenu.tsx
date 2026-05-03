@@ -22,7 +22,7 @@ const HoverLink = ({ href, children, className = "", onClick }: { href: string, 
     </Link>
 );
 
-const AccordionItem = ({ title, children, isOpen, onClick, onClose }: { title: string, children: React.ReactNode, isOpen: boolean, onClick: () => void, onClose: () => void }) => (
+const AccordionItem = ({ title, children, isOpen, onClick, onClose }: { title: string, children?: React.ReactNode, isOpen: boolean, onClick: () => void, onClose: () => void }) => (
     <div className="border-b border-gray-100 last:border-0 grow">
         <div className="flex items-center justify-between w-full py-4 text-left">
             <HoverLink 
@@ -32,16 +32,18 @@ const AccordionItem = ({ title, children, isOpen, onClick, onClose }: { title: s
             >
                 {title}
             </HoverLink>
-            <button 
-                onClick={onClick}
-                className="grow flex justify-end items-center"
-                aria-label={isOpen ? "Collapse" : "Expand"}
-            >
-                {isOpen ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
-            </button>
+            {children && (
+                <button 
+                    onClick={onClick}
+                    className="grow flex justify-end items-center"
+                    aria-label={isOpen ? "Collapse" : "Expand"}
+                >
+                    {isOpen ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                </button>
+            )}
         </div>
         <AnimatePresence>
-            {isOpen && (
+            {isOpen && children && (
                 <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
@@ -152,9 +154,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                                 <Link href="/category/tops/plain" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Plain</Link>
                                 <Link href="/category/tops/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
                             </AccordionItem>
-                            <AccordionItem title="Dresses" isOpen={activeAccordion === "Dresses"} onClick={() => toggleAccordion("Dresses")} onClose={onClose}>
-                                {/* No subcategories for now */}
-                            </AccordionItem>
+                            <AccordionItem title="Dresses" isOpen={activeAccordion === "Dresses"} onClick={() => toggleAccordion("Dresses")} onClose={onClose} />
                             <AccordionItem title="Occasion Wear" isOpen={activeAccordion === "Occasion Wear"} onClick={() => toggleAccordion("Occasion Wear")} onClose={onClose}>
                                 <Link href="/category/occasion-wear/abayas" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Abayas</Link>
                                 <Link href="/category/occasion-wear/overcoats" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Overcoats</Link>
