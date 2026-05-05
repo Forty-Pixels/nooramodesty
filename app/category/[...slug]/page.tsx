@@ -1,7 +1,7 @@
 import React from "react";
 import CategoryHeader from "@/components/Category/CategoryHeader";
 import ListingGrid from "@/components/Category/ListingGrid";
-import { abayas, cordSets, tops, occasionWear, dresses } from "@/data/products";
+import { abayas, cordSets, tops, occasionWear, dresses, saleProducts } from "@/data/products";
 
 export default async function CategoryPage({
     params,
@@ -25,6 +25,7 @@ export default async function CategoryPage({
     if (categoryPath === "tops") products = tops;
     if (categoryPath === "occasion-wear") products = occasionWear;
     if (categoryPath === "dresses") products = dresses;
+    if (categoryPath === "sale") products = saleProducts;
 
     // Filter by sub-category (style) if active
     if (activeStyle) {
@@ -51,5 +52,6 @@ export function generateStaticParams() {
         { slug: ["tops"] },
         { slug: ["occasion-wear"] },
         { slug: ["dresses"] },
+        { slug: ["sale"] },
     ];
 }

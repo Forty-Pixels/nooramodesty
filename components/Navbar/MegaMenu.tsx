@@ -114,6 +114,9 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <HoverLink href="/category/occasion-wear/tops" className="text-sm text-gray-700" onClick={onClose}>Tops</HoverLink>
                             <HoverLink href="/category/occasion-wear/sets" className="text-sm text-gray-700" onClick={onClose}>Sets</HoverLink>
                         </div>
+                        <div className="flex flex-col gap-3">
+                            <HoverLink href="/category/sale" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1 text-red-600">SALE</HoverLink>
+                        </div>
                         <div className="flex flex-col gap-4">
                             <HoverLink href="/login" className="text-[1.05rem] uppercase font-medium !px-3 !py-1" onClick={onClose}>ACCOUNT</HoverLink>
                             <HoverLink href="/wishlist" onClick={onClose} className="text-[1.05rem] uppercase font-medium whitespace-nowrap !px-3 !py-1">
@@ -161,6 +164,9 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                                 <Link href="/category/occasion-wear/tops" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Tops</Link>
                                 <Link href="/category/occasion-wear/sets" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Sets</Link>
                             </AccordionItem>
+                            <div className="py-4 border-b border-gray-100">
+                                <HoverLink href="/category/sale" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3 text-red-600">Sale</HoverLink>
+                            </div>
                             
                             <div className="py-4 border-b border-gray-100">
                                 <HoverLink href="/login" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3">Account</HoverLink>

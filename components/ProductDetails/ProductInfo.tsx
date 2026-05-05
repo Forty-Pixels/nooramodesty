@@ -40,7 +40,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             title: product.title,
-            price: product.price,
+            price: product.salePrice || product.price,
             image: product.mainImage,
             quantity: 1,
             color: selectedColor,
@@ -55,7 +55,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         toggleWishlist({
             _id: product._id,
             title: product.title,
-            price: product.price,
+            price: product.salePrice || product.price,
             image: product.mainImage,
             slug: product.slug,
         });
@@ -93,9 +93,25 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         />
                     </button>
                 </div>
-                <p className="text-lg font-bold">
-                    LKR {product.price.toLocaleString()}
-                </p>
+                {product.salePrice ? (
+                    <div className="space-y-1.5">
+                        <div className="bg-[#B21E1E] text-white text-[0.65rem] font-bold tracking-[0.1em] px-2.5 py-1 uppercase w-max rounded-sm">
+                            {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <p className="text-xl font-bold text-[#B21E1E]">
+                                LKR {product.salePrice.toLocaleString()}
+                            </p>
+                            <p className="text-sm text-gray-400 line-through font-medium">
+                                LKR {product.price.toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-lg font-bold">
+                        LKR {product.price.toLocaleString()}
+                    </p>
+                )}
                 <div className="w-28 h-[1px] bg-gray-200 mt-2" />
             </div>
 

@@ -9,6 +9,7 @@ export const abayas: Product[] = [
         category: "abayas", 
         subCategory: "embroidered", 
         price: 15000,
+        salePrice: 12500,
         type: "Hand Work Abaya",
         color: "Beige",
         collection: "Lavish Collection",
@@ -38,6 +39,7 @@ export const abayas: Product[] = [
         category: "abayas", 
         subCategory: "coat", 
         price: 22000,
+        salePrice: 18000,
         type: "Coat Style Abaya",
         color: "Deep Black",
         collection: "Urban Modesty",
@@ -256,6 +258,7 @@ const generateRichProduct = (id: string, category: string, index: number): Produ
         category: category as any,
         subCategory: subCategories[index % subCategories.length] as any,
         price: 10000 + (index * 500),
+        salePrice: index % 4 === 0 ? (10000 + (index * 500)) * 0.8 : undefined,
         type: `${category.charAt(0).toUpperCase()}${category.slice(1)} Essential`,
         color: "Multi",
         collection: "All-Season Wear",
@@ -365,3 +368,4 @@ export const theLook: Product[] = [
 ];
 
 export const products = [...abayas, ...cordSets, ...tops, ...dresses, ...occasionWear, ...theLook];
+export const saleProducts = products.filter(p => p.salePrice);

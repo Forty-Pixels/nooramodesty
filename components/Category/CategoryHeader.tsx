@@ -10,6 +10,7 @@ const categories = [
   { name: "TOPS", slug: "tops" },
   { name: "OCCASION WEAR", slug: "occasion-wear" },
   { name: "DRESSES", slug: "dresses" },
+  { name: "SALE", slug: "sale" },
 ];
 
 const subCategoriesMap: Record<string, string[]> = {
