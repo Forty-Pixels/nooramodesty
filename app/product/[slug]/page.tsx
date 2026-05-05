@@ -20,7 +20,7 @@ export default async function ProductPage({ params }: PageProps) {
 
     const relatedProducts = allProducts
         .filter((p) => p.category === product.category && p._id !== product._id)
-        .slice(0, 6);
+        .slice(0, 4);
 
     return (
         <div className="bg-white min-h-screen font-sans">
@@ -39,7 +39,7 @@ export default async function ProductPage({ params }: PageProps) {
 
                 {/* Related Products Row (Bottom) */}
                 <div className="mt-32">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
                         {relatedProducts.map((p) => (
                             <Link key={p._id} href={`/product/${p.slug}`} className="group space-y-3">
                                 <div className="relative aspect-[3/4] overflow-hidden bg-gray-50">
