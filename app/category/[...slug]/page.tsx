@@ -29,7 +29,11 @@ export default async function CategoryPage({
 
     // Filter by sub-category (style) if active
     if (activeStyle) {
-        products = products.filter(p => p.subCategory === activeStyle);
+        if (categoryPath === "sale") {
+            products = products.filter(p => p.category === activeStyle);
+        } else {
+            products = products.filter(p => p.subCategory === activeStyle);
+        }
     }
 
     return (
@@ -53,5 +57,9 @@ export function generateStaticParams() {
         { slug: ["occasion-wear"] },
         { slug: ["dresses"] },
         { slug: ["sale"] },
+        { slug: ["sale", "abayas"] },
+        { slug: ["sale", "cord-sets"] },
+        { slug: ["sale", "tops"] },
+        { slug: ["sale", "dresses"] },
     ];
 }

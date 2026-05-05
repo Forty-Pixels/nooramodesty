@@ -18,6 +18,7 @@ const subCategoriesMap: Record<string, string[]> = {
   "cord-sets": ["embroidered", "long", "one-piece", "printed"],
   tops: ["embroidered", "plain", "printed"],
   "occasion-wear": ["abayas", "overcoats", "tops", "sets"],
+  sale: ["abayas", "cord-sets", "tops", "dresses"],
 };
 
 const HoverLink = ({ href, children, className = "", onClick, isActive }: { href: string, children: React.ReactNode, className?: string, onClick?: () => void, isActive?: boolean }) => (
