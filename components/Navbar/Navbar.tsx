@@ -5,11 +5,13 @@ import React, { useState } from "react";
 import Image from "next/image";
 import CartClientIcon from "@/components/Navbar/CartClientIcon";
 import MegaMenu from "@/components/Navbar/MegaMenu";
-import { X, Menu } from "lucide-react";
+import { X, Menu, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SearchOverlay } from "@/components/Navbar/SearchOverlay";
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
 
     return (
         <header className={`sticky top-0 z-50 w-full transition-colors duration-500 ${isMenuOpen ? "bg-white text-black" : "bg-black text-white"}`}>
@@ -77,6 +79,18 @@ const Navbar = () => {
                                 <CartClientIcon variant="minimal" />
                             </div>
 
+                            {/* Search Icon */}
+                            <button
+                                onClick={() => {
+                                    setIsSearchOpen(true);
+                                    setIsMenuOpen(false);
+                                }}
+                                className="p-1.5 hover:opacity-70 transition-opacity cursor-pointer"
+                                aria-label="Open search"
+                            >
+                                <Search size={22} strokeWidth={1.5} className={isMenuOpen ? "text-black" : "text-white"} />
+                            </button>
+
                             {/* Mobile: Hamburger Menu icon */}
                             <button
                                 onClick={() => setIsMenuOpen(true)}
@@ -91,6 +105,7 @@ const Navbar = () => {
             </div>
 
             <MegaMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+            <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         </header>
     );
 };
