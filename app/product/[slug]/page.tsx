@@ -38,7 +38,10 @@ export default async function ProductPage({ params }: PageProps) {
                 </div>
 
                 {/* Related Products Row (Bottom) */}
-                <div className="mt-32">
+                <div className="mt-16 md:mt-24">
+                    <h2 className="text-[0.65rem] md:text-[0.7rem] font-bold tracking-[0.4em] uppercase text-black mb-8">
+                        You May Also Like
+                    </h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
                         {relatedProducts.map((p) => (
                             <Link key={p._id} href={`/product/${p.slug}`} className="group space-y-3">
