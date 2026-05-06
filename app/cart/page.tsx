@@ -11,6 +11,8 @@ export default function CartPage() {
     const { items, removeItem, updateQuantity } = useCartStore();
 
     const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const originalSubtotal = items.reduce((acc, item) => acc + (item.originalPrice || item.price) * item.quantity, 0);
+    const discount = originalSubtotal - subtotal;
     const shipping = subtotal > 0 ? 500 : 0;
     const total = subtotal + shipping;
 
@@ -53,7 +55,7 @@ export default function CartPage() {
                             >
                                 {/* Thumbnail */}
                                 <Link 
-                                    href={`/product/${item._id.split('-')[0]}`} // Rough slug extraction
+                                    href={`/product/${item.slug}`}
                                     className="relative w-32 h-44 md:w-44 md:h-60 bg-white overflow-hidden flex-shrink-0 group"
                                 >
                                     <Image
@@ -104,9 +106,16 @@ export default function CartPage() {
                                             </button>
                                         </div>
 
-                                        <p className="text-sm font-bold text-black tracking-wider">
-                                            LKR {item.price.toLocaleString()}
-                                        </p>
+                                        <div className="flex items-center gap-3">
+                                            <p className="text-sm font-bold text-black tracking-wider">
+                                                LKR {item.price.toLocaleString()}
+                                            </p>
+                                            {item.originalPrice && (
+                                                <p className="text-xs text-gray-400 line-through font-medium">
+                                                    LKR {item.originalPrice.toLocaleString()}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Quantity Controls */}
@@ -157,9 +166,32 @@ export default function CartPage() {
                                     <span>Estimated Shipping</span>
                                     <span className="text-black">LKR {shipping.toLocaleString()}</span>
                                 </div>
+                                {discount > 0 && (
+                                    <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-[#B21E1E]">
+                                        <span>Discount</span>
+                                        <span>- LKR {discount.toLocaleString()}</span>
+                                    </div>
+                                )}
                                 <div className="pt-4 border-t border-black/5 flex justify-between text-sm uppercase tracking-[0.2em] font-bold text-black">
                                     <span>Total</span>
                                     <span>LKR {total.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {/* Promo Code Section */}
+                            <div className="pt-2 space-y-4">
+                                <label className="text-[9px] uppercase tracking-[0.2em] font-bold text-gray-400">
+                                    Promotional Code / Gift Card
+                                </label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="ENTER CODE"
+                                        className="flex-1 bg-[#fcfcfc] border border-black/5 px-4 py-3 text-[10px] font-bold tracking-[0.1em] text-black focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
+                                    />
+                                    <button className="bg-black text-white px-6 py-3 text-[9px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors whitespace-nowrap">
+                                        Apply
+                                    </button>
                                 </div>
                             </div>
 

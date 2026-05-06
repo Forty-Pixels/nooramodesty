@@ -10,6 +10,8 @@ interface CartItem {
   color?: string;
   size?: string;
   customNote?: string;
+  slug: string;
+  originalPrice?: number;
 }
 
 interface WishlistItem {

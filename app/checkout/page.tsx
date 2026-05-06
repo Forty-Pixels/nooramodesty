@@ -42,7 +42,8 @@ function CheckoutContent() {
             checkoutItems = [{
                 _id: `${product._id}-${buyNowColor}-${buyNowSize}-${buyNowNote ? encodeURIComponent(buyNowNote) : ""}`,
                 title: product.title,
-                price: product.price,
+                price: product.salePrice || product.price,
+                originalPrice: product.salePrice ? product.price : undefined,
                 image: product.mainImage,
                 quantity: buyNowQty,
                 color: buyNowColor || product.colors?.[0] || "",
@@ -64,6 +65,8 @@ function CheckoutContent() {
     };
 
     const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const originalSubtotal = checkoutItems.reduce((acc, item) => acc + (item.originalPrice || item.price) * item.quantity, 0);
+    const discountSavings = originalSubtotal - subtotal;
     const shipping = subtotal > 50000 ? 0 : 1500;
     const total = subtotal + shipping;
 
@@ -328,11 +331,33 @@ function CheckoutContent() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="flex items-center text-[10px] font-bold">
-                                    LKR {(item.price * item.quantity).toLocaleString()}
+                                <div className="flex flex-col items-end gap-1">
+                                    <div className="text-[10px] font-bold">
+                                        LKR {(item.price * item.quantity).toLocaleString()}
+                                    </div>
+                                    {item.originalPrice && (
+                                        <div className="text-[8px] text-gray-400 line-through font-medium">
+                                            LKR {(item.originalPrice * item.quantity).toLocaleString()}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
+                    {/* Promo Code Section */}
+                    <div className="mb-10 pb-10 border-b border-black/5">
+                        <label className="text-[9px] uppercase tracking-[0.2em] font-bold text-gray-400 block mb-4">
+                            Promo Code / Gift Card
+                        </label>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                placeholder="ENTER CODE"
+                                className="flex-1 bg-[#fcfcfc] border border-black/5 px-4 py-3 text-[10px] font-bold tracking-[0.1em] text-black focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
+                            />
+                            <button className="bg-black text-white px-5 py-3 text-[9px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors whitespace-nowrap">
+                                Apply
+                            </button>
+                        </div>
                     </div>
 
                     <div className="space-y-4 pt-8 border-t border-black/5">
@@ -344,6 +369,12 @@ function CheckoutContent() {
                             <span>Shipping</span>
                             <span>{shipping === 0 ? "FREE" : `LKR ${shipping.toLocaleString()}`}</span>
                         </div>
+                        {discountSavings > 0 && (
+                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-[#B21E1E]">
+                                <span>Discount</span>
+                                <span>- LKR {discountSavings.toLocaleString()}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-base font-bold uppercase tracking-[0.2em] pt-4 border-t border-black/5">
                             <span>Total</span>
                             <span className="text-black">LKR {total.toLocaleString()}</span>
@@ -352,7 +383,8 @@ function CheckoutContent() {
                 </div>
             </div>
         </div>
-    );
+    </div>
+);
 }
 
 export default function CheckoutPage() {

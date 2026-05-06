@@ -40,7 +40,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             title: product.title,
+            slug: product.slug,
             price: product.salePrice || product.price,
+            originalPrice: product.salePrice ? product.price : undefined,
             image: product.mainImage,
             quantity: 1,
             color: selectedColor,
