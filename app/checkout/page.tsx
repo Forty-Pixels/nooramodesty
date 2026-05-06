@@ -15,6 +15,8 @@ function CheckoutContent() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [buyNowQty, setBuyNowQty] = useState(1);
+    const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod' | 'bank'>('card');
+    const [receipt, setReceipt] = useState<File | null>(null);
 
     // Buy Now Logic
     const buyNowId = searchParams.get("buyNowId");
@@ -225,34 +227,131 @@ function CheckoutContent() {
                             <h2 className="text-lg font-bold uppercase tracking-widest">Payment</h2>
                         </div>
                         <div className="space-y-4">
-                            <div className="p-6 bg-white border border-black/5 space-y-6">
-                                <div className="flex items-center justify-between pb-4 border-b border-black/5">
-                                    <div className="flex items-center gap-3">
-                                        <CreditCard size={18} strokeWidth={1.5} />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest">Credit Card</span>
+                            {/* Payment Method Selector */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                <button
+                                    onClick={() => setPaymentMethod('card')}
+                                    className={`p-6 border flex flex-col items-center gap-3 transition-all duration-300 ${
+                                        paymentMethod === 'card' ? "border-black bg-white" : "border-black/5 bg-white/50 hover:bg-white"
+                                    }`}
+                                >
+                                    <CreditCard size={20} strokeWidth={1.5} className={paymentMethod === 'card' ? "text-black" : "text-gray-400"} />
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${paymentMethod === 'card' ? "text-black" : "text-gray-400"}`}>Credit Card</span>
+                                </button>
+                                <button
+                                    onClick={() => setPaymentMethod('cod')}
+                                    className={`p-6 border flex flex-col items-center gap-3 transition-all duration-300 ${
+                                        paymentMethod === 'cod' ? "border-black bg-white" : "border-black/5 bg-white/50 hover:bg-white"
+                                    }`}
+                                >
+                                    <Truck size={20} strokeWidth={1.5} className={paymentMethod === 'cod' ? "text-black" : "text-gray-400"} />
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${paymentMethod === 'cod' ? "text-black" : "text-gray-400"}`}>Cash on Delivery</span>
+                                </button>
+                                <button
+                                    onClick={() => setPaymentMethod('bank')}
+                                    className={`p-6 border flex flex-col items-center gap-3 transition-all duration-300 ${
+                                        paymentMethod === 'bank' ? "border-black bg-white" : "border-black/5 bg-white/50 hover:bg-white"
+                                    }`}
+                                >
+                                    <ShieldCheck size={20} strokeWidth={1.5} className={paymentMethod === 'bank' ? "text-black" : "text-gray-400"} />
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${paymentMethod === 'bank' ? "text-black" : "text-gray-400"}`}>Bank Transfer</span>
+                                </button>
+                            </div>
+
+                            {/* Payment Forms */}
+                            <div className="p-8 bg-white border border-black/5 min-h-[200px] flex flex-col justify-center">
+                                {paymentMethod === 'card' && (
+                                    <div className="space-y-8 animate-in fade-in duration-500">
+                                        <div className="flex items-center justify-between pb-4 border-b border-black/5">
+                                            <div className="flex items-center gap-3">
+                                                <CreditCard size={18} strokeWidth={1.5} />
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">Credit Card Details</span>
+                                            </div>
+                                            <div className="flex gap-2 opacity-50 grayscale">
+                                                <div className="w-8 h-5 bg-gray-200 rounded"></div>
+                                                <div className="w-8 h-5 bg-gray-200 rounded"></div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Card Number"
+                                                className="col-span-2 w-full bg-[#fcfcfc] border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Expiry (MM/YY)"
+                                                className="w-full bg-[#fcfcfc] border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="CVC"
+                                                className="w-full bg-[#fcfcfc] border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex gap-2 opacity-50 grayscale">
-                                        <div className="w-8 h-5 bg-gray-200 rounded"></div>
-                                        <div className="w-8 h-5 bg-gray-200 rounded"></div>
+                                )}
+
+                                {paymentMethod === 'cod' && (
+                                    <div className="space-y-4 text-center py-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                        <Truck size={32} strokeWidth={1} className="mx-auto text-gray-300" />
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-black">Pay upon delivery</p>
+                                            <p className="text-[9px] text-gray-500 uppercase tracking-widest leading-relaxed max-w-xs mx-auto">
+                                                Please have the exact amount ready for our courier partner. We accept cash only for this method.
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Card Number"
-                                        className="col-span-2 w-full bg-[#fcfcfc] border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Expiry (MM/YY)"
-                                        className="w-full bg-[#fcfcfc] border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="CVC"
-                                        className="w-full bg-[#fcfcfc] border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none"
-                                    />
-                                </div>
+                                )}
+
+                                {paymentMethod === 'bank' && (
+                                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                        <div className="bg-[#fcfcfc] p-6 border border-black/5 space-y-4">
+                                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Transfer Details</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-1">
+                                                    <p className="text-[8px] uppercase tracking-widest text-gray-400">Bank Name</p>
+                                                    <p className="text-[10px] font-bold">Example Bank</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <p className="text-[8px] uppercase tracking-widest text-gray-400">Account Number</p>
+                                                    <p className="text-[10px] font-bold tracking-widest">0000 0000 0000</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <p className="text-[8px] uppercase tracking-widest text-gray-400">Branch</p>
+                                                    <p className="text-[10px] font-bold">Example Branch</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <p className="text-[8px] uppercase tracking-widest text-gray-400">Account Name</p>
+                                                    <p className="text-[10px] font-bold">Example Account Name</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Upload Receipt</p>
+                                            <div className="relative border-2 border-dashed border-black/5 hover:border-black/10 transition-colors p-8 text-center cursor-pointer group">
+                                                <input 
+                                                    type="file" 
+                                                    onChange={(e) => setReceipt(e.target.files?.[0] || null)}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    accept="image/*"
+                                                />
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest group-hover:text-black transition-colors">
+                                                        {receipt ? receipt.name : "Select Image"}
+                                                    </p>
+                                                    <p className="text-[8px] text-gray-400 uppercase tracking-widest">
+                                                        JPEG or PNG (Max 5MB)
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-[8px] text-gray-400 uppercase tracking-widest leading-relaxed text-center italic">
+                                                * Please upload your transfer slip to avoid processing delays.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </section>
