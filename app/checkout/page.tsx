@@ -92,24 +92,53 @@ function CheckoutContent() {
 
     if (isSuccess) {
         return (
-            <div className="min-h-screen bg-[#f6f5f3] flex flex-col items-center justify-center px-6 text-center">
-                <div className="max-w-md space-y-8 animate-in fade-in zoom-in duration-1000">
-                    <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-8">
-                        <ShieldCheck size={40} className="text-white" />
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-20 text-center">
+                <div className="max-w-xl w-full space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
+                    {/* Success Icon */}
+                    <div className="relative mx-auto w-24 h-24">
+                        <div className="absolute inset-0 bg-black rounded-full animate-ping opacity-10 duration-[2000ms]"></div>
+                        <div className="relative w-24 h-24 bg-black rounded-full flex items-center justify-center z-10 shadow-xl shadow-black/20">
+                            <ShieldCheck size={48} className="text-white" strokeWidth={1.5} />
+                        </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-[0.2em] text-black">
-                        Thank You
-                    </h1>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium leading-relaxed">
-                        Your order has been placed successfully. You will receive a confirmation email shortly with your order details.
-                    </p>
-                    <div className="pt-8">
+
+                    <div className="space-y-4">
+                        <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-[0.25em] text-black">
+                            Thank You
+                        </h1>
+                        <p className="text-[11px] uppercase tracking-[0.3em] text-gray-400 font-bold">
+                            Your order has been received
+                        </p>
+                    </div>
+
+                    <div className="bg-[#f6f5f3] p-10 space-y-8 rounded-sm">
+                        <div className="space-y-3">
+                            <p className="text-xs font-medium text-black leading-relaxed">
+                                A receipt and order confirmation has been sent to your email.
+                                We will notify you as soon as your items are ready for dispatch.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-6">
                         <Link
                             href="/category/abayas"
-                            className="inline-flex items-center gap-3 bg-black text-white px-10 py-4 text-[10px] tracking-[0.4em] font-bold uppercase hover:bg-zinc-800 transition-all active:scale-95"
+                            className="w-full md:w-auto bg-black text-white px-12 py-5 text-[10px] tracking-[0.4em] font-bold uppercase hover:bg-zinc-800 transition-all active:scale-95 shadow-xl shadow-black/10"
                         >
                             Continue Shopping
                         </Link>
+                        
+                        <div className="flex flex-col items-center gap-2 pt-4">
+                            <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Need help with your order?</p>
+                            <a 
+                                href="https://wa.me/94771234567" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-bold uppercase tracking-widest text-black border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
+                            >
+                                Contact Support
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
