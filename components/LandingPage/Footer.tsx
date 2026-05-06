@@ -3,8 +3,13 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import type { SiteLinks } from "@/types/siteLinks";
 
-const Footer = () => {
+export interface FooterProps {
+  links: SiteLinks;
+}
+
+export const Footer = ({ links }: FooterProps) => {
   return (
     <footer className="bg-[#141414] text-white pt-16 pb-8 px-6 md:px-10 lg:px-20">
       <div className="max-w-[1440px] mx-auto">
@@ -18,15 +23,23 @@ const Footer = () => {
               <p>Colombo, Sri Lanka</p>
               <p>Mon-Fri, 10:00 - 18:00</p>
             </div>
-            <p className="text-sm text-[#BEBEBE] mt-2 font-medium">+94 768011651</p>
+            <p className="text-sm text-[#BEBEBE] mt-2 font-medium">{links.contactPhone}</p>
           </div>
 
           {/* Column 2: Socials & Newsletter */}
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-3">
-              <Link href="#" className="text-sm hover:text-white transition-colors tracking-wider">X/Twitter</Link>
-              <Link href="#" className="text-sm hover:text-white transition-colors tracking-wider">Instagram</Link>
-              <Link href="#" className="text-sm hover:text-white transition-colors tracking-wider">Facebook</Link>
+              {links.social.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target={link.isExternal ? "_blank" : undefined}
+                  rel={link.isExternal ? "noreferrer" : undefined}
+                  className="text-sm hover:text-white transition-colors tracking-wider"
+                >
+                  {link.label}
+                </a>
+              ))}
             </div>
 
             <div className="flex flex-col gap-4 mt-4">
@@ -46,16 +59,32 @@ const Footer = () => {
 
           {/* Column 3: Site Links */}
           <div className="flex flex-col gap-3">
-            <Link href="/" className="text-sm hover:text-gray-400 transition-colors tracking-wider">Home</Link>
-            <Link href="#" className="text-sm hover:text-gray-400 transition-colors tracking-wider">Catalog</Link>
-            <Link href="#" className="text-sm hover:text-gray-400 transition-colors tracking-wider">Product</Link>
+            {links.site.map((link) => (
+              <Link key={link.label} href={link.href} className="text-sm hover:text-gray-400 transition-colors tracking-wider">
+                {link.label}
+              </Link>
+            ))}
           </div>
 
           {/* Column 4: Legal Links */}
           <div className="flex flex-col gap-3">
-            <Link href="#" className="text-sm text-[#BEBEBE] hover:text-white transition-colors tracking-wider">Terms & Conditions</Link>
-            <Link href="#" className="text-sm text-[#BEBEBE] hover:text-white transition-colors tracking-wider">Privacy & Cookie Policy</Link>
-            <Link href="#" className="text-sm text-[#BEBEBE] hover:text-white transition-colors tracking-wider">Shopping & Return Policy</Link>
+            {links.legal.map((link) => (
+              link.isExternal ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-[#BEBEBE] hover:text-white transition-colors tracking-wider"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.label} href={link.href} className="text-sm text-[#BEBEBE] hover:text-white transition-colors tracking-wider">
+                  {link.label}
+                </Link>
+              )
+            ))}
           </div>
         </div>
 
@@ -78,5 +107,3 @@ const Footer = () => {
     </footer>
   );
 };
-
-export default Footer;
