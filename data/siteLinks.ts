@@ -28,6 +28,8 @@ export const siteLinks: SiteLinks = {
     { label: "Home", href: "/" },
     { label: "Catalog", href: "/category/abayas" },
     { label: "Product", href: "/product/abaya-one" },
+    { label: "Shipping & Returns", href: "/shipping-and-return-policy" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
   ],
   legal: [
     {
@@ -38,11 +40,19 @@ export const siteLinks: SiteLinks = {
       label: "Shipping & Return Policy",
       href: "/shipping-and-return-policy",
     },
+    {
+      label: "Privacy Policy",
+      href: "/privacy-policy",
+    },
   ],
   support: [
     {
       label: "Shipping & Returns Policy",
       href: "/shipping-and-return-policy",
+    },
+    {
+      label: "Privacy Policy",
+      href: "/privacy-policy",
     },
     {
       label: "Need help? Contact Support",

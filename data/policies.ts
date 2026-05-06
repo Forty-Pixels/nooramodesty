@@ -71,3 +71,39 @@ export const shippingAndReturnPolicy: PolicyPageContent = {
     },
   ],
 };
+
+export const privacyPolicy: PolicyPageContent = {
+  _id: "policy-privacy",
+  title: "Privacy Policy",
+  slug: "privacy-policy",
+  eyebrow: "Personal Data",
+  updatedAt: "May 2026",
+  intro:
+    "This Privacy Policy describes how Noora Modesty collects, uses, and protects your information when you visit our site or make a purchase.",
+  sections: [
+    {
+      _id: "collection",
+      title: "Information We Collect",
+      body:
+        "When you visit Noora Modesty, we collect certain information about your device, your interaction with the site, and information necessary to process your purchases. We may also collect additional information if you contact us for customer support.",
+    },
+    {
+      _id: "usage",
+      title: "How We Use Your Information",
+      body:
+        "We use your personal information to provide our services to you, which includes: offering products for sale, processing payments, shipping and fulfillment of your order, and keeping you up to date on new products, services, and offers.",
+    },
+    {
+      _id: "security",
+      title: "Data Security",
+      body:
+        "We take the security of your personal information seriously and use industry-standard measures to protect it. However, no method of transmission over the internet or electronic storage is 100% secure.",
+    },
+    {
+      _id: "contact",
+      title: "Contact Us",
+      body:
+        "For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at hello@nooramodesty.com.",
+    },
+  ],
+};
