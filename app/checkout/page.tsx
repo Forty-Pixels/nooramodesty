@@ -8,6 +8,8 @@ import { ArrowLeft, ArrowRight, ChevronRight, Lock, Truck, CreditCard, ShieldChe
 import { useSearchParams } from "next/navigation";
 import { products } from "@/data/products";
 import { Suspense } from "react";
+import { countries } from "@/data/countries";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 function CheckoutContent() {
     const { items, clearCart, updateQuantity } = useCartStore();
@@ -17,6 +19,8 @@ function CheckoutContent() {
     const [buyNowQty, setBuyNowQty] = useState(1);
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod' | 'bank'>('card');
     const [receipt, setReceipt] = useState<File | null>(null);
+    const [selectedCountry, setSelectedCountry] = useState<string>("");
+    const [selectedRegion, setSelectedRegion] = useState<string>("");
 
     // Buy Now Logic
     const buyNowId = searchParams.get("buyNowId");
@@ -71,6 +75,9 @@ function CheckoutContent() {
     const discountSavings = originalSubtotal - subtotal;
     const shipping = subtotal > 50000 ? 0 : 1500;
     const total = subtotal + shipping;
+
+    const currentCountryData = countries.find(c => c.code === selectedCountry);
+    const hasRegions = currentCountryData && currentCountryData.regions && currentCountryData.regions.length > 0;
 
     const handlePlaceOrder = (e: React.FormEvent) => {
         e.preventDefault();
@@ -176,6 +183,19 @@ function CheckoutContent() {
                                 className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
                                 required
                             />
+                            
+                            <CustomSelect 
+                                className="col-span-2"
+                                options={countries}
+                                placeholder="Country / Region"
+                                label="Country / Region"
+                                value={selectedCountry}
+                                onChange={(val) => {
+                                    setSelectedCountry(val);
+                                    setSelectedRegion(""); // Reset region when country changes
+                                }}
+                            />
+
                             <input
                                 type="text"
                                 placeholder="Address"
@@ -187,12 +207,36 @@ function CheckoutContent() {
                                 placeholder="Apartment, suite, etc. (optional)"
                                 className="col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
                             />
+                            
                             <input
                                 type="text"
                                 placeholder="City"
                                 className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
                                 required
                             />
+                            <input
+                                type="text"
+                                placeholder="Postal / Zip Code"
+                                className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
+                                required
+                            />
+
+                            {hasRegions ? (
+                                <CustomSelect 
+                                    options={currentCountryData.regions}
+                                    placeholder={selectedCountry === 'LK' ? "District" : "State / Province"}
+                                    label={selectedCountry === 'LK' ? "District" : "State / Province"}
+                                    value={selectedRegion}
+                                    onChange={(val) => setSelectedRegion(val)}
+                                />
+                            ) : (
+                                <input
+                                    type="text"
+                                    placeholder="State / Province"
+                                    className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
+                                    required
+                                />
+                            )}
                             <input
                                 type="text"
                                 placeholder="Phone"
