@@ -54,7 +54,8 @@ function CheckoutContent() {
                 quantity: buyNowQty,
                 color: buyNowColor || product.colors?.[0] || "",
                 size: buyNowSize || product.sizes?.[0] || "",
-                customNote: buyNowNote || undefined
+                customNote: buyNowNote || undefined,
+                slug: product.slug,
             }];
         }
     }
@@ -250,7 +251,7 @@ function CheckoutContent() {
                                 required
                             />
 
-                            {hasRegions ? (
+                            {hasRegions && currentCountryData?.regions && (
                                 <CustomSelect 
                                     options={currentCountryData.regions}
                                     placeholder={selectedCountry === 'LK' ? "District" : "State / Province"}
@@ -258,7 +259,8 @@ function CheckoutContent() {
                                     value={selectedRegion}
                                     onChange={(val) => setSelectedRegion(val)}
                                 />
-                            ) : (
+                            )}
+                            {!hasRegions && (
                                 <input
                                     type="text"
                                     placeholder="State / Province"
