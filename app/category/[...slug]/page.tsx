@@ -2,32 +2,29 @@ import React from "react";
 import CategoryHeader from "@/components/Category/CategoryHeader";
 import ListingGrid from "@/components/Category/ListingGrid";
 import { abayas, cordSets, tops, occasionWear, dresses, saleProducts } from "@/data/products";
+import { ListingControls } from "@/components/Category/ListingControls";
 
 export default async function CategoryPage({
     params,
     searchParams,
 }: {
     params: Promise<{ slug: string[] }>;
-    searchParams: Promise<{ style?: string }>;
+    searchParams: Promise<{ style?: string; sort?: string }>;
 }) {
     const { slug } = await params;
-    const { style: styleQuery } = await searchParams;
+    const { style: styleQuery, sort: sortQuery } = await searchParams;
     
-    const categoryPath = slug[0]; // 'abayas', 'cord-sets', 'tops'
-    const subCategoryPath = slug[1]; // optional: 'embroidered', etc.
-    
-    // Active style is either from path (/category/abayas/coat) or query (?style=coat)
+    const categoryPath = slug[0];
+    const subCategoryPath = slug[1];
     const activeStyle = subCategoryPath || styleQuery;
 
-    // Determine which product list to show
-    let products = abayas;
-    if (categoryPath === "cord-sets") products = cordSets;
-    if (categoryPath === "tops") products = tops;
-    if (categoryPath === "occasion-wear") products = occasionWear;
-    if (categoryPath === "dresses") products = dresses;
-    if (categoryPath === "sale") products = saleProducts;
+    let products = [...abayas];
+    if (categoryPath === "cord-sets") products = [...cordSets];
+    if (categoryPath === "tops") products = [...tops];
+    if (categoryPath === "occasion-wear") products = [...occasionWear];
+    if (categoryPath === "dresses") products = [...dresses];
+    if (categoryPath === "sale") products = [...saleProducts];
 
-    // Filter by sub-category (style) if active
     if (activeStyle) {
         if (categoryPath === "sale") {
             products = products.filter(p => p.category === activeStyle);
@@ -36,12 +33,30 @@ export default async function CategoryPage({
         }
     }
 
+    // Sorting Logic
+    if (sortQuery) {
+        products.sort((a, b) => {
+            const getPrice = (p: any) => p.salePrice || p.price;
+            
+            switch (sortQuery) {
+                case "price-asc":
+                    return getPrice(a) - getPrice(b);
+                case "price-desc":
+                    return getPrice(b) - getPrice(a);
+                case "name-asc":
+                    return a.title.localeCompare(b.title);
+                case "name-desc":
+                    return b.title.localeCompare(a.title);
+                default:
+                    return 0;
+            }
+        });
+    }
+
     return (
         <main className="flex flex-col min-h-screen bg-white">
-            {/* Secondary Category Navigation */}
             <CategoryHeader />
-            
-            {/* Product Listing Grid */}
+            <ListingControls />
             <div className="w-full">
                 <ListingGrid products={products} />
             </div>
