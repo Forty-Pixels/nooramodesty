@@ -44,11 +44,19 @@ export const siteLinks: SiteLinks = {
       label: "Privacy Policy",
       href: "/privacy-policy",
     },
+    {
+      label: "Returns & Cancellations",
+      href: "/returns-and-cancellations",
+    },
   ],
   support: [
     {
       label: "Shipping & Returns Policy",
       href: "/shipping-and-return-policy",
+    },
+    {
+      label: "Returns & Cancellations",
+      href: "/returns-and-cancellations",
     },
     {
       label: "Privacy Policy",
