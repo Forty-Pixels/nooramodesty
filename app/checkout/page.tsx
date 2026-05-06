@@ -54,7 +54,8 @@ function CheckoutContent() {
                 quantity: buyNowQty,
                 color: buyNowColor || product.colors?.[0] || "",
                 size: buyNowSize || product.sizes?.[0] || "",
-                customNote: buyNowNote || undefined
+                customNote: buyNowNote || undefined,
+                slug: product.slug,
             }];
         }
     }
@@ -221,7 +222,7 @@ function CheckoutContent() {
                                 value={selectedCountry}
                                 onChange={(val) => {
                                     setSelectedCountry(val);
-                                    setSelectedRegion(""); // Reset region when country changes
+                                    setSelectedRegion("");
                                 }}
                             />
 
@@ -250,26 +251,31 @@ function CheckoutContent() {
                                 required
                             />
 
-                            {hasRegions ? (
-                                <CustomSelect 
+                            {hasRegions && currentCountryData?.regions && (
+                                <CustomSelect
+                                    className="col-span-2"
                                     options={currentCountryData.regions}
                                     placeholder={selectedCountry === 'LK' ? "District" : "State / Province"}
                                     label={selectedCountry === 'LK' ? "District" : "State / Province"}
                                     value={selectedRegion}
-                                    onChange={(val) => setSelectedRegion(val)}
+                                    onChange={setSelectedRegion}
                                 />
-                            ) : (
+                            )}
+                            {!hasRegions && (
                                 <input
                                     type="text"
-                                    placeholder="State / Province"
-                                    className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
+                                    placeholder={selectedCountry === 'LK' ? "District" : "State / Province"}
+                                    className="col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
+                                    value={selectedRegion}
+                                    onChange={(e) => setSelectedRegion(e.target.value)}
                                     required
                                 />
                             )}
+                            
                             <input
                                 type="text"
                                 placeholder="Phone"
-                                className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
+                                className="col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
                                 required
                             />
                         </div>
