@@ -40,7 +40,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <Navbar />
-        <main className="flex-grow overflow-hidden">
+        <main className="flex-grow overflow-x-clip">
           <PageTransitionProvider>
             {children}
           </PageTransitionProvider>

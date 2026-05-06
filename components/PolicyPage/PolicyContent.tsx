@@ -9,7 +9,7 @@ export const PolicyContent = ({ content }: PolicyContentProps) => {
     <section className="bg-[#f6f5f3] text-[#141414]">
       <div className="mx-auto flex min-h-[72vh] w-full max-w-[1180px] flex-col px-6 py-20 md:px-10 md:py-28 lg:px-12">
         <div className="grid items-start gap-12 lg:grid-cols-[0.9fr_1.35fr] lg:gap-20">
-          <div className="space-y-8 lg:sticky lg:top-28">
+          <div className="space-y-8 lg:sticky lg:top-28 lg:self-start">
             <div className="space-y-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#8B8378]">
                 {content.eyebrow}
