@@ -17,24 +17,44 @@ const ProductListingCard: React.FC<ProductListingCardProps> = ({ product }) => {
 
   return (
     <div className="group flex flex-col w-full relative">
-      {/* Image Container */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
-        <Link href={`/product/${product.slug}`} className="block h-full w-full">
-          <Image
-            src={product.mainImage}
-            alt={product.title}
-            fill
-            className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-            sizes="(max-width: 768px) 50vw, 25vw"
-          />
-        </Link>
-        
-        {/* Sale Badge */}
-        {product.salePrice && (
-          <div className="absolute top-4 left-0 z-10 bg-[#B21E1E] text-white text-[0.6rem] font-bold tracking-[0.1em] px-2.5 py-1.5 uppercase">
-            {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
-          </div>
-        )}
+        {/* Image Container */}
+        <div className={`relative aspect-[3/4] w-full overflow-hidden ${product.stockStatus === "out-of-stock" ? "bg-gray-50" : "bg-[#f6f5f3]"}`}>
+          <Link href={`/product/${product.slug}`} className="block h-full w-full">
+            <Image
+              src={product.mainImage}
+              alt={product.title}
+              fill
+              className={`object-cover object-center transition-all duration-1000 group-hover:scale-105 ${
+                product.stockStatus === "out-of-stock" ? "opacity-40 saturate-0 blur-[0.4px]" : ""
+              }`}
+              sizes="(max-width: 768px) 50vw, 25vw"
+            />
+          </Link>
+          
+          {/* Badges Container (Sale & Low Stock only) */}
+          {product.stockStatus !== "out-of-stock" && (
+            <div className="absolute top-0 left-0 z-10 flex flex-col gap-0">
+              {product.salePrice && (
+                <div className="bg-[#B21E1E] text-white text-[0.55rem] font-bold tracking-[0.2em] px-3 py-1.5 uppercase">
+                  {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
+                </div>
+              )}
+              {product.stockStatus === "low-stock" && (
+                <div className="bg-[#8B8378] text-white text-[0.55rem] font-bold tracking-[0.2em] px-3 py-1.5 uppercase">
+                  Low Stock
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Out of Stock Bottom Bar */}
+          {product.stockStatus === "out-of-stock" && (
+            <div className="absolute bottom-0 left-0 right-0 z-20 bg-white/70 backdrop-blur-md py-3.5 text-center border-t border-black/5">
+              <span className="text-[0.55rem] font-bold uppercase tracking-[0.5em] text-black/50 ml-[0.5em]">
+                Out of Stock
+              </span>
+            </div>
+          )}
 
         {/* Wishlist Heart Icon - White Outline as in design */}
         <button

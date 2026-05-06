@@ -22,5 +22,9 @@ export interface Product {
     colors?: string[];
     sizes?: string[];
     materialSpecs?: MaterialSpecs;
+    stockCount?: number;
+    stockStatus?: "in-stock" | "low-stock" | "out-of-stock";
+    outOfStockSizes?: string[];
+    outOfStockColors?: string[];
 }
 

@@ -112,6 +112,24 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         LKR {product.price.toLocaleString()}
                     </p>
                 )}
+                
+                {/* Stock Status - Only show if Low or Out of Stock */}
+                {(product.stockStatus === "low-stock" || product.stockStatus === "out-of-stock") && (
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                            product.stockStatus === "low-stock" ? "bg-amber-500 animate-pulse" :
+                            "bg-[#B21E1E]"
+                        }`} />
+                        <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                            product.stockStatus === "low-stock" ? "text-amber-700/80" :
+                            "text-[#B21E1E]/80"
+                        }`}>
+                            {product.stockStatus === "low-stock" && `Hurry! Only ${product.stockCount} left in stock`}
+                            {product.stockStatus === "out-of-stock" && "Out of Stock"}
+                        </span>
+                    </div>
+                )}
+
                 <div className="w-28 h-[1px] bg-gray-200 mt-2" />
             </div>
 
@@ -145,16 +163,28 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
                     <div className="flex gap-2">
-                        {product.colors?.map((c) => (
-                            <button
-                                key={c}
-                                onClick={() => setSelectedColor(c)}
-                                className={`w-7 h-7 rounded-full border border-gray-200 transition-all duration-300 ${
-                                    selectedColor === c ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
-                                }`}
-                                style={{ backgroundColor: c }}
-                            />
-                        ))}
+                        {product.colors?.map((c) => {
+                            const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(c);
+                            return (
+                                <button
+                                    key={c}
+                                    onClick={() => setSelectedColor(c)}
+                                    disabled={isOutOfStock}
+                                    className={`w-7 h-7 rounded-full border border-gray-200 transition-all duration-300 relative overflow-hidden ${
+                                        selectedColor === c && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
+                                    } ${isOutOfStock ? "opacity-30 cursor-not-allowed grayscale" : "cursor-pointer"}`}
+                                    style={{ backgroundColor: c }}
+                                    title={isOutOfStock ? "Out of Stock" : undefined}
+                                >
+                                    {isOutOfStock && (
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <div className="absolute w-[120%] h-[1px] bg-white/80 rotate-45" />
+                                            <div className="absolute w-[120%] h-[1px] bg-white/80 -rotate-45" />
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -162,22 +192,33 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Size</label>
                     <div className="flex gap-2">
-                        {product.sizes?.map((s) => (
-                            <button
-                                key={s}
-                                onClick={() => {
-                                    setSelectedSize(s);
-                                    setIsCustomSize(false);
-                                }}
-                                className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 ${
-                                    selectedSize === s && !isCustomSize
-                                    ? "bg-[#8B8378] text-white border-[#8B8378]" 
-                                    : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
-                                }`}
-                            >
-                                {s}
-                            </button>
-                        ))}
+                        {product.sizes?.map((s) => {
+                            const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockSizes?.includes(s);
+                            return (
+                                <button
+                                    key={s}
+                                    disabled={isOutOfStock}
+                                    onClick={() => {
+                                        setSelectedSize(s);
+                                        setIsCustomSize(false);
+                                    }}
+                                    className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 relative overflow-hidden ${
+                                        selectedSize === s && !isCustomSize && !isOutOfStock
+                                        ? "bg-[#8B8378] text-white border-[#8B8378]" 
+                                        : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
+                                    } ${isOutOfStock ? "opacity-25 cursor-not-allowed" : "cursor-pointer"}`}
+                                    title={isOutOfStock ? "Out of Stock" : undefined}
+                                >
+                                    {s}
+                                    {isOutOfStock && (
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <div className="absolute w-[140%] h-[1px] bg-black/40 rotate-45" />
+                                            <div className="absolute w-[140%] h-[1px] bg-black/40 -rotate-45" />
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
                         <button
                             onClick={() => setShowCustomModal(true)}
                             className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
@@ -270,19 +311,29 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             <div className="mt-5 flex items-center gap-4">
                 <button 
                     onClick={handleBuyNow}
-                    className="w-44 h-11 bg-[#8B8378] hover:bg-[#7a7166] text-white text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer"
+                    disabled={product.stockStatus === "out-of-stock"}
+                    className={`w-44 h-11 text-white text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
+                        product.stockStatus === "out-of-stock" 
+                        ? "bg-gray-300 cursor-not-allowed" 
+                        : "bg-[#8B8378] hover:bg-[#7a7166]"
+                    }`}
                 >
                     Buy Now
                 </button>
                 <button 
                     onClick={handleAddToBag}
-                    className="w-44 h-11 bg-white border border-[#8B8378] text-[#8B8378] hover:bg-gray-50 text-[11px] font-bold uppercase tracking-widest transition-all relative overflow-hidden cursor-pointer"
+                    disabled={product.stockStatus === "out-of-stock"}
+                    className={`w-44 h-11 bg-white border text-[11px] font-bold uppercase tracking-widest transition-all relative overflow-hidden cursor-pointer ${
+                        product.stockStatus === "out-of-stock"
+                        ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                        : "border-[#8B8378] text-[#8B8378] hover:bg-gray-50"
+                    }`}
                 >
                     <span className={`absolute inset-0 flex items-center justify-center bg-[#8B8378] text-white transition-transform duration-300 ${isAdded ? "translate-y-0" : "translate-y-full"}`}>
                         ADDED TO BAG
                     </span>
                     <span className={`${isAdded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
-                        Add to Bag
+                        {product.stockStatus === "out-of-stock" ? "Out of Stock" : "Add to Bag"}
                     </span>
                 </button>
                 <button className="w-11 h-11 border border-gray-300 hover:border-black transition-all flex items-center justify-center group cursor-pointer">

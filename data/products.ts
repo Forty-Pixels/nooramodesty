@@ -29,7 +29,11 @@ export const abayas: Product[] = [
             composition: "Premium Nidha",
             properties: ["High Opacity", "Breathable", "Soft Touch"],
             macroImage: "/product-details-page/nidha-macro.png"
-        }
+        },
+        stockCount: 15,
+        stockStatus: "in-stock",
+        outOfStockSizes: ["54"],
+        outOfStockColors: ["#8A9A5B"]
     },
     { 
         _id: "abaya-2", 
@@ -59,7 +63,11 @@ export const abayas: Product[] = [
             composition: "Satin Crepe",
             properties: ["Lustrous Finish", "Wrinkle Resistant", "Heavy Fall"],
             macroImage: "/product-details-page/satin-macro.png"
-        }
+        },
+        stockCount: 3,
+        stockStatus: "low-stock",
+        outOfStockSizes: ["58"],
+        outOfStockColors: ["#000080"]
     },
     { 
         _id: "abaya-3", 
@@ -88,7 +96,9 @@ export const abayas: Product[] = [
             composition: "Premium Nidha",
             properties: ["Lightweight", "Durable", "Silky Texture"],
             macroImage: "/product-details-page/nidha-macro.png"
-        }
+        },
+        stockStatus: "out-of-stock",
+        stockCount: 0
     },
     { 
         _id: "abaya-4", 
@@ -278,7 +288,11 @@ const generateRichProduct = (id: string, category: string, index: number): Produ
             composition: "Premium Blend",
             properties: ["Breathable", "Soft Touch", "High Durability"],
             macroImage: "/product-details-page/cotton-macro.png"
-        }
+        },
+        stockCount: index % 5 === 0 ? 2 : (10 + index),
+        stockStatus: index % 5 === 0 ? "low-stock" : "in-stock",
+        outOfStockSizes: index % 3 === 0 ? ["54"] : [],
+        outOfStockColors: index % 4 === 0 ? ["#000000"] : []
     };
 };
 
