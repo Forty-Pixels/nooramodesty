@@ -49,13 +49,13 @@ export const shippingAndReturnPolicy: PolicyPageContent = {
       _id: "delivery",
       title: "Delivery",
       body:
-        "Delivery timelines depend on product availability, destination, courier schedules, and order volume. We will contact you if a confirmed order requires extra processing time.",
+        "Delivery timelines depend on product availability, destination, courier schedules, and order volume. If an order takes extra time please feel free to contact our support through email or WhatsApp channels and an agent will get in touch with you.",
     },
     {
       _id: "returns",
       title: "Returns",
       body:
-        "Return requests should be made promptly after receiving the order. Items must be unused, unworn, unwashed, and returned with original packaging where applicable.",
+        "Return requests must be made within 14 days of receiving your order. Items must be unused, unworn, unwashed, and have all tags intact. When returning, please include the original packaging and the courier bag, as it contains the necessary order number for processing.",
     },
     {
       _id: "exchanges",

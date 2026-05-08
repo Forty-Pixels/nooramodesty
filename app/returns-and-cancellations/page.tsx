@@ -51,7 +51,7 @@ export default function ReturnsAndCancellationsPage() {
                             Request Sent
                         </h1>
                         <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold leading-relaxed">
-                            Your request has been received. Our team will review the details and contact you via email within 24-48 hours.
+                            Your request has been received. Our team will review the details and contact you within 24-48 hours.
                         </p>
                     </div>
                     <div className="pt-8">
@@ -127,12 +127,13 @@ export default function ReturnsAndCancellationsPage() {
                         </div>
                     </div>
 
-                    {/* Email */}
+                    {/* Phone Number */}
                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Email Address</label>
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Phone Number</label>
                         <input 
                             required
-                            type="email" 
+                            type="tel" 
+                            placeholder="e.g. +94 77 123 4567"
                             className="w-full bg-transparent border-b border-black/20 focus:border-black outline-none py-2 text-sm transition-colors text-black placeholder:text-gray-400"
                         />
                     </div>

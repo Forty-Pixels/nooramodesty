@@ -56,6 +56,16 @@ export default async function ProductPage({ params }: PageProps) {
                                 </div>
                                 <div className="space-y-1">
                                     <h3 className="text-[10px] uppercase tracking-widest font-bold truncate text-black">{p.title}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <p className={`text-[10px] font-bold ${p.salePrice ? "text-[#B21E1E]" : "text-black"}`}>
+                                            LKR {(p.salePrice || p.price).toLocaleString()}
+                                        </p>
+                                        {p.salePrice && (
+                                            <p className="text-[9px] text-gray-400 line-through">
+                                                LKR {p.price.toLocaleString()}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </Link>
                         ))}

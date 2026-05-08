@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import useCartStore from "@/store";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, ChevronRight, Lock, Truck, CreditCard, ShieldCheck, MessageSquare, Mail, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, Lock, Truck, CreditCard, ShieldCheck, MessageSquare, Mail, Info, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { products } from "@/data/products";
 import { Suspense } from "react";
@@ -409,15 +409,30 @@ function CheckoutContent() {
                                                 <input 
                                                     type="file" 
                                                     onChange={(e) => setReceipt(e.target.files?.[0] || null)}
-                                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    accept="image/*"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                    accept="image/*,application/pdf"
                                                 />
                                                 <div className="space-y-2">
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest group-hover:text-black transition-colors">
-                                                        {receipt ? receipt.name : "Select Image"}
-                                                    </p>
+                                                    <div className="flex items-center justify-center gap-3">
+                                                        <p className="text-[10px] font-bold uppercase tracking-widest group-hover:text-black transition-colors truncate max-w-[250px]">
+                                                            {receipt ? receipt.name : "Select File"}
+                                                        </p>
+                                                        {receipt && (
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setReceipt(null);
+                                                                }}
+                                                                className="relative z-20 p-1.5 bg-black text-white rounded-full hover:bg-zinc-800 transition-all shadow-lg"
+                                                                title="Remove file"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <p className="text-[8px] text-gray-400 uppercase tracking-widest">
-                                                        JPEG or PNG (Max 5MB)
+                                                        JPEG, PNG or PDF (Max 5MB)
                                                     </p>
                                                 </div>
                                             </div>

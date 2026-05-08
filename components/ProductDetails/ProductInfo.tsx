@@ -407,26 +407,26 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                     <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'shipping' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
                         <div className="overflow-hidden">
                             <p className="text-[10px] text-gray-600 leading-relaxed">
-                                Standard shipping takes 3-5 business days. Returns accepted within 14 days of delivery. Items must be in original condition with tags attached.
+                                Standard shipping takes 3-5 business days. Returns accepted within 14 days of delivery. Items must have tags intact and be returned with original packaging, including the courier bag.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Product Measurements */}
+                {/* Size Guide */}
                 <div className="border-b border-gray-100">
                     <button 
                         onClick={() => toggleAccordion('measurements')}
                         className="w-full py-3.5 flex items-center justify-between group"
                     >
                         <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-black group-hover:text-[#8B8378] transition-colors">
-                            Product Measurements {openAccordion === 'measurements' ? '−' : '+'}
+                            Size Guide {openAccordion === 'measurements' ? '−' : '+'}
                         </span>
                     </button>
                     <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'measurements' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
                         <div className="overflow-hidden">
                             <div className="space-y-2">
-                                <p className="text-[10px] text-gray-600 leading-relaxed font-bold uppercase">Size Guide (inches)</p>
+                                <p className="text-[10px] text-gray-600 leading-relaxed font-bold uppercase">Measurements (inches)</p>
                                 <div className="grid grid-cols-4 gap-2 text-[10px] text-gray-600">
                                     <div className="font-bold">Size</div>
                                     <div className="font-bold">Length</div>
