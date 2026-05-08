@@ -68,22 +68,22 @@ export default function ReturnsAndCancellationsPage() {
     }
 
     return (
-        <main className="min-h-screen bg-[#f6f5f3] pt-32 pb-20 px-6">
-            <div className="max-w-2xl mx-auto bg-white p-8 md:p-16 shadow-sm">
+        <main className="min-h-screen bg-[#f6f5f3] pt-24 md:pt-32 pb-20 px-4 md:px-6">
+            <div className="max-w-2xl mx-auto bg-white p-6 md:p-16 shadow-sm">
                 <div className="mb-12 text-center md:text-left">
-                    <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-[0.25em] text-black mb-4">
+                    <h1 className="text-2xl md:text-4xl font-bold uppercase tracking-[0.15em] md:tracking-[0.25em] text-black mb-4 leading-tight">
                         Returns & <br className="md:hidden" /> Cancellations
                     </h1>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">
+                    <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">
                         Please fill out the form below to submit your request
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-10">
+                <form onSubmit={handleSubmit} className="space-y-8 md:space-y-10">
                     {/* Request Type Toggle */}
                     <div className="space-y-4">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Request Type</label>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3 md:gap-4">
                             {(["return", "cancellation"] as const).map((type) => (
                                 <button
                                     key={type}
@@ -92,7 +92,7 @@ export default function ReturnsAndCancellationsPage() {
                                         setRequestType(type);
                                         setReason("");
                                     }}
-                                    className={`py-4 text-[10px] font-bold uppercase tracking-[0.2em] border transition-all ${
+                                    className={`py-3.5 md:py-4 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] border transition-all ${
                                         requestType === type 
                                             ? "bg-black text-white border-black" 
                                             : "bg-white text-gray-600 border-black/10 hover:border-black/30"
@@ -104,7 +104,7 @@ export default function ReturnsAndCancellationsPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                         {/* Name */}
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Full Name</label>
@@ -187,7 +187,7 @@ export default function ReturnsAndCancellationsPage() {
                     <div className="pt-6">
                         <button
                             disabled={isProcessing}
-                            className={`w-full bg-black text-white py-6 text-[10px] tracking-[0.5em] font-bold uppercase transition-all flex items-center justify-center gap-4 ${
+                            className={`w-full bg-black text-white py-5 md:py-6 text-[10px] tracking-[0.3em] md:tracking-[0.5em] font-bold uppercase transition-all flex items-center justify-center gap-4 ${
                                 isProcessing ? "opacity-70 cursor-not-allowed" : "hover:bg-zinc-800 active:scale-[0.98]"
                             }`}
                         >
