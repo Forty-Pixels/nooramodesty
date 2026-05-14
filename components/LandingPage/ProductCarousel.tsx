@@ -16,7 +16,8 @@ interface ProductCarouselProps {
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(3);
-  const totalProducts = products.length;
+  const visibleProducts = products.filter((product) => product.mainImage && product.slug);
+  const totalProducts = visibleProducts.length;
   const { toggleWishlist, wishlistItems } = useCartStore();
 
   useEffect(() => {
@@ -28,7 +29,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const maxIndex = totalProducts - itemsPerPage;
+  const maxIndex = Math.max(0, totalProducts - itemsPerPage);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
@@ -54,11 +55,11 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
               animate={{ x: `-${currentIndex * (100 / itemsPerPage)}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {products.map((product) => {
+              {visibleProducts.map((product, index) => {
                 const isWishlisted = wishlistItems.some(item => item._id === product._id);
                 return (
                   <div 
-                    key={product._id} 
+                    key={`${product._id}-${index}`}
                     className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group relative"
                   >
                     <Link href={`/product/${product.slug}`} className="block">
