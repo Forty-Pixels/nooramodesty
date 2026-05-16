@@ -1,7 +1,7 @@
 "use client";
 
 import { Product } from "@/types/product";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import useCartStore from "@/store";
 import { Heart, Send } from "lucide-react";
@@ -12,13 +12,16 @@ interface ProductInfoProps {
 }
 
 export const ProductInfo = ({ product }: ProductInfoProps) => {
-    const [selectedColor, setSelectedColor] = useState(product.colors?.[0]);
-    const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]);
+    const displayColors = product.colors && product.colors.length > 0 ? product.colors : ["#8B8378"];
+    const displaySizes = product.sizes && product.sizes.length > 0 ? product.sizes : ["54", "56", "58"];
+    const [selectedColor, setSelectedColor] = useState(displayColors[0]);
+    const [selectedSize, setSelectedSize] = useState(displaySizes[0]);
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [customMeasurements, setCustomMeasurements] = useState({ length: "", bustHip: "", sleeve: "" });
     const [isCustomSize, setIsCustomSize] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
+    const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
     
     const { addItem, toggleWishlist, wishlistItems } = useCartStore();
     const isWishlisted = wishlistItems.some(item => item._id === product._id);
@@ -27,6 +30,35 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const toggleAccordion = (id: string) => {
         setOpenAccordion(openAccordion === id ? null : id);
     };
+
+    const selectedSubVariation = useMemo(() => {
+        const selectedVariation = product.variations?.find((variation) => variation.colorHex === selectedColor) || product.variations?.[0];
+        return selectedVariation?.subVariations.find((subVariation) => subVariation.size === selectedSize) || {
+            size: selectedSize || displaySizes[0],
+            clickomVariationId: 1,
+        };
+    }, [product.variations, selectedColor, selectedSize]);
+
+    useEffect(() => {
+        const subVariations = product.variations?.flatMap((variation) => variation.subVariations) || [];
+
+        subVariations.forEach((subVariation) => {
+            fetch(`/api/stocks/${subVariation.clickomVariationId}`)
+                .then((response) => response.json())
+                .then((data: { inStock?: boolean }) => {
+                    setStockByVariationId((current) => ({
+                        ...current,
+                        [subVariation.clickomVariationId]: data.inStock !== false,
+                    }));
+                })
+                .catch(() => {
+                    setStockByVariationId((current) => ({
+                        ...current,
+                        [subVariation.clickomVariationId]: true,
+                    }));
+                });
+        });
+    }, [product.variations]);
 
     const getCustomNote = () => {
         if (!isCustomSize) return undefined;
@@ -39,6 +71,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
+            productId: product._id,
             title: product.title,
             slug: product.slug,
             price: product.salePrice || product.price,
@@ -47,6 +80,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             quantity: 1,
             color: selectedColor,
             size: size,
+            clickomVariationId: selectedSubVariation?.clickomVariationId,
+            customSize: isCustomSize,
             customNote: customNote
         });
         setIsAdded(true);
@@ -66,7 +101,22 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const handleBuyNow = () => {
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
-        router.push(`/checkout?buyNowId=${product._id}&color=${encodeURIComponent(selectedColor || "")}&size=${encodeURIComponent(size || "")}${customNote ? `&customNote=${encodeURIComponent(customNote)}` : ""}`);
+        addItem({
+            _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
+            productId: product._id,
+            title: product.title,
+            slug: product.slug,
+            price: product.salePrice || product.price,
+            originalPrice: product.salePrice ? product.price : undefined,
+            image: product.mainImage,
+            quantity: 1,
+            color: selectedColor,
+            size: size,
+            clickomVariationId: selectedSubVariation?.clickomVariationId,
+            customSize: isCustomSize,
+            customNote: customNote
+        });
+        router.push("/checkout");
     };
 
     const handleCustomSubmit = (e: React.FormEvent) => {
@@ -165,7 +215,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
                     <div className="flex gap-2">
-                        {product.colors?.map((c) => {
+                        {displayColors.map((c) => {
                             const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(c);
                             return (
                                 <button
@@ -194,8 +244,11 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Size</label>
                     <div className="flex gap-2">
-                        {product.sizes?.map((s) => {
-                            const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockSizes?.includes(s);
+                        {displaySizes.map((s) => {
+                            const variation = product.variations
+                                ?.find((item) => item.colorHex === selectedColor || !selectedColor)
+                                ?.subVariations.find((subVariation) => subVariation.size === s);
+                            const isOutOfStock = variation ? stockByVariationId[variation.clickomVariationId] === false : false;
                             return (
                                 <button
                                     key={s}
@@ -313,9 +366,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             <div className="mt-5 flex items-center gap-4">
                 <button 
                     onClick={handleBuyNow}
-                    disabled={product.stockStatus === "out-of-stock"}
+                    disabled={!selectedSubVariation}
                     className={`w-44 h-11 text-white text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
-                        product.stockStatus === "out-of-stock" 
+                        !selectedSubVariation 
                         ? "bg-gray-300 cursor-not-allowed" 
                         : "bg-[#8B8378] hover:bg-[#7a7166]"
                     }`}
@@ -324,9 +377,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 </button>
                 <button 
                     onClick={handleAddToBag}
-                    disabled={product.stockStatus === "out-of-stock"}
+                    disabled={!selectedSubVariation}
                     className={`w-44 h-11 bg-white border text-[11px] font-bold uppercase tracking-widest transition-all relative overflow-hidden cursor-pointer ${
-                        product.stockStatus === "out-of-stock"
+                        !selectedSubVariation
                         ? "border-gray-200 text-gray-300 cursor-not-allowed"
                         : "border-[#8B8378] text-[#8B8378] hover:bg-gray-50"
                     }`}
@@ -335,7 +388,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         ADDED TO BAG
                     </span>
                     <span className={`${isAdded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
-                        {product.stockStatus === "out-of-stock" ? "Out of Stock" : "Add to Bag"}
+                        {!selectedSubVariation ? "Unavailable" : "Add to Bag"}
                     </span>
                 </button>
                 <button className="w-11 h-11 border border-gray-300 hover:border-black transition-all flex items-center justify-center group cursor-pointer">

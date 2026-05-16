@@ -10,6 +10,8 @@
     "sanity:seed-categories": "node --env-file=.env.local sanity/lib/seedCategories.mjs"
   },
   "dependencies": {
+    "@netlify/functions": "^5.2.1",
+    "@netlify/plugin-nextjs": "^5.15.11",
     "@sanity/image-url": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
@@ -17,8 +19,10 @@
     "next-sanity": "^12.4.5",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "resend": "^6.12.3",
     "sanity": "^5.25.1",
     "styled-components": "^6.4.1",
+    "zod": "^4.4.3",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
