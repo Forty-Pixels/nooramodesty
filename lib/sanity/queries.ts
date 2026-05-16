@@ -11,7 +11,9 @@ const productProjection = `
   plainDescription,
   "description": plainDescription,
   "category": category->slug.current,
-  "subCategory": coalesce(subCategory->slug.current, subCategory),
+  "categoryRef": category._ref,
+  "subCategory": subCategory->slug.current,
+  "subCategoryRef": subCategory._ref,
   type,
   color,
   collection,
@@ -67,7 +69,10 @@ export const HOMEPAGE_QUERY = defineQuery(`*[_type == "homepage"][0]{
 export const PRODUCTS_BY_CATEGORY_QUERY = defineQuery(`*[
   _type == "product" &&
   isVisible != false &&
-  category->slug.current == $category
+  (
+    category->slug.current == $category ||
+    category._ref == $categoryRef
+  )
 ] | order(title asc) {
   ${productProjection}
 }`);
@@ -91,7 +96,10 @@ export const PRODUCT_BY_SLUG_QUERY = defineQuery(`*[
 export const RELATED_PRODUCTS_QUERY = defineQuery(`*[
   _type == "product" &&
   isVisible != false &&
-  category->slug.current == $category &&
+  (
+    category->slug.current == $category ||
+    category._ref == $categoryRef
+  ) &&
   slug.current != $slug
 ] | order(title asc)[0...4] {
   ${productProjection}
