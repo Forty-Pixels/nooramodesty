@@ -73,12 +73,28 @@ function CheckoutContent() {
     return "";
   };
 
+  const validateCouponRequest = () => {
+    if (!formState.fullName || !formState.mobile || !formState.email || !formState.addressLine1 || !formState.city || !formState.zipCode) {
+      return "Complete contact and delivery details before applying a coupon.";
+    }
+    if (!formState.email.includes("@")) return "Enter a valid email address before applying a coupon.";
+    if (items.some((item) => !item.clickomVariationId)) return "Choose a valid size for every item before applying a coupon.";
+    return "";
+  };
+
   const handleApplyCoupon = async () => {
     setCouponMessage("");
     setDiscountAmount(0);
 
     if (!couponCode.trim()) {
       setCouponMessage("Enter a coupon code.");
+      return;
+    }
+
+    const couponError = validateCouponRequest();
+
+    if (couponError) {
+      setCouponMessage(couponError);
       return;
     }
 

@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     });
 
     if (coupon?._id) {
-      await client.patch(coupon._id).inc({ usesCount: 1 }).commit();
+      await client.patch(coupon._id).setIfMissing({ usesCount: 0 }).inc({ usesCount: 1 }).commit();
     }
 
     try {
