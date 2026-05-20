@@ -1,9 +1,9 @@
+import { products } from "@/data/products";
 import { ProductGallery } from "@/components/ProductDetails/ProductGallery";
 import { ProductInfo } from "@/components/ProductDetails/ProductInfo";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getProductBySlug, getRelatedProducts } from "@/lib/sanity/products";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -11,13 +11,16 @@ interface PageProps {
 
 export default async function ProductPage({ params }: PageProps) {
     const { slug } = await params;
-    const product = await getProductBySlug(slug);
+    const allProducts = products;
+    const product = allProducts.find((p) => p.slug === slug);
 
     if (!product) {
         notFound();
     }
 
-    const relatedProducts = await getRelatedProducts(product);
+    const relatedProducts = allProducts
+        .filter((p) => p.category === product.category && p._id !== product._id)
+        .slice(0, 4);
 
     return (
         <div className="bg-white min-h-screen font-sans">
