@@ -8,12 +8,16 @@ interface HeroProps {
     imageOneSrc?: string;
     imageTwoSrc?: string;
     centerLogoSrc?: string;
+    ctaLabel?: string;
+    ctaHref?: string;
 }
 
 const Hero: React.FC<HeroProps> = ({
     imageOneSrc = "/landing-page/hero/hero-image1.png",
     imageTwoSrc = "/landing-page/hero/hero-image-2.png",
     centerLogoSrc = "/noora-modesty-logo-2.png",
+    ctaLabel = "SHOP ALL",
+    ctaHref = "/category/abayas",
 }) => {
     return (
         <section className="relative w-full h-[calc(100vh-44px)] md:h-[calc(100vh-52px)] bg-[#f6f5f3] overflow-hidden flex flex-col md:flex-row">
@@ -63,11 +67,11 @@ const Hero: React.FC<HeroProps> = ({
             {/* Shop Button overlay - More compact white background box for mobile visibility */}
             <div className="absolute bottom-10 md:bottom-10 left-1/2 transform -translate-x-1/2 z-20 w-fit">
                 <Link
-                    href="/category/abayas"
+                    href={ctaHref}
                     className="group relative inline-flex items-center justify-center px-6 py-2 md:px-4 md:py-1 bg-white md:bg-transparent font-bold text-[0.7rem] md:text-[0.7rem] tracking-[0.4em] text-black uppercase overflow-hidden transition-all duration-300 shadow-md md:shadow-none border border-black/5 md:border-none"
                 >
                     <span className="absolute inset-0 w-full h-full bg-black transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0"></span>
-                    <span className="relative z-10 group-hover:text-white transition-colors duration-300 ease-out">SHOP ALL</span>
+                    <span className="relative z-10 group-hover:text-white transition-colors duration-300 ease-out">{ctaLabel}</span>
                 </Link>
             </div>
 

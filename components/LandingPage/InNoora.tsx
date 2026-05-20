@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useMotionValue } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { InNooraImage } from "@/data/inNoora";
+import { InNooraImage } from "@/types/homepage";
 
 interface InNooraProps {
   images: InNooraImage[];
@@ -13,7 +14,8 @@ interface InNooraProps {
 const InNoora: React.FC<InNooraProps> = ({ images }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(2);
-  const totalItems = images.length;
+  const visibleImages = images.filter((image) => image.url && image.alt);
+  const totalItems = visibleImages.length;
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,7 +33,7 @@ const InNoora: React.FC<InNooraProps> = ({ images }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const maxIndex = totalItems - itemsPerPage;
+  const maxIndex = Math.max(0, totalItems - itemsPerPage);
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
@@ -92,13 +94,28 @@ const InNoora: React.FC<InNooraProps> = ({ images }) => {
               stiffness: 200,
             }}
           >
-            {images.map((image, index) => (
+            {visibleImages.map((image, index) => (
               <div 
-                key={image._id} 
+                key={`${image._id}-${index}`}
                 className="flex-shrink-0 px-[1px] md:px-[2px]"
                 style={{ width: `${100 / itemsPerPage}%` }}
               >
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#f6f5f3]">
+                {image.productSlug ? (
+                  <Link
+                    href={`/product/${image.productSlug}`}
+                    className="relative aspect-[4/5] w-full overflow-hidden bg-[#f6f5f3] block"
+                  >
+                    <Image
+                      src={image.url}
+                      alt={image.alt}
+                      fill
+                      className="object-cover transition-transform duration-700 ease-out hover:scale-105"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
+                      priority={index < 6}
+                    />
+                  </Link>
+                ) : (
+                  <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#f6f5f3]">
                   <Image
                     src={image.url}
                     alt={image.alt}
@@ -107,7 +124,8 @@ const InNoora: React.FC<InNooraProps> = ({ images }) => {
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
                     priority={index < 6}
                   />
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </motion.div>

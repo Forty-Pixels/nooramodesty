@@ -1,8 +1,9 @@
 import React from "react";
 import CategoryHeader from "@/components/Category/CategoryHeader";
 import ListingGrid from "@/components/Category/ListingGrid";
-import { abayas, cordSets, tops, occasionWear, dresses, saleProducts } from "@/data/products";
 import { ListingControls } from "@/components/Category/ListingControls";
+import { Product } from "@/types/product";
+import { getProductsByCategory } from "@/lib/sanity/products";
 
 export default async function CategoryPage({
     params,
@@ -18,12 +19,7 @@ export default async function CategoryPage({
     const subCategoryPath = slug[1];
     const activeStyle = subCategoryPath || styleQuery;
 
-    let products = [...abayas];
-    if (categoryPath === "cord-sets") products = [...cordSets];
-    if (categoryPath === "tops") products = [...tops];
-    if (categoryPath === "occasion-wear") products = [...occasionWear];
-    if (categoryPath === "dresses") products = [...dresses];
-    if (categoryPath === "sale") products = [...saleProducts];
+    let products = await getProductsByCategory(categoryPath);
 
     if (activeStyle) {
         if (categoryPath === "sale") {
@@ -36,7 +32,7 @@ export default async function CategoryPage({
     // Sorting Logic
     if (sortQuery) {
         products.sort((a, b) => {
-            const getPrice = (p: any) => p.salePrice || p.price;
+            const getPrice = (product: Product) => product.salePrice || product.price;
             
             switch (sortQuery) {
                 case "price-asc":
