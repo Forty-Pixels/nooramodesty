@@ -68,14 +68,18 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const handleAddToBag = () => {
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
+        const basePrice = product.salePrice || product.price;
+        const finalPrice = isCustomSize ? basePrice + 850 : basePrice;
+        const originalPrice = product.salePrice ? product.price : undefined;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 850 : originalPrice;
         
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
-            price: product.salePrice || product.price,
-            originalPrice: product.salePrice ? product.price : undefined,
+            price: finalPrice,
+            originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
             color: selectedColor,
@@ -101,13 +105,18 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const handleBuyNow = () => {
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
+        const basePrice = product.salePrice || product.price;
+        const finalPrice = isCustomSize ? basePrice + 850 : basePrice;
+        const originalPrice = product.salePrice ? product.price : undefined;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 850 : originalPrice;
+
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
-            price: product.salePrice || product.price,
-            originalPrice: product.salePrice ? product.price : undefined,
+            price: finalPrice,
+            originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
             color: selectedColor,
@@ -243,7 +252,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 {/* Size Selector */}
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Size</label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-end">
                         {displaySizes.map((s) => {
                             const variation = product.variations
                                 ?.find((item) => item.colorHex === selectedColor || !selectedColor)
@@ -274,22 +283,32 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 </button>
                             );
                         })}
-                        <button
-                            onClick={() => setShowCustomModal(true)}
-                            className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
-                                isCustomSize
-                                ? "bg-black text-white border-black" 
-                                : "bg-white text-black border-gray-200 hover:border-black"
-                            }`}
-                            title="Enter custom measurements"
-                        >
-                            +
-                        </button>
+                        <div className="relative flex flex-col items-center">
+                            <span className="text-[6px] md:text-[7px] text-[#8B8378] font-bold uppercase tracking-wider mb-1.5 whitespace-nowrap animate-pulse">
+                                Pre-Order
+                            </span>
+                            <button
+                                onClick={() => setShowCustomModal(true)}
+                                className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
+                                    isCustomSize
+                                    ? "bg-black text-white border-black" 
+                                    : "bg-white text-black border-gray-200 hover:border-black"
+                                }`}
+                                title="Enter custom measurements"
+                            >
+                                +
+                            </button>
+                        </div>
                     </div>
                     {isCustomSize && (
-                        <p className="text-[8px] text-[#8B8378] uppercase tracking-widest font-bold mt-1">
-                            Using Custom Measurements
-                        </p>
+                        <div className="mt-3 p-3 bg-neutral-50 border border-neutral-100 rounded-sm space-y-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                            <p className="text-[8px] text-[#8B8378] uppercase tracking-widest font-bold">
+                                Using Custom Measurements
+                            </p>
+                            <p className="text-[10px] leading-relaxed text-gray-500 font-medium normal-case">
+                                Custom sizes take around two weeks to dispatch and additional charges of Rs 850 for custom sizes.
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>
