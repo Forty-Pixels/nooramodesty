@@ -87,7 +87,9 @@ export default function CartPage() {
                                                     {item.size && (
                                                         <div className="flex items-center gap-2">
                                                             <span>Size:</span>
-                                                            <span className="text-black font-bold">{item.size}</span>
+                                                            <span className="text-black font-bold">
+                                                                {item.size} {item.customSize && "(+ LKR 1,500)"}
+                                                            </span>
                                                         </div>
                                                     )}
                                                     {item.customNote && (

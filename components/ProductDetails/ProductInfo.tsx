@@ -23,7 +23,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [isAdded, setIsAdded] = useState(false);
     const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
     
-    const { addItem, toggleWishlist, wishlistItems } = useCartStore();
+    const { addItem, toggleWishlist, wishlistItems, setBuyNowItem } = useCartStore();
     const isWishlisted = wishlistItems.some(item => item._id === product._id);
     const router = useRouter();
 
@@ -110,7 +110,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         const originalPrice = product.salePrice ? product.price : undefined;
         const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 1500 : originalPrice;
 
-        addItem({
+        setBuyNowItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
@@ -125,7 +125,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             customSize: isCustomSize,
             customNote: customNote
         });
-        router.push("/checkout");
+        router.push("/checkout?buyNow=true");
     };
 
     const handleCustomSubmit = (e: React.FormEvent) => {
