@@ -69,9 +69,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
         const basePrice = product.salePrice || product.price;
-        const finalPrice = isCustomSize ? basePrice + 850 : basePrice;
+        const finalPrice = isCustomSize ? basePrice + 1500 : basePrice;
         const originalPrice = product.salePrice ? product.price : undefined;
-        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 850 : originalPrice;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 1500 : originalPrice;
         
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
@@ -106,9 +106,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
         const basePrice = product.salePrice || product.price;
-        const finalPrice = isCustomSize ? basePrice + 850 : basePrice;
+        const finalPrice = isCustomSize ? basePrice + 1500 : basePrice;
         const originalPrice = product.salePrice ? product.price : undefined;
-        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 850 : originalPrice;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 1500 : originalPrice;
 
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
@@ -306,7 +306,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 Using Custom Measurements
                             </p>
                             <p className="text-[10px] leading-relaxed text-gray-500 font-medium normal-case">
-                                Custom sizes take around two weeks to dispatch and additional charges of Rs 850 for custom sizes.
+                                Please note we request at least 2 weeks to dispatch customer sizes. An extra charge of Rs. 1500/- will be levied on each custom size order.
                             </p>
                         </div>
                     )}

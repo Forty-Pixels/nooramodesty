@@ -10,7 +10,7 @@ import {
   OrderTotals,
 } from "@/types/order";
 
-const CUSTOM_SIZE_CHARGE = 850;
+const CUSTOM_SIZE_CHARGE = 1500;
 const FREE_SHIPPING_THRESHOLD = 50000;
 const STANDARD_SHIPPING = 1500;
 
