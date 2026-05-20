@@ -14,10 +14,9 @@ const categories = [
 ];
 
 const subCategoriesMap: Record<string, string[]> = {
-  abayas: ["embroidered", "coat", "wedding"],
+  abayas: ["embroidered", "coat"],
   "cord-sets": ["embroidered", "long", "one-piece", "printed"],
   tops: ["embroidered", "plain", "printed"],
-  dresses: ["maxi", "satin", "printed", "wrap"],
   "occasion-wear": ["abayas", "overcoats", "tops", "sets"],
   sale: ["abayas", "cord-sets", "tops", "dresses"],
 };

@@ -1,4 +1,8 @@
-import { InNooraImage } from "@/types/homepage";
+export interface InNooraImage {
+    _id: string;
+    url: string;
+    alt: string;
+}
 
 export const inNooraImages: InNooraImage[] = [
     {
