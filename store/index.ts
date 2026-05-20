@@ -1,14 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface CartItem {
+export interface CartItem {
   _id: string;
+  productId: string;
   title: string;
   price: number;
   image: string;
   quantity: number;
   color?: string;
   size?: string;
+  clickomVariationId?: number;
+  customSize?: boolean;
   customNote?: string;
   slug: string;
   originalPrice?: number;

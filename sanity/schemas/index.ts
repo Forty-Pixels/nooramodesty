@@ -1,7 +1,9 @@
 import { blockContent } from "./blockContent";
 import { category } from "./category";
+import { coupon } from "./coupon";
 import { homepage, homepageProductSection, inNooraImage } from "./homepage";
 import { materialSpecs } from "./materialSpecs";
+import { order, orderItem } from "./order";
 import { product } from "./product";
 import { siteSettings } from "./siteSettings";
 import { subCategory } from "./subCategory";
@@ -15,6 +17,9 @@ export const schemaTypes = [
   subVariation,
   variation,
   product,
+  orderItem,
+  order,
+  coupon,
   homepageProductSection,
   inNooraImage,
   homepage,
