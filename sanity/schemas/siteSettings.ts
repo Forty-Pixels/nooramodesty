@@ -28,5 +28,12 @@ export const siteSettings = defineType({
       type: "number",
       initialValue: 3,
     }),
+    defineField({
+      name: "isStoreLocatorActive",
+      title: "Enable Store Locator",
+      type: "boolean",
+      description: "Enable this to show the Store Locator page, footer links, and out-of-stock size popups on the website. Turn off to hide them.",
+      initialValue: false,
+    }),
   ],
 });

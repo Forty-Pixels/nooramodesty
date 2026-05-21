@@ -6,6 +6,7 @@ import Image from "next/image";
 import useCartStore from "@/store";
 import { Heart, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { isStoreLocatorActive } from "@/utils/featureFlags";
 
 interface ProductInfoProps {
     product: Product;
@@ -22,6 +23,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
     const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
+    const [showStoreLocatorModal, setShowStoreLocatorModal] = useState(false);
     
     const { addItem, toggleWishlist, wishlistItems, setBuyNowItem } = useCartStore();
     const isWishlisted = wishlistItems.some(item => item._id === product._id);
@@ -261,16 +263,20 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             return (
                                 <button
                                     key={s}
-                                    disabled={isOutOfStock}
+                                    disabled={isOutOfStock && !isStoreLocatorActive}
                                     onClick={() => {
-                                        setSelectedSize(s);
-                                        setIsCustomSize(false);
+                                        if (isOutOfStock && isStoreLocatorActive) {
+                                            setShowStoreLocatorModal(true);
+                                        } else {
+                                            setSelectedSize(s);
+                                            setIsCustomSize(false);
+                                        }
                                     }}
                                     className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 relative overflow-hidden ${
                                         selectedSize === s && !isCustomSize && !isOutOfStock
                                         ? "bg-[#8B8378] text-white border-[#8B8378]" 
                                         : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
-                                    } ${isOutOfStock ? "opacity-25 cursor-not-allowed" : "cursor-pointer"}`}
+                                    } ${isOutOfStock ? `opacity-25 ${isStoreLocatorActive ? "cursor-pointer" : "cursor-not-allowed"}` : "cursor-pointer"}`}
                                     title={isOutOfStock ? "Out of Stock" : undefined}
                                 >
                                     {s}
@@ -377,6 +383,53 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Store Locator Suggestion Modal */}
+            {showStoreLocatorModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+                    <div className="bg-white w-full max-w-sm p-8 shadow-2xl animate-in fade-in zoom-in duration-300 text-center">
+                        <div className="flex justify-end">
+                            <button 
+                                onClick={() => setShowStoreLocatorModal(false)} 
+                                className="text-gray-400 hover:text-black transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-6 mt-2">
+                            <div className="w-16 h-16 bg-[#f6f5f3] rounded-full flex items-center justify-center mx-auto text-black/60 shadow-inner">
+                                <Send size={24} />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-black">Item Unavailable Online</h3>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold leading-relaxed">
+                                    We may not have this size in stock online, but you can find a physical store near you that might!
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-4">
+                                <button 
+                                    onClick={() => {
+                                        setShowStoreLocatorModal(false);
+                                        router.push("/store-locator");
+                                    }}
+                                    className="w-full py-4 text-[10px] font-bold uppercase tracking-[0.3em] bg-black text-white hover:bg-zinc-800 transition-all active:scale-95"
+                                >
+                                    Find a Store Near Me
+                                </button>
+                                <button 
+                                    onClick={() => setShowStoreLocatorModal(false)}
+                                    className="w-full py-4 text-[10px] font-bold uppercase tracking-[0.3em] border border-black/10 hover:bg-[#f6f5f3] hover:text-black transition-all text-gray-500"
+                                >
+                                    Continue Browsing
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
