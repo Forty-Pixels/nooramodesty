@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar/Navbar";
@@ -24,6 +24,12 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Noora Modesty | Premium Modest Wear",
   description: "Experience the elegance of premium modest fashion. Curated abayas, cord sets, and tops designed for the modern woman.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 import PageTransitionProvider from "@/components/Providers/PageTransitionProvider";

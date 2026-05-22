@@ -6,6 +6,7 @@ import Image from "next/image";
 import useCartStore from "@/store";
 import { Heart, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { isStoreLocatorActive } from "@/utils/featureFlags";
 
 interface ProductInfoProps {
     product: Product;
@@ -22,8 +23,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
     const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
+    const [showStoreLocatorModal, setShowStoreLocatorModal] = useState(false);
     
-    const { addItem, toggleWishlist, wishlistItems } = useCartStore();
+    const { addItem, toggleWishlist, wishlistItems, setBuyNowItem } = useCartStore();
     const isWishlisted = wishlistItems.some(item => item._id === product._id);
     const router = useRouter();
 
@@ -68,14 +70,18 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const handleAddToBag = () => {
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
+        const basePrice = product.salePrice || product.price;
+        const finalPrice = isCustomSize ? basePrice + 1500 : basePrice;
+        const originalPrice = product.salePrice ? product.price : undefined;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 1500 : originalPrice;
         
         addItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
-            price: product.salePrice || product.price,
-            originalPrice: product.salePrice ? product.price : undefined,
+            price: finalPrice,
+            originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
             color: selectedColor,
@@ -101,13 +107,18 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const handleBuyNow = () => {
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
-        addItem({
+        const basePrice = product.salePrice || product.price;
+        const finalPrice = isCustomSize ? basePrice + 1500 : basePrice;
+        const originalPrice = product.salePrice ? product.price : undefined;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 1500 : originalPrice;
+
+        setBuyNowItem({
             _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
-            price: product.salePrice || product.price,
-            originalPrice: product.salePrice ? product.price : undefined,
+            price: finalPrice,
+            originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
             color: selectedColor,
@@ -116,7 +127,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             customSize: isCustomSize,
             customNote: customNote
         });
-        router.push("/checkout");
+        router.push("/checkout?buyNow=true");
     };
 
     const handleCustomSubmit = (e: React.FormEvent) => {
@@ -243,7 +254,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 {/* Size Selector */}
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Size</label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-end">
                         {displaySizes.map((s) => {
                             const variation = product.variations
                                 ?.find((item) => item.colorHex === selectedColor || !selectedColor)
@@ -252,16 +263,20 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             return (
                                 <button
                                     key={s}
-                                    disabled={isOutOfStock}
+                                    disabled={isOutOfStock && !isStoreLocatorActive}
                                     onClick={() => {
-                                        setSelectedSize(s);
-                                        setIsCustomSize(false);
+                                        if (isOutOfStock && isStoreLocatorActive) {
+                                            setShowStoreLocatorModal(true);
+                                        } else {
+                                            setSelectedSize(s);
+                                            setIsCustomSize(false);
+                                        }
                                     }}
                                     className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 relative overflow-hidden ${
                                         selectedSize === s && !isCustomSize && !isOutOfStock
                                         ? "bg-[#8B8378] text-white border-[#8B8378]" 
                                         : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
-                                    } ${isOutOfStock ? "opacity-25 cursor-not-allowed" : "cursor-pointer"}`}
+                                    } ${isOutOfStock ? `opacity-25 ${isStoreLocatorActive ? "cursor-pointer" : "cursor-not-allowed"}` : "cursor-pointer"}`}
                                     title={isOutOfStock ? "Out of Stock" : undefined}
                                 >
                                     {s}
@@ -274,22 +289,32 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 </button>
                             );
                         })}
-                        <button
-                            onClick={() => setShowCustomModal(true)}
-                            className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
-                                isCustomSize
-                                ? "bg-black text-white border-black" 
-                                : "bg-white text-black border-gray-200 hover:border-black"
-                            }`}
-                            title="Enter custom measurements"
-                        >
-                            +
-                        </button>
+                        <div className="relative flex flex-col items-center">
+                            <span className="text-[6px] md:text-[7px] text-[#8B8378] font-bold uppercase tracking-wider mb-1.5 whitespace-nowrap animate-pulse">
+                                Pre-Order
+                            </span>
+                            <button
+                                onClick={() => setShowCustomModal(true)}
+                                className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
+                                    isCustomSize
+                                    ? "bg-black text-white border-black" 
+                                    : "bg-white text-black border-gray-200 hover:border-black"
+                                }`}
+                                title="Enter custom measurements"
+                            >
+                                +
+                            </button>
+                        </div>
                     </div>
                     {isCustomSize && (
-                        <p className="text-[8px] text-[#8B8378] uppercase tracking-widest font-bold mt-1">
-                            Using Custom Measurements
-                        </p>
+                        <div className="mt-3 p-3 bg-neutral-50 border border-neutral-100 rounded-sm space-y-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                            <p className="text-[8px] text-[#8B8378] uppercase tracking-widest font-bold">
+                                Using Custom Measurements
+                            </p>
+                            <p className="text-[10px] leading-relaxed text-gray-500 font-medium normal-case">
+                                Please note we request at least 2 weeks to dispatch customer sizes. An extra charge of Rs. 1500/- will be levied on each custom size order.
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>
@@ -358,6 +383,53 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Store Locator Suggestion Modal */}
+            {showStoreLocatorModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+                    <div className="bg-white w-full max-w-sm p-8 shadow-2xl animate-in fade-in zoom-in duration-300 text-center">
+                        <div className="flex justify-end">
+                            <button 
+                                onClick={() => setShowStoreLocatorModal(false)} 
+                                className="text-gray-400 hover:text-black transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-6 mt-2">
+                            <div className="w-16 h-16 bg-[#f6f5f3] rounded-full flex items-center justify-center mx-auto text-black/60 shadow-inner">
+                                <Send size={24} />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-black">Item Unavailable Online</h3>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold leading-relaxed">
+                                    We may not have this size in stock online, but you can find a physical store near you that might!
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-4">
+                                <button 
+                                    onClick={() => {
+                                        setShowStoreLocatorModal(false);
+                                        router.push("/store-locator");
+                                    }}
+                                    className="w-full py-4 text-[10px] font-bold uppercase tracking-[0.3em] bg-black text-white hover:bg-zinc-800 transition-all active:scale-95"
+                                >
+                                    Find a Store Near Me
+                                </button>
+                                <button 
+                                    onClick={() => setShowStoreLocatorModal(false)}
+                                    className="w-full py-4 text-[10px] font-bold uppercase tracking-[0.3em] border border-black/10 hover:bg-[#f6f5f3] hover:text-black transition-all text-gray-500"
+                                >
+                                    Continue Browsing
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

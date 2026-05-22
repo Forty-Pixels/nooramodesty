@@ -28,11 +28,14 @@ interface WishlistItem {
 interface AppState {
   items: CartItem[];
   wishlistItems: WishlistItem[];
+  buyNowItem: CartItem | null;
   addItem: (product: CartItem) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   toggleWishlist: (product: WishlistItem) => void;
+  setBuyNowItem: (item: CartItem | null) => void;
+  updateBuyNowQuantity: (quantity: number) => void;
 }
 
 const useCartStore = create<AppState>()(
@@ -40,6 +43,14 @@ const useCartStore = create<AppState>()(
     (set) => ({
       items: [],
       wishlistItems: [],
+      buyNowItem: null,
+      setBuyNowItem: (item) => set({ buyNowItem: item }),
+      updateBuyNowQuantity: (quantity) =>
+        set((state) => ({
+          buyNowItem: state.buyNowItem
+            ? { ...state.buyNowItem, quantity: Math.max(1, quantity) }
+            : null,
+        })),
       addItem: (product) =>
         set((state) => {
           const existingItem = state.items.find((item) => item._id === product._id);

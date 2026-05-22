@@ -28,6 +28,8 @@ export const siteLinks: SiteLinks = {
     { label: "Home", href: "/" },
     { label: "Catalog", href: "/category/abayas" },
     { label: "Product", href: "/product/abaya-one" },
+    { label: "Suggestions", href: "/suggestions" },
+    { label: "Store Locator", href: "/store-locator" },
   ],
   legal: [
     {
@@ -56,6 +58,13 @@ export const siteLinks: SiteLinks = {
       label: "Returns & Cancellations",
       href: "/returns-and-cancellations",
     },
+    {
+      label: "Suggestions",
+      href: "/suggestions",
+    },
+    {
+      label: "Store Locator",
+      href: "/store-locator" },
     {
       label: "Privacy Policy",
       href: "/privacy-policy",

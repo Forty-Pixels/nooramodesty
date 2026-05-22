@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Info, Lock, Mail, ShieldCheck, Truck, X } from "lucide-react";
@@ -28,7 +29,12 @@ const initialFormState: CheckoutFormState = {
 };
 
 function CheckoutContent() {
-  const { items, clearCart, updateQuantity } = useCartStore();
+  const { items, clearCart, updateQuantity, buyNowItem, setBuyNowItem, updateBuyNowQuantity } = useCartStore();
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams.get("buyNow") === "true";
+
+  const checkoutItems = isBuyNow && buyNowItem ? [buyNowItem] : items;
+
   const [formState, setFormState] = useState(initialFormState);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [paymentSlip, setPaymentSlip] = useState<File | null>(null);
@@ -39,7 +45,7 @@ function CheckoutContent() {
   const [error, setError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
 
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const shipping = subtotal > 50000 ? 0 : 1500;
   const total = subtotal + shipping - discountAmount;
 
@@ -47,7 +53,7 @@ function CheckoutContent() {
     customer: formState,
     paymentMethod,
     couponCode: couponCode || undefined,
-    items: items.map((item) => ({
+    items: checkoutItems.map((item) => ({
       productId: item.productId || item._id.split("-")[0],
       clickomVariationId: item.clickomVariationId || 0,
       quantity: item.quantity,
@@ -63,12 +69,12 @@ function CheckoutContent() {
   };
 
   const validateClient = () => {
-    if (items.length === 0) return "Your bag is empty.";
+    if (checkoutItems.length === 0) return "Your bag is empty.";
     if (!formState.fullName || !formState.mobile || !formState.email || !formState.addressLine1 || !formState.city || !formState.zipCode) {
       return "Please complete all required fields.";
     }
     if (!formState.email.includes("@")) return "Please enter a valid email address.";
-    if (items.some((item) => !item.clickomVariationId)) return "Please choose a valid size for every item.";
+    if (checkoutItems.some((item) => !item.clickomVariationId)) return "Please choose a valid size for every item.";
     if (paymentSlip && paymentSlip.size > 5 * 1024 * 1024) return "Payment slip must be 5MB or smaller.";
     return "";
   };
@@ -78,7 +84,7 @@ function CheckoutContent() {
       return "Complete contact and delivery details before applying a coupon.";
     }
     if (!formState.email.includes("@")) return "Enter a valid email address before applying a coupon.";
-    if (items.some((item) => !item.clickomVariationId)) return "Choose a valid size for every item before applying a coupon.";
+    if (checkoutItems.some((item) => !item.clickomVariationId)) return "Choose a valid size for every item before applying a coupon.";
     return "";
   };
 
@@ -137,7 +143,11 @@ function CheckoutContent() {
     }
 
     setOrderNumber(data.orderNumber);
-    clearCart();
+    if (isBuyNow) {
+      setBuyNowItem(null);
+    } else {
+      clearCart();
+    }
   };
 
   if (orderNumber) {
@@ -163,7 +173,7 @@ function CheckoutContent() {
     );
   }
 
-  if (items.length === 0) {
+  if (checkoutItems.length === 0) {
     return (
       <div className="min-h-screen bg-[#f6f5f3] flex flex-col items-center justify-center">
         <p className="text-xs uppercase tracking-widest text-gray-400 mb-6">Your bag is empty</p>
@@ -249,18 +259,32 @@ function CheckoutContent() {
         <div className="lg:col-span-5 bg-white px-6 md:px-12 py-12 h-fit lg:sticky lg:top-[88px] order-1 lg:order-2 border-b lg:border-b-0 border-black/5">
           <h2 className="text-lg font-bold uppercase tracking-widest mb-10">Order Review</h2>
           <div className="space-y-8 mb-10">
-            {items.map((item) => (
+            {checkoutItems.map((item) => (
               <div key={item._id} className="flex gap-5">
                 <div className="relative w-20 aspect-[3/4] bg-[#f6f5f3]">
                   <Image src={item.image} alt={item.title} fill className="object-cover" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest">{item.title}</h3>
-                  <p className="text-[9px] uppercase tracking-widest text-gray-400 mt-1">{item.size} {item.customNote ? "- Custom" : ""}</p>
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 mt-1">
+                    {item.size} {item.customSize ? "(+ LKR 1,500)" : ""}
+                  </p>
                   <div className="flex items-center gap-3 mt-3">
-                    <button type="button" onClick={() => updateQuantity(item._id, item.quantity - 1)} className="w-5 h-5 border border-black/10 rounded-full text-[10px]">-</button>
+                    <button type="button" onClick={() => {
+                      if (isBuyNow) {
+                        updateBuyNowQuantity(item.quantity - 1);
+                      } else {
+                        updateQuantity(item._id, item.quantity - 1);
+                      }
+                    }} className="w-5 h-5 border border-black/10 rounded-full text-[10px]">-</button>
                     <span className="text-[10px] font-bold">{item.quantity}</span>
-                    <button type="button" onClick={() => updateQuantity(item._id, item.quantity + 1)} className="w-5 h-5 border border-black/10 rounded-full text-[10px]">+</button>
+                    <button type="button" onClick={() => {
+                      if (isBuyNow) {
+                        updateBuyNowQuantity(item.quantity + 1);
+                      } else {
+                        updateQuantity(item._id, item.quantity + 1);
+                      }
+                    }} className="w-5 h-5 border border-black/10 rounded-full text-[10px]">+</button>
                   </div>
                 </div>
                 <p className="text-[10px] font-bold">LKR {(item.price * item.quantity).toLocaleString()}</p>
