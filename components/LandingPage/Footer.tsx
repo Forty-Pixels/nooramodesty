@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { SiteLinks } from "@/types/siteLinks";
+import { isStoreLocatorActive } from "@/utils/featureFlags";
 
 export interface FooterProps {
   links: SiteLinks;
@@ -59,11 +60,13 @@ export const Footer = ({ links }: FooterProps) => {
 
           {/* Column 3: Site Links */}
           <div className="flex flex-col gap-3">
-            {links.site.map((link) => (
-              <Link key={link.label} href={link.href} className="text-sm hover:text-gray-400 transition-colors tracking-wider">
-                {link.label}
-              </Link>
-            ))}
+            {links.site
+              .filter((link) => link.href !== "/store-locator" || isStoreLocatorActive)
+              .map((link) => (
+                <Link key={link.label} href={link.href} className="text-sm hover:text-gray-400 transition-colors tracking-wider">
+                  {link.label}
+                </Link>
+              ))}
           </div>
 
           {/* Column 4: Legal Links */}

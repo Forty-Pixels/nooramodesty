@@ -90,6 +90,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <HoverLink href="/category/abayas" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Abayas</HoverLink>
                             <HoverLink href="/category/abayas/embroidered" className="text-sm text-gray-700" onClick={onClose}>Embroidered</HoverLink>
                             <HoverLink href="/category/abayas/coat" className="text-sm text-gray-700" onClick={onClose}>Coat</HoverLink>
+                            <HoverLink href="/category/abayas/wedding" className="text-sm text-gray-700" onClick={onClose}>Wedding</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
                             <HoverLink href="/category/cord-sets" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Cord sets</HoverLink>
@@ -106,6 +107,10 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                         </div>
                         <div className="flex flex-col gap-3">
                             <HoverLink href="/category/dresses" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Dresses</HoverLink>
+                            <HoverLink href="/category/dresses/maxi" className="text-sm text-gray-700" onClick={onClose}>Maxi</HoverLink>
+                            <HoverLink href="/category/dresses/satin" className="text-sm text-gray-700" onClick={onClose}>Satin</HoverLink>
+                            <HoverLink href="/category/dresses/printed" className="text-sm text-gray-700" onClick={onClose}>Printed</HoverLink>
+                            <HoverLink href="/category/dresses/wrap" className="text-sm text-gray-700" onClick={onClose}>Wrap</HoverLink>
                         </div>
                         <div className="flex flex-col gap-3">
                             <HoverLink href="/category/occasion-wear" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Occasion Wear</HoverLink>
@@ -145,6 +150,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             <AccordionItem title="Abayas" isOpen={activeAccordion === "Abayas"} onClick={() => toggleAccordion("Abayas")} onClose={onClose}>
                                 <Link href="/category/abayas/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
                                 <Link href="/category/abayas/coat" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Coat</Link>
+                                <Link href="/category/abayas/wedding" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Wedding</Link>
                             </AccordionItem>
                             <AccordionItem title="Cord sets" isOpen={activeAccordion === "Cord sets"} onClick={() => toggleAccordion("Cord sets")} onClose={onClose}>
                                 <Link href="/category/cord-sets/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
@@ -157,7 +163,12 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                                 <Link href="/category/tops/plain" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Plain</Link>
                                 <Link href="/category/tops/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
                             </AccordionItem>
-                            <AccordionItem title="Dresses" isOpen={activeAccordion === "Dresses"} onClick={() => toggleAccordion("Dresses")} onClose={onClose} />
+                            <AccordionItem title="Dresses" isOpen={activeAccordion === "Dresses"} onClick={() => toggleAccordion("Dresses")} onClose={onClose}>
+                                <Link href="/category/dresses/maxi" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Maxi</Link>
+                                <Link href="/category/dresses/satin" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Satin</Link>
+                                <Link href="/category/dresses/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
+                                <Link href="/category/dresses/wrap" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Wrap</Link>
+                            </AccordionItem>
                             <AccordionItem title="Occasion Wear" isOpen={activeAccordion === "Occasion Wear"} onClick={() => toggleAccordion("Occasion Wear")} onClose={onClose}>
                                 <Link href="/category/occasion-wear/abayas" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Abayas</Link>
                                 <Link href="/category/occasion-wear/overcoats" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Overcoats</Link>

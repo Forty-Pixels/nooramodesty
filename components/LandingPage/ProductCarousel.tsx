@@ -16,7 +16,8 @@ interface ProductCarouselProps {
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(3);
-  const totalProducts = products.length;
+  const visibleProducts = products.filter((product) => product.mainImage && product.slug);
+  const totalProducts = visibleProducts.length;
   const { toggleWishlist, wishlistItems } = useCartStore();
 
   useEffect(() => {
@@ -28,7 +29,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const maxIndex = totalProducts - itemsPerPage;
+  const maxIndex = Math.max(0, totalProducts - itemsPerPage);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
@@ -54,11 +55,11 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
               animate={{ x: `-${currentIndex * (100 / itemsPerPage)}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {products.map((product) => {
+              {visibleProducts.map((product, index) => {
                 const isWishlisted = wishlistItems.some(item => item._id === product._id);
                 return (
                   <div 
-                    key={product._id} 
+                    key={`${product._id}-${index}`}
                     className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group relative"
                   >
                     <Link href={`/product/${product.slug}`} className="block">
@@ -80,7 +81,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
                         toggleWishlist({
                             _id: product._id,
                             title: product.title,
-                            price: product.price,
+                            price: product.salePrice || product.price,
                             image: product.mainImage,
                             slug: product.slug,
                         });
@@ -97,10 +98,24 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products }) =>
                     </button>
 
                     <Link href={`/product/${product.slug}`} className="block">
-                      <div className="mt-4 flex items-start justify-between pl-1 md:pl-2">
+                      <div className="mt-4 flex flex-col gap-1 pl-1 md:pl-2">
                         <h3 className="text-[0.65rem] md:text-[0.7rem] font-bold tracking-[0.2em] uppercase text-black">
                           {product.title}
                         </h3>
+                        {product.salePrice ? (
+                          <div className="flex items-center gap-2">
+                            <p className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-wider text-[#B21E1E]">
+                              LKR {product.salePrice.toLocaleString()}
+                            </p>
+                            <p className="text-[0.55rem] md:text-[0.6rem] font-medium tracking-wider text-gray-400 line-through">
+                              LKR {product.price.toLocaleString()}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-[0.6rem] md:text-[0.65rem] font-medium tracking-wider text-black">
+                            LKR {product.price.toLocaleString()}
+                          </p>
+                        )}
                       </div>
                     </Link>
                   </div>

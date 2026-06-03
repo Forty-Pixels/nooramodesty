@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { siteLinks } from "@/data/siteLinks";
+import { isStoreLocatorActive } from "@/utils/featureFlags";
 
 export default function CartPage() {
     const { items, removeItem, updateQuantity } = useCartStore();
@@ -87,7 +88,9 @@ export default function CartPage() {
                                                     {item.size && (
                                                         <div className="flex items-center gap-2">
                                                             <span>Size:</span>
-                                                            <span className="text-black font-bold">{item.size}</span>
+                                                            <span className="text-black font-bold">
+                                                                {item.size} {item.customSize && "(+ LKR 1,500)"}
+                                                            </span>
                                                         </div>
                                                     )}
                                                     {item.customNote && (
@@ -212,23 +215,25 @@ export default function CartPage() {
 
                         {/* Additional Info links */}
                         <div className="mt-8 flex flex-col gap-3 px-4">
-                            {siteLinks.support.map((link) => (
-                                link.isExternal ? (
-                                    <a
-                                        key={link.label}
-                                        href={link.href}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-[9px] uppercase tracking-widest font-bold text-gray-400 hover:text-black transition-colors"
-                                    >
-                                        {link.label}
-                                    </a>
-                                ) : (
-                                    <Link key={link.label} href={link.href} className="text-[9px] uppercase tracking-widest font-bold text-gray-400 hover:text-black transition-colors">
-                                        {link.label}
-                                    </Link>
-                                )
-                            ))}
+                            {siteLinks.support
+                                .filter((link) => link.href !== "/store-locator" || isStoreLocatorActive)
+                                .map((link) => (
+                                    link.isExternal ? (
+                                        <a
+                                            key={link.label}
+                                            href={link.href}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-[9px] uppercase tracking-widest font-bold text-gray-400 hover:text-black transition-colors"
+                                        >
+                                            {link.label}
+                                        </a>
+                                    ) : (
+                                        <Link key={link.label} href={link.href} className="text-[9px] uppercase tracking-widest font-bold text-gray-400 hover:text-black transition-colors">
+                                            {link.label}
+                                        </Link>
+                                    )
+                                ))}
                         </div>
                     </div>
                 </div>

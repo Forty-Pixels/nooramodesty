@@ -1,22 +1,30 @@
 import Hero from "@/components/LandingPage/Hero";
-import AbayaCarousel from "@/components/LandingPage/AbayaCarousel";
-import CordSetCarousel from "@/components/LandingPage/CordSetCarousel";
-import { OccasionWearCarousel } from "@/components/LandingPage/OccasionWearCarousel";
-import TopsCarousel from "@/components/LandingPage/TopsCarousel";
 import MediaCarousel from "@/components/LandingPage/MediaCarousel";
 import { InNoora } from "@/components/LandingPage/InNoora";
-import { inNooraImages } from "@/data/inNoora";
+import { HomepageProductSection } from "@/components/LandingPage/HomepageProductSection";
+import { getHomepageContent } from "@/lib/sanity/homepage";
 
-export default function Home() {
+export default async function Home() {
+  const homepage = await getHomepageContent();
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Hero />
-      <AbayaCarousel />
-      <CordSetCarousel />
-      <OccasionWearCarousel />
-      <TopsCarousel />
+      <Hero
+        imageOneSrc={homepage.hero.imageOneSrc}
+        imageTwoSrc={homepage.hero.imageTwoSrc}
+        centerLogoSrc={homepage.hero.centerLogoSrc}
+        ctaLabel={homepage.hero.ctaLabel}
+        ctaHref={homepage.hero.ctaHref}
+      />
+      {homepage.productSections.map((section) => (
+        <HomepageProductSection
+          key={section._key}
+          title={section.title}
+          products={section.products}
+        />
+      ))}
       <MediaCarousel />
-      <InNoora images={inNooraImages} />
+      <InNoora images={homepage.inNooraImages} />
     </div>
   );
 }

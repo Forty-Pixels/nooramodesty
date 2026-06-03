@@ -19,11 +19,19 @@ const REASONS = {
         "Product looks different from photos",
         "Quality not as expected",
         "Other"
+    ],
+    exchange: [
+        "Size doesn't fit",
+        "Want a different color",
+        "Received wrong item",
+        "Item is damaged or defective",
+        "Product looks different from photos",
+        "Other"
     ]
 };
 
 export default function ReturnsAndCancellationsPage() {
-    const [requestType, setRequestType] = useState<"return" | "cancellation">("return");
+    const [requestType, setRequestType] = useState<"return" | "cancellation" | "exchange">("return");
     const [reason, setReason] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -83,8 +91,8 @@ export default function ReturnsAndCancellationsPage() {
                     {/* Request Type Toggle */}
                     <div className="space-y-4">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Request Type</label>
-                        <div className="grid grid-cols-2 gap-3 md:gap-4">
-                            {(["return", "cancellation"] as const).map((type) => (
+                        <div className="grid grid-cols-3 gap-2 md:gap-4">
+                            {(["return", "cancellation", "exchange"] as const).map((type) => (
                                 <button
                                     key={type}
                                     type="button"
