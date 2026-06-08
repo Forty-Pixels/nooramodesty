@@ -4,7 +4,8 @@ import React, { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Info, Lock, Mail, ShieldCheck, Truck, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, ShieldCheck, Truck, X } from "lucide-react";
+import { CheckoutAssistance } from "@/components/CheckoutPage/CheckoutAssistance";
 import useCartStore from "@/store";
 import { CheckoutOrderPayload, PaymentMethod } from "@/types/order";
 
@@ -254,6 +255,8 @@ function CheckoutContent() {
             {isProcessing ? "Processing..." : "Place Order"}
             {!isProcessing && <ArrowRight size={16} />}
           </button>
+
+          <CheckoutAssistance className="lg:hidden" />
         </div>
 
         <div className="lg:col-span-5 bg-white px-6 md:px-12 py-12 h-fit lg:sticky lg:top-[88px] order-1 lg:order-2 border-b lg:border-b-0 border-black/5">
@@ -308,17 +311,7 @@ function CheckoutContent() {
             <div className="flex justify-between text-base font-bold uppercase tracking-[0.2em] pt-4 border-t border-black/5"><span>Total</span><span>LKR {total.toLocaleString()}</span></div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-black/5 space-y-4">
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black">Need Assistance?</p>
-            <a href="mailto:hello@nooramodesty.com" className="flex items-center gap-3 text-[10px] text-gray-500 hover:text-black transition-colors">
-              <Mail size={14} strokeWidth={1.5} />
-              HELLO@NOORAMODESTY.COM
-            </a>
-            <Link href="/shipping-and-return-policy" className="text-[8px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors flex items-center gap-1.5">
-              <Info size={10} />
-              Shipping & Returns
-            </Link>
-          </div>
+          <CheckoutAssistance className="mt-12 hidden lg:block" />
         </div>
       </div>
     </form>

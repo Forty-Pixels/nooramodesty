@@ -301,15 +301,72 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 Pre-Order
                             </span>
                             <button
+                                type="button"
                                 onClick={() => setShowCustomModal(true)}
                                 className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
                                     isCustomSize
                                     ? "bg-black text-white border-black" 
                                     : "bg-white text-black border-gray-200 hover:border-black"
                                 }`}
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {showCustomModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+                    <div className="bg-white w-full max-w-sm p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-black">Custom Size</h3>
+                                <p className="text-[10px] uppercase tracking-[0.18em] text-gray-500 font-bold leading-relaxed">
+                                    Custom sizes are made to order and include an additional LKR 1,500.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowCustomModal(false)}
+                                className="text-gray-400 hover:text-black transition-colors"
+                                aria-label="Close custom size form"
+                            >
+                                X
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCustomSubmit} className="mt-8 space-y-5">
+                            <input
+                                value={customMeasurements.length}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, length: event.target.value }))}
+                                placeholder="Length"
+                                required
+                                className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
+                            />
+                            <input
+                                value={customMeasurements.bustHip}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, bustHip: event.target.value }))}
+                                placeholder="Bust & Hip"
+                                required
+                                className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
+                            />
+                            <input
+                                value={customMeasurements.sleeve}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, sleeve: event.target.value }))}
+                                placeholder="Sleeve"
+                                required
+                                className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
+                            />
+                            <div className="flex gap-3 pt-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCustomModal(false)}
+                                    className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-black/10 text-gray-500 hover:text-black transition-all"
+                                >
                                     Cancel
                                 </button>
-                                <button 
+                                <button
                                     type="submit"
                                     className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest bg-black text-white hover:bg-zinc-800 transition-all"
                                 >
