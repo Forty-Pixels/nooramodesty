@@ -15,6 +15,13 @@ interface ProductInfoProps {
 export const ProductInfo = ({ product }: ProductInfoProps) => {
     const displayColors = product.colors && product.colors.length > 0 ? product.colors : ["#8B8378"];
     const displaySizes = product.sizes && product.sizes.length > 0 ? product.sizes : ["54", "56", "58"];
+    const materialProperties = product.materialSpecs?.properties || [];
+    const hasMaterialSpecs = Boolean(
+        product.materialSpecs?.macroImage ||
+        product.materialSpecs?.composition ||
+        product.materialSpecs?.gsm ||
+        materialProperties.length > 0
+    );
     const [selectedColor, setSelectedColor] = useState(displayColors[0]);
     const [selectedSize, setSelectedSize] = useState(displaySizes[0]);
     const [showCustomModal, setShowCustomModal] = useState(false);
@@ -475,7 +482,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             </div>
 
             {/* Consolidated Material Quality Detail Section */}
-            {product.materialSpecs && (
+            {product.materialSpecs && hasMaterialSpecs && (
                 <div className="mt-6 pt-5 border-t border-gray-100">
                     <div className="flex items-center gap-2 mb-3">
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black">Material Quality Detail</span>
@@ -483,6 +490,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                     
                     <div className="flex gap-5 items-start bg-gray-50/50 p-3.5 rounded-sm border border-gray-50">
                         {/* Macro Image Thumbnail */}
+                        {product.materialSpecs.macroImage && (
                         <div className="relative w-16 h-16 bg-white border border-gray-100 flex-shrink-0">
                             <Image
                                 src={product.materialSpecs.macroImage}
@@ -491,23 +499,28 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 className="object-cover"
                             />
                         </div>
+                        )}
 
                         {/* Specs Grid */}
                         <div className="flex-1 grid grid-cols-2 gap-x-5 gap-y-2">
+                            {product.materialSpecs.composition && (
                             <div className="space-y-0.5">
                                 <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">Fabric Type</p>
                                 <p className="text-[11px] font-bold text-black leading-none">{product.materialSpecs.composition}</p>
                             </div>
+                            )}
+                            {product.materialSpecs.gsm && (
                             <div className="space-y-0.5">
                                 <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">Weight</p>
                                 <p className="text-[11px] font-bold text-black leading-none">{product.materialSpecs.gsm} GSM</p>
                             </div>
+                            )}
                             <div className="col-span-2 space-y-0.5">
                                 <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">Properties</p>
                                 <div className="flex flex-wrap gap-x-2">
-                                    {product.materialSpecs.properties.map((p, i) => (
+                                    {materialProperties.map((p, i) => (
                                         <span key={i} className="text-[10px] text-gray-600 font-medium lowercase">
-                                            {p}{i < product.materialSpecs!.properties.length - 1 ? " •" : ""}
+                                            {p}{i < materialProperties.length - 1 ? " •" : ""}
                                         </span>
                                     ))}
                                 </div>
@@ -569,3 +582,4 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         </div>
     );
 };
+
