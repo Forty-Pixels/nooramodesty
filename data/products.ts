@@ -381,5 +381,10 @@ export const theLook: Product[] = [
     { _id: "look-8", title: "THE LOOK EIGHT", slug: "look-eight", mainImage: "/landing-page/the-look/thelook-2.png", category: "the-look", price: 41000 },
 ];
 
-export const products = [...abayas, ...cordSets, ...tops, ...dresses, ...occasionWear, ...theLook];
+const withMockCreatedAt = (product: Product, index: number): Product => {
+    const createdAt = new Date(Date.UTC(2026, 5, 1 - index)).toISOString();
+    return { ...product, createdAt };
+};
+
+export const products = [...abayas, ...cordSets, ...tops, ...dresses, ...occasionWear, ...theLook].map(withMockCreatedAt);
 export const saleProducts = products.filter(p => p.salePrice);
