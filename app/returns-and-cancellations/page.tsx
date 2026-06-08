@@ -87,6 +87,18 @@ export default function ReturnsAndCancellationsPage() {
                     </p>
                 </div>
 
+                {/* Policy Disclaimers */}
+                <div className="mb-10 p-5 bg-[#f6f5f3] border border-black/5 flex items-start gap-4">
+                    <ShieldCheck size={18} className="text-black shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-black">Important Notice</p>
+                        <ul className="list-disc pl-4 text-[9px] uppercase tracking-[0.12em] text-gray-500 font-bold space-y-1.5 leading-relaxed">
+                            <li>Exchange/ return not possible for customized sizing.</li>
+                            <li>Returns are only accepted for valid reasons only.</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-8 md:space-y-10">
                     {/* Request Type Toggle */}
                     <div className="space-y-4">

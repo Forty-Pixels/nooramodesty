@@ -55,7 +55,7 @@ export const shippingAndReturnPolicy: PolicyPageContent = {
       _id: "returns",
       title: "Returns",
       body:
-        "Return requests must be made within 14 days of receiving your order. Items must be unused, unworn, unwashed, and have all tags intact. When returning, please include the original packaging and the courier bag, as it contains the necessary order number for processing.",
+        "Return requests must be made within 14 days of receiving your order. Items must be unused, unworn, unwashed, and have all tags intact. When returning, please include the original packaging and the courier bag, as it contains the necessary order number for processing. Returns are only accepted for valid reasons only.",
     },
     {
       _id: "exchanges",
@@ -67,7 +67,7 @@ export const shippingAndReturnPolicy: PolicyPageContent = {
       _id: "exceptions",
       title: "Exceptions",
       body:
-        "Customized, altered, final sale, damaged-through-use, or hygiene-sensitive items may not be eligible for return unless required by applicable consumer protection rules.",
+        "Customized sizing, altered, final sale, damaged-through-use, or hygiene-sensitive items are not eligible for return or exchange unless required by applicable consumer protection rules. Exchange/ return not possible for customized sizing.",
     },
   ],
 };
