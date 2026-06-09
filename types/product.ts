@@ -1,8 +1,8 @@
 export interface MaterialSpecs {
-    gsm: number;
-    composition: string;
-    properties: string[];
-    macroImage: string;
+    gsm?: number;
+    composition?: string;
+    properties?: string[];
+    macroImage?: string;
 }
 
 export interface ProductSubVariation {
@@ -26,6 +26,7 @@ export interface Product {
     images?: string[];
     price: number;
     salePrice?: number;
+    createdAt?: string;
     description?: string;
     category: string;
     subCategory?: string;

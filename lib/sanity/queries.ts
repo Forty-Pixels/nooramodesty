@@ -2,6 +2,7 @@ import { defineQuery } from "next-sanity";
 
 const productProjection = `
   _id,
+  "createdAt": _createdAt,
   title,
   "slug": slug.current,
   "mainImage": mainImage.asset->url,

@@ -1,29 +1,22 @@
 import React, { Suspense } from "react";
 import ListingGrid from "@/components/Category/ListingGrid";
+import { ListingControls } from "@/components/Category/ListingControls";
 import { products } from "@/data/products";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { filterAndSortProducts, getProductFacets, hasActiveProductFilters, ProductFilterParams } from "@/utils/productFilters";
 
 interface SearchPageProps {
-    searchParams: Promise<{ q?: string }>;
+    searchParams: Promise<ProductFilterParams>;
 }
 
 const SearchResults = async ({ searchParams }: SearchPageProps) => {
-    const { q: query } = await searchParams;
-    const searchTerm = query?.toLowerCase().trim() || "";
+    const filters = await searchParams;
+    const searchTerm = filters.q?.toLowerCase().trim() || "";
+    const hasActiveFilters = hasActiveProductFilters(filters);
 
-    const filteredProducts = products.filter((product) => {
-        if (!searchTerm) return false;
-        
-        return (
-            product.title.toLowerCase().includes(searchTerm) ||
-            product.category.toLowerCase().includes(searchTerm) ||
-            product.subCategory?.toLowerCase().includes(searchTerm) ||
-            product.description?.toLowerCase().includes(searchTerm) ||
-            product.collection?.toLowerCase().includes(searchTerm) ||
-            product.type?.toLowerCase().includes(searchTerm)
-        );
-    });
+    const facets = getProductFacets(products);
+    const filteredProducts = hasActiveFilters ? filterAndSortProducts(products, filters) : [];
 
     return (
         <div className="flex flex-col">
@@ -36,7 +29,7 @@ const SearchResults = async ({ searchParams }: SearchPageProps) => {
                     <div className="flex items-center gap-4">
                         <Search size={24} className="text-black" />
                         <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight italic">
-                            {searchTerm ? `"${searchTerm}"` : "Enter a search term"}
+                            {searchTerm ? `"${searchTerm}"` : hasActiveFilters ? "Filtered Products" : "Enter a search term"}
                         </h2>
                     </div>
                     <p className="mt-4 text-[10px] md:text-xs font-bold tracking-widest text-gray-400 uppercase">
@@ -44,6 +37,8 @@ const SearchResults = async ({ searchParams }: SearchPageProps) => {
                     </p>
                 </div>
             </div>
+
+            <ListingControls facets={facets} resultCount={filteredProducts.length} showCategoryFilter />
 
             {/* Results Grid */}
             <div className="bg-white min-h-[50vh] py-10">

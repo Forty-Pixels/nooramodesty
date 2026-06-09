@@ -20,6 +20,7 @@ export default async function Home() {
         <HomepageProductSection
           key={section._key}
           title={section.title}
+          categorySlug={section.categorySlug}
           products={section.products}
         />
       ))}
