@@ -5,6 +5,7 @@ import {
   buildOrderItems,
   calculateTotals,
   findCoupon,
+  formatCheckoutValidationErrors,
   parseCheckoutPayload,
 } from "@/lib/server/orderValidation";
 import { requireSanityWriteClient } from "@/lib/server/sanity";
@@ -20,7 +21,15 @@ function parsePayload(value: FormDataEntryValue | null): CheckoutOrderPayload {
     throw new Error("Order payload is required.");
   }
 
-  return parseCheckoutPayload(JSON.parse(value));
+  try {
+    return parseCheckoutPayload(JSON.parse(value));
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error("Order payload must be valid JSON.");
+    }
+
+    throw error;
+  }
 }
 
 function validateSlip(file: FormDataEntryValue | null): File | null {
@@ -111,12 +120,12 @@ export async function POST(request: Request) {
       orderId: order._id,
     });
   } catch (error) {
-    const message =
-      error instanceof ZodError
-        ? "Invalid order details."
-        : error instanceof Error
-          ? error.message
-          : "Unable to create order.";
+    if (error instanceof ZodError) {
+      const errors = formatCheckoutValidationErrors(error);
+      return Response.json({ error: errors[0], errors }, { status: 400 });
+    }
+
+    const message = error instanceof Error ? error.message : "Unable to create order.";
 
     return Response.json({ error: message }, { status: 400 });
   }
