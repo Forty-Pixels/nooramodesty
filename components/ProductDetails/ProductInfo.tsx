@@ -15,6 +15,13 @@ interface ProductInfoProps {
 export const ProductInfo = ({ product }: ProductInfoProps) => {
     const displayColors = product.colors && product.colors.length > 0 ? product.colors : ["#8B8378"];
     const displaySizes = product.sizes && product.sizes.length > 0 ? product.sizes : ["54", "56", "58"];
+    const materialProperties = product.materialSpecs?.properties || [];
+    const hasMaterialSpecs = Boolean(
+        product.materialSpecs?.macroImage ||
+        product.materialSpecs?.composition ||
+        product.materialSpecs?.gsm ||
+        materialProperties.length > 0
+    );
     const [selectedColor, setSelectedColor] = useState(displayColors[0]);
     const [selectedSize, setSelectedSize] = useState(displaySizes[0]);
     const [showCustomModal, setShowCustomModal] = useState(false);
@@ -294,88 +301,72 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 Pre-Order
                             </span>
                             <button
+                                type="button"
                                 onClick={() => setShowCustomModal(true)}
                                 className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
                                     isCustomSize
                                     ? "bg-black text-white border-black" 
                                     : "bg-white text-black border-gray-200 hover:border-black"
                                 }`}
-                                title="Enter custom measurements"
                             >
                                 +
                             </button>
                         </div>
                     </div>
-                    {isCustomSize && (
-                        <div className="mt-3 p-3 bg-neutral-50 border border-neutral-100 rounded-sm space-y-1 animate-in fade-in slide-in-from-top-1 duration-300">
-                            <p className="text-[8px] text-[#8B8378] uppercase tracking-widest font-bold">
-                                Using Custom Measurements
-                            </p>
-                            <p className="text-[10px] leading-relaxed text-gray-500 font-medium normal-case">
-                                Please note we request at least 2 weeks to dispatch customer sizes. An extra charge of Rs. 1500/- will be levied on each custom size order.
-                            </p>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* Measurement Modal */}
             {showCustomModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
                     <div className="bg-white w-full max-w-sm p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-                        <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
-                            <h3 className="text-sm font-bold uppercase tracking-[0.2em]">Enter Your Measurements</h3>
-                            <button onClick={() => setShowCustomModal(false)} className="text-gray-400 hover:text-black">✕</button>
-                        </div>
-                        
-                        <form onSubmit={handleCustomSubmit} className="space-y-6">
-                            <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Abaya Length (Shoulder to floor)</label>
-                                    <input 
-                                        type="number" 
-                                        step="0.1"
-                                        required
-                                        value={customMeasurements.length}
-                                        onChange={(e) => setCustomMeasurements({...customMeasurements, length: e.target.value})}
-                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
-                                        placeholder="e.g. 55"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Bust & Hip (Full round)</label>
-                                    <input 
-                                        type="text" 
-                                        required
-                                        value={customMeasurements.bustHip}
-                                        onChange={(e) => setCustomMeasurements({...customMeasurements, bustHip: e.target.value})}
-                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
-                                        placeholder="e.g. 36, 40"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Sleeve Length (Neck to wrist)</label>
-                                    <input 
-                                        type="number" 
-                                        step="0.1"
-                                        required
-                                        value={customMeasurements.sleeve}
-                                        onChange={(e) => setCustomMeasurements({...customMeasurements, sleeve: e.target.value})}
-                                        className="w-full border-b border-gray-200 py-2 text-xs focus:outline-none focus:border-black transition-colors"
-                                        placeholder="e.g. 28"
-                                    />
-                                </div>
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-black">Custom Size</h3>
+                                <p className="text-[10px] uppercase tracking-[0.18em] text-gray-500 font-bold leading-relaxed">
+                                    Custom sizes are made to order and include an additional LKR 1,500.
+                                </p>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowCustomModal(false)}
+                                className="text-gray-400 hover:text-black transition-colors"
+                                aria-label="Close custom size form"
+                            >
+                                X
+                            </button>
+                        </div>
 
-                            <div className="flex gap-4 pt-4">
-                                <button 
+                        <form onSubmit={handleCustomSubmit} className="mt-8 space-y-5">
+                            <input
+                                value={customMeasurements.length}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, length: event.target.value }))}
+                                placeholder="Length"
+                                required
+                                className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
+                            />
+                            <input
+                                value={customMeasurements.bustHip}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, bustHip: event.target.value }))}
+                                placeholder="Bust & Hip"
+                                required
+                                className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
+                            />
+                            <input
+                                value={customMeasurements.sleeve}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, sleeve: event.target.value }))}
+                                placeholder="Sleeve"
+                                required
+                                className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
+                            />
+                            <div className="flex gap-3 pt-3">
+                                <button
                                     type="button"
                                     onClick={() => setShowCustomModal(false)}
-                                    className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-all"
+                                    className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-black/10 text-gray-500 hover:text-black transition-all"
                                 >
                                     Cancel
                                 </button>
-                                <button 
+                                <button
                                     type="submit"
                                     className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest bg-black text-white hover:bg-zinc-800 transition-all"
                                 >
@@ -475,7 +466,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             </div>
 
             {/* Consolidated Material Quality Detail Section */}
-            {product.materialSpecs && (
+            {product.materialSpecs && hasMaterialSpecs && (
                 <div className="mt-6 pt-5 border-t border-gray-100">
                     <div className="flex items-center gap-2 mb-3">
                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black">Material Quality Detail</span>
@@ -483,6 +474,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                     
                     <div className="flex gap-5 items-start bg-gray-50/50 p-3.5 rounded-sm border border-gray-50">
                         {/* Macro Image Thumbnail */}
+                        {product.materialSpecs.macroImage && (
                         <div className="relative w-16 h-16 bg-white border border-gray-100 flex-shrink-0">
                             <Image
                                 src={product.materialSpecs.macroImage}
@@ -491,23 +483,28 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 className="object-cover"
                             />
                         </div>
+                        )}
 
                         {/* Specs Grid */}
                         <div className="flex-1 grid grid-cols-2 gap-x-5 gap-y-2">
+                            {product.materialSpecs.composition && (
                             <div className="space-y-0.5">
                                 <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">Fabric Type</p>
                                 <p className="text-[11px] font-bold text-black leading-none">{product.materialSpecs.composition}</p>
                             </div>
+                            )}
+                            {product.materialSpecs.gsm && (
                             <div className="space-y-0.5">
                                 <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">Weight</p>
                                 <p className="text-[11px] font-bold text-black leading-none">{product.materialSpecs.gsm} GSM</p>
                             </div>
+                            )}
                             <div className="col-span-2 space-y-0.5">
                                 <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">Properties</p>
                                 <div className="flex flex-wrap gap-x-2">
-                                    {product.materialSpecs.properties.map((p, i) => (
+                                    {materialProperties.map((p, i) => (
                                         <span key={i} className="text-[10px] text-gray-600 font-medium lowercase">
-                                            {p}{i < product.materialSpecs!.properties.length - 1 ? " •" : ""}
+                                            {p}{i < materialProperties.length - 1 ? " •" : ""}
                                         </span>
                                     ))}
                                 </div>
@@ -569,3 +566,4 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         </div>
     );
 };
+

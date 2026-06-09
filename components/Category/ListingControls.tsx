@@ -1,77 +1,180 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { SlidersHorizontal, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FilterDrawer } from "@/components/Category/FilterDrawer";
+import { FilterDropdown } from "@/components/ui/FilterDropdown";
+import { ProductFacets, sortFilterOptions } from "@/utils/productFilters";
 
-const sortOptions = [
-  { label: "Price: Low to High", value: "price-asc" },
-  { label: "Price: High to Low", value: "price-desc" },
-  { label: "Name: A-Z", value: "name-asc" },
-  { label: "Name: Z-A", value: "name-desc" },
-];
+interface FilterDraft extends Record<string, string> {
+  category: string;
+  availability: string;
+  size: string;
+  color: string;
+  minPrice: string;
+  maxPrice: string;
+}
 
-export const ListingControls: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+interface ListingControlsProps {
+  facets: ProductFacets;
+  resultCount: number;
+  showCategoryFilter?: boolean;
+  showSearchInput?: boolean;
+}
+
+export const ListingControls: React.FC<ListingControlsProps> = ({
+  facets,
+  resultCount,
+  showCategoryFilter = false,
+  showSearchInput = true,
+}) => {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [nameQuery, setNameQuery] = useState("");
+  const [filterDraft, setFilterDraft] = useState<FilterDraft>({
+    category: "",
+    availability: "",
+    size: "",
+    color: "",
+    minPrice: "",
+    maxPrice: "",
+  });
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const currentSort = searchParams.get("sort") || "default";
-  const selectedLabel = sortOptions.find(opt => opt.value === currentSort)?.label || "Sort By";
+  const hasActiveFilters = [
+    "q",
+    "category",
+    "color",
+    "size",
+    "availability",
+    "minPrice",
+    "maxPrice",
+    "sort",
+  ].some((key) => searchParams.has(key));
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    setNameQuery(searchParams.get("q") || "");
+  }, [searchParams]);
 
-  const handleSortChange = (value: string) => {
+  const getFilterValuesFromUrl = (): FilterDraft => ({
+    category: searchParams.get("category") || "",
+    availability: searchParams.get("availability") || "",
+    size: searchParams.get("size") || "",
+    color: searchParams.get("color") || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+  });
+
+  const openFilters = () => {
+    setFilterDraft(getFilterValuesFromUrl());
+    setIsFilterOpen(true);
+  };
+
+  const updateParams = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value === "default") {
-      params.delete("sort");
-    } else {
-      params.set("sort", value);
-    }
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    setIsOpen(false);
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === "default") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    const queryString = params.toString();
+    router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+  };
+
+  const handleNameSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    updateParams({ q: nameQuery.trim() });
+  };
+
+  const handleReset = () => {
+    router.push(pathname, { scroll: false });
+    setIsFilterOpen(false);
+  };
+
+  const updateFilterDraft = (updates: Record<string, string>) => {
+    setFilterDraft((current) => ({ ...current, ...updates }));
+  };
+
+  const clearFilterDraft = () => {
+    setFilterDraft({
+      category: "",
+      availability: "",
+      size: "",
+      color: "",
+      minPrice: "",
+      maxPrice: "",
+    });
+  };
+
+  const applyFilterDraft = () => {
+    updateParams(filterDraft);
+    setIsFilterOpen(false);
   };
 
   return (
-    <div className="flex justify-end px-4 md:px-6 lg:px-8 py-6 border-b border-black/5 bg-white">
-      <div className="relative" ref={containerRef}>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em] hover:opacity-70 transition-opacity cursor-pointer h-full"
-        >
-          <span className="text-gray-400">Sort By:</span>
-          <span className="text-black">{selectedLabel}</span>
-          <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
-        </button>
+    <div className="border-b border-black/5 bg-white">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 md:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={isFilterOpen ? () => setIsFilterOpen(false) : openFilters}
+              className="inline-flex h-10 items-center gap-3 text-[10px] font-bold uppercase tracking-[0.28em] text-black transition-opacity hover:opacity-70"
+            >
+              <SlidersHorizontal size={15} strokeWidth={1.5} />
+              Filters
+            </button>
 
-        {isOpen && (
-          <div className="absolute z-50 top-full right-0 mt-4 bg-white border border-black/10 shadow-2xl min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="py-2">
-              {sortOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleSortChange(option.value)}
-                  className={`w-full text-left px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors
-                    ${currentSort === option.value ? "bg-black text-white" : "text-gray-500 hover:bg-[#f6f5f3] hover:text-black"}
-                  `}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+            {showSearchInput && (
+              <form onSubmit={handleNameSubmit}>
+                <input
+                  value={nameQuery}
+                  onChange={(event) => setNameQuery(event.target.value)}
+                  placeholder="Search by name"
+                  className="h-10 w-full min-w-60 border border-black/30 bg-white px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-black outline-none placeholder:text-gray-500 focus:border-black sm:w-60"
+                />
+              </form>
+            )}
           </div>
-        )}
+
+          <div className="flex items-center gap-4">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex h-10 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 transition-colors hover:text-black"
+              >
+                <X size={13} strokeWidth={1.5} />
+                Clear
+              </button>
+            )}
+            <FilterDropdown
+              label="Sort By"
+              value={searchParams.get("sort") || ""}
+              options={sortFilterOptions}
+              onChange={(value) => updateParams({ sort: value })}
+            />
+          </div>
+        </div>
       </div>
+      <FilterDrawer
+        isOpen={isFilterOpen}
+        facets={facets}
+        resultCount={resultCount}
+        showCategoryFilter={showCategoryFilter}
+        values={filterDraft}
+        onChange={updateFilterDraft}
+        onClear={clearFilterDraft}
+        onClose={() => setIsFilterOpen(false)}
+        onPrimaryAction={applyFilterDraft}
+        primaryActionLabel="View Results"
+      />
     </div>
   );
 };

@@ -3,10 +3,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { products } from "@/data/products";
 import ProductListingCard from "@/components/Category/ProductListingCard";
 import { Product } from "@/types/product";
+import { FilterDrawer } from "@/components/Category/FilterDrawer";
+import { FilterDropdown } from "@/components/ui/FilterDropdown";
+import {
+    filterAndSortProducts,
+    getProductFacets,
+    sortFilterOptions,
+} from "@/utils/productFilters";
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -15,24 +22,47 @@ interface SearchOverlayProps {
 
 export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
     const [query, setQuery] = useState("");
+    const [category, setCategory] = useState("");
+    const [color, setColor] = useState("");
+    const [size, setSize] = useState("");
+    const [availability, setAvailability] = useState("");
+    const [sort, setSort] = useState("");
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
+    const facets = getProductFacets(products);
 
     useEffect(() => {
-        if (query.trim().length > 0) {
-            const searchTerm = query.toLowerCase().trim();
-            const results = products.filter((p) => 
-                p.title.toLowerCase().includes(searchTerm) ||
-                p.category.toLowerCase().includes(searchTerm) ||
-                p.subCategory?.toLowerCase().includes(searchTerm) ||
-                p.collection?.toLowerCase().includes(searchTerm)
-            ).slice(0, 4); // Limit to 4 results in overlay
+        const hasActiveFilters = Boolean(
+            query.trim() ||
+            category ||
+            color ||
+            size ||
+            availability ||
+            sort ||
+            minPrice ||
+            maxPrice,
+        );
+
+        if (hasActiveFilters) {
+            const results = filterAndSortProducts(products, {
+                q: query,
+                category,
+                color,
+                size,
+                availability,
+                sort,
+                minPrice,
+                maxPrice,
+            }).slice(0, 4);
             setFilteredProducts(results);
         } else {
             setFilteredProducts([]);
         }
-    }, [query]);
+    }, [availability, category, color, maxPrice, minPrice, query, size, sort]);
 
     useEffect(() => {
         if (isOpen && inputRef.current) {
@@ -40,13 +70,48 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
         }
     }, [isOpen]);
 
+    const buildSearchUrl = () => {
+        const params = new URLSearchParams();
+        const values = {
+            q: query.trim(),
+            category,
+            color,
+            size,
+            availability,
+            minPrice: minPrice.trim(),
+            maxPrice: maxPrice.trim(),
+            sort,
+        };
+
+        Object.entries(values).forEach(([key, value]) => {
+            if (value) params.set(key, value);
+        });
+
+        const queryString = params.toString();
+        return queryString ? `/search?${queryString}` : "/search";
+    };
+
+    const resetSearchState = () => {
+        setQuery("");
+        setCategory("");
+        setColor("");
+        setSize("");
+        setAvailability("");
+        setSort("");
+        setMinPrice("");
+        setMaxPrice("");
+        setIsFilterOpen(false);
+    };
+
+    const goToResults = () => {
+        router.push(buildSearchUrl());
+        onClose();
+        resetSearchState();
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (query.trim()) {
-            router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-            onClose();
-            setQuery("");
-        }
+        goToResults();
     };
 
     return (
@@ -90,7 +155,7 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="TYPE TO SEARCH..."
-                                className="w-full bg-transparent border-b border-gray-200 py-3 md:py-6 text-xl md:text-5xl font-bold tracking-tight uppercase text-black placeholder:text-gray-200 focus:outline-none focus:border-black transition-all duration-500"
+                                className="w-full bg-transparent border-b border-gray-300 py-3 md:py-6 text-xl md:text-5xl font-bold tracking-tight uppercase text-black placeholder:text-gray-400 focus:outline-none focus:border-black transition-all duration-500"
                             />
                             <button 
                                 type="submit"
@@ -99,17 +164,51 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                                 <Search size={24} strokeWidth={1.5} />
                             </button>
                         </form>
+
+                        <div className="max-w-4xl mx-auto w-full mt-5">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFilterOpen((current) => !current)}
+                                    className="inline-flex h-10 items-center gap-3 text-[0.6rem] font-bold uppercase tracking-[0.28em] text-black transition-opacity hover:opacity-70"
+                                >
+                                    <SlidersHorizontal size={14} strokeWidth={1.5} />
+                                    Filters
+                                </button>
+                                <FilterDropdown label="Sort By" value={sort} options={sortFilterOptions} onChange={setSort} />
+                            </div>
+
+                            <FilterDrawer
+                                isOpen={isFilterOpen}
+                                facets={facets}
+                                resultCount={filteredProducts.length}
+                                showCategoryFilter
+                                values={{ category, availability, size, color, minPrice, maxPrice }}
+                                onChange={(updates) => {
+                                    if (typeof updates.category === "string") setCategory(updates.category);
+                                    if (typeof updates.availability === "string") setAvailability(updates.availability);
+                                    if (typeof updates.size === "string") setSize(updates.size);
+                                    if (typeof updates.color === "string") setColor(updates.color);
+                                    if (typeof updates.minPrice === "string") setMinPrice(updates.minPrice);
+                                    if (typeof updates.maxPrice === "string") setMaxPrice(updates.maxPrice);
+                                }}
+                                onClear={resetSearchState}
+                                onClose={() => setIsFilterOpen(false)}
+                                onPrimaryAction={goToResults}
+                                primaryActionLabel="View Results"
+                            />
+                        </div>
                         
                         <div className="max-w-4xl mx-auto w-full mt-6 md:mt-12 overflow-y-auto max-h-[60vh] pb-10">
-                            {query.trim().length > 0 ? (
+                            {query.trim().length > 0 || category || color || size || availability || sort || minPrice || maxPrice ? (
                                 <div className="space-y-8">
                                     <div className="flex justify-between items-center">
                                         <div className="text-[0.6rem] text-gray-400 font-bold uppercase tracking-widest">Products Found ({filteredProducts.length})</div>
                                         <button 
-                                            onClick={handleSubmit}
+                                            onClick={goToResults}
                                             className="text-[0.6rem] text-black font-bold uppercase tracking-widest hover:opacity-70 transition-opacity"
                                         >
-                                            View All Results →
+                                            View All Results -&gt;
                                         </button>
                                     </div>
                                     
@@ -123,7 +222,7 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                                         </div>
                                     ) : (
                                         <div className="py-10 text-center">
-                                            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest italic">No products matching "{query}"</p>
+                                            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest italic">No products match the selected search</p>
                                         </div>
                                     )}
                                 </div>
@@ -137,7 +236,7 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                                                 setQuery(item);
                                                 router.push(`/search?q=${encodeURIComponent(item)}`);
                                                 onClose();
-                                                setQuery("");
+                                                resetSearchState();
                                             }}
                                             className="text-xs font-bold uppercase tracking-[0.2em] text-black hover:text-[#8B8378] transition-colors border-b border-transparent hover:border-[#8B8378] pb-1"
                                         >

@@ -2,18 +2,19 @@ import React from "react";
 import CategoryHeader from "@/components/Category/CategoryHeader";
 import ListingGrid from "@/components/Category/ListingGrid";
 import { ListingControls } from "@/components/Category/ListingControls";
-import { Product } from "@/types/product";
 import { getProductsByCategory } from "@/lib/sanity/products";
+import { filterAndSortProducts, getProductFacets, ProductFilterParams } from "@/utils/productFilters";
 
 export default async function CategoryPage({
     params,
     searchParams,
 }: {
     params: Promise<{ slug: string[] }>;
-    searchParams: Promise<{ style?: string; sort?: string }>;
+    searchParams: Promise<ProductFilterParams & { style?: string }>;
 }) {
     const { slug } = await params;
-    const { style: styleQuery, sort: sortQuery } = await searchParams;
+    const searchParamsValue = await searchParams;
+    const { style: styleQuery } = searchParamsValue;
     
     const categoryPath = slug[0];
     const subCategoryPath = slug[1];
@@ -29,30 +30,17 @@ export default async function CategoryPage({
         }
     }
 
-    // Sorting Logic
-    if (sortQuery) {
-        products.sort((a, b) => {
-            const getPrice = (product: Product) => product.salePrice || product.price;
-            
-            switch (sortQuery) {
-                case "price-asc":
-                    return getPrice(a) - getPrice(b);
-                case "price-desc":
-                    return getPrice(b) - getPrice(a);
-                case "name-asc":
-                    return a.title.localeCompare(b.title);
-                case "name-desc":
-                    return b.title.localeCompare(a.title);
-                default:
-                    return 0;
-            }
-        });
-    }
+    const facets = getProductFacets(products);
+
+    products = filterAndSortProducts(products, {
+        ...searchParamsValue,
+        category: "",
+    });
 
     return (
         <main className="flex flex-col min-h-screen bg-white">
             <CategoryHeader />
-            <ListingControls />
+            <ListingControls facets={facets} resultCount={products.length} />
             <div className="w-full">
                 <ListingGrid products={products} />
             </div>
