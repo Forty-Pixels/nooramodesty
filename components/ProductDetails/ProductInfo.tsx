@@ -42,14 +42,14 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
     const selectedSubVariation = useMemo(() => {
         const selectedVariation = product.variations?.find((variation) => variation.colorHex === selectedColor) || product.variations?.[0];
-        return selectedVariation?.subVariations.find((subVariation) => subVariation.size === selectedSize) || {
+        return selectedVariation?.subVariations?.find((subVariation) => subVariation.size === selectedSize) || {
             size: selectedSize || displaySizes[0],
             clickomVariationId: 1,
         };
     }, [product.variations, selectedColor, selectedSize]);
 
     useEffect(() => {
-        const subVariations = product.variations?.flatMap((variation) => variation.subVariations) || [];
+        const subVariations = product.variations?.flatMap((variation) => variation.subVariations || []) || [];
 
         subVariations.forEach((subVariation) => {
             fetch(`/api/stocks/${subVariation.clickomVariationId}`)
@@ -232,7 +232,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 {/* Color Selector */}
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-3.5">
                         {displayColors.map((c) => {
                             const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(c);
                             return (
@@ -265,7 +265,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         {displaySizes.map((s) => {
                             const variation = product.variations
                                 ?.find((item) => item.colorHex === selectedColor || !selectedColor)
-                                ?.subVariations.find((subVariation) => subVariation.size === s);
+                                ?.subVariations?.find((subVariation) => subVariation.size === s);
                             const isOutOfStock = variation ? stockByVariationId[variation.clickomVariationId] === false : false;
                             return (
                                 <button
