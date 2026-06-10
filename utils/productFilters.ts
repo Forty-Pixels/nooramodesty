@@ -147,7 +147,7 @@ function productMatchesSize(product: Product, size: string) {
 
   const productSizes = compactValues([
     ...(product.sizes || []),
-    ...(product.variations?.flatMap((variation) => variation.subVariations.map((subVariation) => subVariation.size)) || []),
+    ...(product.variations?.flatMap((variation) => variation.subVariations?.map((subVariation) => subVariation.size) || []) || []),
   ]);
   const outOfStockSizes = compactValues(product.outOfStockSizes || []);
 
@@ -305,7 +305,7 @@ export function getProductFacets(products: Product[]): ProductFacets {
 
     const productSizes = Array.from(new Set([
       ...(product.sizes || []),
-      ...(product.variations?.flatMap((variation) => variation.subVariations.map((subVariation) => subVariation.size)) || []),
+      ...(product.variations?.flatMap((variation) => variation.subVariations?.map((subVariation) => subVariation.size) || []) || []),
     ])).filter((size) => !product.outOfStockSizes?.includes(size));
 
     productSizes.forEach((size) => addCount(sizeMap, size, size));
