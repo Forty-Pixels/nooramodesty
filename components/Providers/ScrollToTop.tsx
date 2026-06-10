@@ -7,6 +7,7 @@ export function ScrollToTop() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname.startsWith("/studio")) return;
     window.scrollTo(0, 0);
   }, [pathname]);
 

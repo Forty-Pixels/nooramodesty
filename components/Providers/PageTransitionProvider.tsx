@@ -7,7 +7,12 @@ import { Suspense } from "react";
 function TransitionWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
+  // Sanity Studio manages its own routing — skip the transition animation
+  if (pathname.startsWith("/studio")) {
+    return <>{children}</>;
+  }
+
   // Use both pathname and search params as the key to trigger animations on filtering
   const key = `${pathname}?${searchParams.toString()}`;
 
@@ -34,3 +39,4 @@ export default function PageTransitionProvider({ children }: { children: React.R
     </Suspense>
   );
 }
+
