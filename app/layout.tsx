@@ -33,6 +33,7 @@ export const viewport: Viewport = {
 };
 
 import PageTransitionProvider from "@/components/Providers/PageTransitionProvider";
+import { ScrollToTop } from "@/components/Providers/ScrollToTop";
 
 export default function RootLayout({
   children,
@@ -45,14 +46,16 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
+        <ScrollToTop />
         <Navbar />
         <main className="flex-grow overflow-x-clip">
           <PageTransitionProvider>
             {children}
+            <Footer links={siteLinks} />
           </PageTransitionProvider>
         </main>
-        <Footer links={siteLinks} />
       </body>
     </html>
   );
 }
+

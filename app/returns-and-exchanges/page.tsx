@@ -112,6 +112,7 @@ export default function ReturnsAndExchangesPage() {
       return;
     }
 
+    window.scrollTo({ top: 0, behavior: "instant" });
     setIsSubmitted(true);
   };
 
