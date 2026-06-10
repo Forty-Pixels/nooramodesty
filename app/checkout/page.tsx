@@ -29,6 +29,23 @@ const initialFormState: CheckoutFormState = {
   zipCode: "",
 };
 
+const MAX_PAYMENT_SLIP_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PAYMENT_SLIP_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
+
+interface CheckoutOrderResponse {
+  orderNumber?: string;
+  error?: string;
+  errors?: string[];
+}
+
+interface CouponValidationResponse {
+  valid?: boolean;
+  message?: string;
+  discountAmount?: number;
+}
+
 function CheckoutContent() {
   const { items, clearCart, updateQuantity, buyNowItem, setBuyNowItem, updateBuyNowQuantity } = useCartStore();
   const searchParams = useSearchParams();
@@ -42,8 +59,9 @@ function CheckoutContent() {
   const [couponCode, setCouponCode] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponMessage, setCouponMessage] = useState("");
+  const [isCouponError, setIsCouponError] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<string[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
 
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -70,31 +88,57 @@ function CheckoutContent() {
   };
 
   const validateClient = () => {
-    if (checkoutItems.length === 0) return "Your bag is empty.";
-    if (!formState.fullName || !formState.mobile || !formState.email || !formState.addressLine1 || !formState.city || !formState.zipCode) {
-      return "Please complete all required fields.";
+    const validationErrors: string[] = [];
+    const fullName = formState.fullName.trim();
+    const mobile = formState.mobile.trim();
+    const email = formState.email.trim();
+    const addressLine1 = formState.addressLine1.trim();
+    const city = formState.city.trim();
+    const zipCode = formState.zipCode.trim();
+    const mobileDigitCount = mobile.replace(/\D/g, "").length;
+
+    if (checkoutItems.length === 0) validationErrors.push("Your bag is empty.");
+    if (!fullName) validationErrors.push("Full name is required.");
+    if (fullName && fullName.length < 2) validationErrors.push("Full name must be at least 2 characters.");
+    if (!mobile) validationErrors.push("Phone number is required.");
+    if (mobile && (!PHONE_PATTERN.test(mobile) || mobileDigitCount < 7 || mobileDigitCount > 15)) {
+      validationErrors.push("Phone number must contain 7 to 15 digits and no letters.");
     }
-    if (!formState.email.includes("@")) return "Please enter a valid email address.";
-    if (checkoutItems.some((item) => !item.clickomVariationId)) return "Please choose a valid size for every item.";
-    if (paymentSlip && paymentSlip.size > 5 * 1024 * 1024) return "Payment slip must be 5MB or smaller.";
-    return "";
+    if (!email) validationErrors.push("Email address is required.");
+    if (email && !EMAIL_PATTERN.test(email)) validationErrors.push("Please enter a valid email address.");
+    if (!addressLine1) validationErrors.push("Address is required.");
+    if (addressLine1 && addressLine1.length < 3) validationErrors.push("Address must be at least 3 characters.");
+    if (!city) validationErrors.push("City is required.");
+    if (city && city.length < 2) validationErrors.push("City must be at least 2 characters.");
+    if (!zipCode) validationErrors.push("Postal code is required.");
+    if (zipCode && zipCode.length < 2) validationErrors.push("Postal code must be at least 2 characters.");
+    if (checkoutItems.some((item) => !item.clickomVariationId)) validationErrors.push("Please choose a valid size for every item.");
+    if (checkoutItems.some((item) => item.quantity < 1)) validationErrors.push("Item quantity must be at least 1.");
+    if (checkoutItems.some((item) => item.quantity > 20)) validationErrors.push("Item quantity cannot be more than 20.");
+    if (paymentSlip && !ALLOWED_PAYMENT_SLIP_TYPES.has(paymentSlip.type)) {
+      validationErrors.push("Payment slip must be a JPEG, PNG, WEBP, or PDF file.");
+    }
+    if (paymentSlip && paymentSlip.size > MAX_PAYMENT_SLIP_SIZE) validationErrors.push("Payment slip must be 5MB or smaller.");
+
+    return Array.from(new Set(validationErrors));
   };
 
   const validateCouponRequest = () => {
-    if (!formState.fullName || !formState.mobile || !formState.email || !formState.addressLine1 || !formState.city || !formState.zipCode) {
-      return "Complete contact and delivery details before applying a coupon.";
-    }
-    if (!formState.email.includes("@")) return "Enter a valid email address before applying a coupon.";
+    if (checkoutItems.length === 0) return "Your bag is empty.";
     if (checkoutItems.some((item) => !item.clickomVariationId)) return "Choose a valid size for every item before applying a coupon.";
+    if (checkoutItems.some((item) => item.quantity < 1 || item.quantity > 20)) return "Check item quantities before applying a coupon.";
+
     return "";
   };
 
   const handleApplyCoupon = async () => {
     setCouponMessage("");
+    setIsCouponError(false);
     setDiscountAmount(0);
 
     if (!couponCode.trim()) {
       setCouponMessage("Enter a coupon code.");
+      setIsCouponError(true);
       return;
     }
 
@@ -102,6 +146,7 @@ function CheckoutContent() {
 
     if (couponError) {
       setCouponMessage(couponError);
+      setIsCouponError(true);
       return;
     }
 
@@ -110,19 +155,20 @@ function CheckoutContent() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const data = await response.json();
+    const data = (await response.json()) as CouponValidationResponse;
 
-    setCouponMessage(data.message || (data.valid ? "Coupon applied." : "Coupon could not be applied."));
+    setCouponMessage(data.valid ? data.message || "Coupon applied." : data.message || "Invalid coupon.");
+    setIsCouponError(!data.valid);
     setDiscountAmount(data.valid ? data.discountAmount || 0 : 0);
   };
 
   const handlePlaceOrder = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError("");
-    const clientError = validateClient();
+    setErrors([]);
+    const clientErrors = validateClient();
 
-    if (clientError) {
-      setError(clientError);
+    if (clientErrors.length > 0) {
+      setErrors(clientErrors);
       return;
     }
 
@@ -135,11 +181,16 @@ function CheckoutContent() {
       method: "POST",
       body: formData,
     });
-    const data = await response.json();
+    const data = (await response.json()) as CheckoutOrderResponse;
     setIsProcessing(false);
 
     if (!response.ok) {
-      setError(data.error || "Unable to create order.");
+      setErrors(data.errors?.length ? data.errors : [data.error || "Unable to create order."]);
+      return;
+    }
+
+    if (!data.orderNumber) {
+      setErrors(["Order was created, but the order number was not returned."]);
       return;
     }
 
@@ -186,7 +237,7 @@ function CheckoutContent() {
   }
 
   return (
-    <form onSubmit={handlePlaceOrder} className="bg-[#f6f5f3] min-h-screen font-sans text-black">
+    <form onSubmit={handlePlaceOrder} noValidate className="bg-[#f6f5f3] min-h-screen font-sans text-black">
       <header className="py-12 px-6 md:px-12 flex justify-between items-center bg-transparent">
         <Link href="/cart" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity">
           <ArrowLeft size={14} />
@@ -203,13 +254,13 @@ function CheckoutContent() {
           <section className="space-y-6">
             <h2 className="text-lg font-bold uppercase tracking-widest">Contact & Delivery</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input value={formState.fullName} onChange={(e) => updateField("fullName", e.target.value)} placeholder="Full Name" required className="md:col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
-              <input value={formState.email} onChange={(e) => updateField("email", e.target.value)} type="email" placeholder="Email Address" required className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
-              <input value={formState.mobile} onChange={(e) => updateField("mobile", e.target.value)} placeholder="Phone" required className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
-              <input value={formState.addressLine1} onChange={(e) => updateField("addressLine1", e.target.value)} placeholder="Address" required className="md:col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
+              <input value={formState.fullName} onChange={(e) => updateField("fullName", e.target.value)} placeholder="Full Name" className="md:col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
+              <input value={formState.email} onChange={(e) => updateField("email", e.target.value)} type="email" placeholder="Email Address" className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
+              <input value={formState.mobile} onChange={(e) => updateField("mobile", e.target.value)} placeholder="Phone" className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
+              <input value={formState.addressLine1} onChange={(e) => updateField("addressLine1", e.target.value)} placeholder="Address" className="md:col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
               <input value={formState.addressLine2} onChange={(e) => updateField("addressLine2", e.target.value)} placeholder="Apartment, suite, etc. (optional)" className="md:col-span-2 w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
-              <input value={formState.city} onChange={(e) => updateField("city", e.target.value)} placeholder="City" required className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
-              <input value={formState.zipCode} onChange={(e) => updateField("zipCode", e.target.value)} placeholder="Postal / Zip Code" required className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
+              <input value={formState.city} onChange={(e) => updateField("city", e.target.value)} placeholder="City" className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
+              <input value={formState.zipCode} onChange={(e) => updateField("zipCode", e.target.value)} placeholder="Postal / Zip Code" className="w-full bg-white border border-black/5 px-5 py-4 text-xs font-medium focus:outline-none focus:border-black/20 placeholder:text-gray-300" />
             </div>
           </section>
 
@@ -250,7 +301,19 @@ function CheckoutContent() {
             )}
           </section>
 
-          {error && <p className="text-sm font-bold text-[#B21E1E]">{error}</p>}
+          {errors.length > 0 && (
+            <div className="border border-[#B21E1E]/20 bg-[#B21E1E]/5 px-4 py-3 text-sm font-bold text-[#B21E1E]" aria-live="polite">
+              {errors.length === 1 ? (
+                <p>{errors[0]}</p>
+              ) : (
+                <ul className="list-disc space-y-1 pl-5">
+                  {errors.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           <button disabled={isProcessing} className="w-full bg-black text-white py-6 text-[11px] font-bold uppercase tracking-[0.4em] hover:bg-zinc-800 disabled:bg-gray-400 flex items-center justify-center gap-3">
             {isProcessing ? "Processing..." : "Place Order"}
             {!isProcessing && <ArrowRight size={16} />}
@@ -301,7 +364,15 @@ function CheckoutContent() {
               <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="ENTER CODE" className="flex-1 bg-[#fcfcfc] border border-black/5 px-4 py-3 text-[10px] font-bold tracking-[0.1em] focus:outline-none" />
               <button type="button" onClick={handleApplyCoupon} className="bg-black text-white px-5 py-3 text-[9px] font-bold uppercase tracking-widest">Apply</button>
             </div>
-            {couponMessage && <p className="text-[9px] uppercase tracking-widest text-gray-400 mt-3">{couponMessage}</p>}
+            {couponMessage && (
+              <p className={`mt-3 text-[9px] uppercase tracking-widest ${
+                isCouponError
+                  ? "border border-[#B21E1E]/20 bg-[#B21E1E]/5 px-3 py-2 font-bold text-[#B21E1E]"
+                  : "text-gray-400"
+              }`}>
+                {couponMessage}
+              </p>
+            )}
           </div>
 
           <div className="space-y-4 pt-8 border-t border-black/5">

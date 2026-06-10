@@ -21,7 +21,7 @@ export default function ShippingAndReturnPolicyPage() {
             </p>
           </div>
           <Link
-            href="/returns-and-cancellations"
+            href="/returns-and-exchanges"
             className="inline-flex items-center gap-4 bg-black text-white px-12 py-5 text-[10px] tracking-[0.4em] font-bold uppercase hover:bg-zinc-800 transition-all active:scale-95 shadow-xl shadow-black/10"
           >
             Go to Returns Form

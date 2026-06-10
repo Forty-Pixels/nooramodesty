@@ -2,20 +2,21 @@ import { ZodError } from "zod";
 import {
   buildOrderItems,
   calculateTotals,
+  couponValidationSchema,
   findCoupon,
-  parseCheckoutPayload,
+  formatCheckoutValidationErrors,
 } from "@/lib/server/orderValidation";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const payload = parseCheckoutPayload(await request.json());
+    const payload = couponValidationSchema.parse(await request.json());
     const items = await buildOrderItems(payload.items);
     const coupon = await findCoupon(payload.couponCode);
 
     if (!coupon) {
-      return Response.json({ valid: false, message: "Coupon not found.", discountAmount: 0 });
+      return Response.json({ valid: false, message: "Invalid coupon.", discountAmount: 0 });
     }
 
     const totals = calculateTotals(items, coupon);
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof ZodError
-        ? "Invalid coupon request."
+        ? formatCheckoutValidationErrors(error)[0]
         : error instanceof Error
           ? error.message
           : "Unable to validate coupon.";
