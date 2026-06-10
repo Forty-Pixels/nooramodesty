@@ -5,6 +5,7 @@ import { homepage, homepageProductSection, inNooraImage } from "./homepage";
 import { materialSpecs } from "./materialSpecs";
 import { order, orderItem } from "./order";
 import { product } from "./product";
+import { returnExchangeRequest } from "./returnExchangeRequest";
 import { siteSettings } from "./siteSettings";
 import { subCategory } from "./subCategory";
 import { subVariation, variation } from "./variation";
@@ -19,6 +20,7 @@ export const schemaTypes = [
   product,
   orderItem,
   order,
+  returnExchangeRequest,
   coupon,
   homepageProductSection,
   inNooraImage,

@@ -45,8 +45,8 @@ export const siteLinks: SiteLinks = {
       href: "/privacy-policy",
     },
     {
-      label: "Returns & Cancellations",
-      href: "/returns-and-cancellations",
+      label: "Returns & Exchanges",
+      href: "/returns-and-exchanges",
     },
   ],
   support: [
@@ -55,8 +55,8 @@ export const siteLinks: SiteLinks = {
       href: "/shipping-and-return-policy",
     },
     {
-      label: "Returns & Cancellations",
-      href: "/returns-and-cancellations",
+      label: "Returns & Exchanges",
+      href: "/returns-and-exchanges",
     },
     {
       label: "Suggestions",
