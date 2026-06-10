@@ -7,7 +7,7 @@ export const categoryFilterOptions = [
   { label: "Tops", value: "tops" },
   { label: "Occasion Wear", value: "occasion-wear" },
   { label: "Dresses", value: "dresses" },
-  { label: "Sale", value: "sale" },
+  { label: "Clearance", value: "clearance" },
 ];
 
 export const colorFilterOptions = [
@@ -157,7 +157,7 @@ function productMatchesSize(product: Product, size: string) {
 function productMatchesCategory(product: Product, category: string) {
   const normalizedCategory = normalize(category);
   if (!normalizedCategory) return true;
-  if (normalizedCategory === "sale") return Boolean(product.salePrice);
+  if (normalizedCategory === "clearance") return Boolean(product.salePrice);
 
   return normalize(product.category) === normalizedCategory;
 }

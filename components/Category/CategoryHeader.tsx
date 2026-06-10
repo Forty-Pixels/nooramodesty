@@ -10,7 +10,7 @@ const categories = [
   { name: "TOPS", slug: "tops" },
   { name: "OCCASION WEAR", slug: "occasion-wear" },
   { name: "DRESSES", slug: "dresses" },
-  { name: "SALE", slug: "sale" },
+  { name: "CLEARANCE", slug: "clearance" },
 ];
 
 const subCategoriesMap: Record<string, string[]> = {
@@ -19,7 +19,7 @@ const subCategoriesMap: Record<string, string[]> = {
   tops: ["embroidered", "plain", "printed"],
   dresses: ["maxi", "satin", "printed", "wrap"],
   "occasion-wear": ["abayas", "overcoats", "tops", "sets"],
-  sale: ["abayas", "cord-sets", "tops", "dresses"],
+  clearance: ["abayas", "cord-sets", "tops", "dresses"],
 };
 
 const HoverLink = ({ href, children, className = "", onClick, isActive }: { href: string, children: React.ReactNode, className?: string, onClick?: () => void, isActive?: boolean }) => (

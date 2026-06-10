@@ -20,7 +20,8 @@ const homepageCategoryHrefs: Record<string, string> = {
   "occasion wear": "/category/occasion-wear",
   "occassion wear": "/category/occasion-wear",
   dresses: "/category/dresses",
-  sale: "/category/sale",
+  sale: "/category/clearance",
+  clearance: "/category/clearance",
 };
 
 function normalizeCategoryTitle(title: string) {
@@ -34,8 +35,9 @@ function createCategorySlug(title: string) {
 function resolveCategoryHref(title: string, categorySlug: string | undefined, products: Product[]) {
   const firstProductCategory = products.find((product) => product.category)?.category;
   const titleHref = homepageCategoryHrefs[normalizeCategoryTitle(title)];
+  const slugHref = categorySlug ? homepageCategoryHrefs[normalizeCategoryTitle(categorySlug)] : undefined;
 
-  return titleHref || `/category/${categorySlug || firstProductCategory || createCategorySlug(title)}`;
+  return titleHref || slugHref || `/category/${categorySlug || firstProductCategory || createCategorySlug(title)}`;
 }
 
 export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({
