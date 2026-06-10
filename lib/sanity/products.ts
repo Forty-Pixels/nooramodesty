@@ -40,8 +40,8 @@ export async function getProductsByCategory(category: string): Promise<Product[]
     return [];
   }
 
-  const query = category === "sale" ? SALE_PRODUCTS_QUERY : PRODUCTS_BY_CATEGORY_QUERY;
-  const params = category === "sale" ? {} : { category, categoryRef: `category.${category}` };
+  const query = category === "clearance" ? SALE_PRODUCTS_QUERY : PRODUCTS_BY_CATEGORY_QUERY;
+  const params = category === "clearance" ? {} : { category, categoryRef: `category.${category}` };
 
   const products = await sanityClient.fetch<SanityProductResult[]>(
     query,

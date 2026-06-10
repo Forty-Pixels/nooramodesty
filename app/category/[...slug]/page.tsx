@@ -4,6 +4,7 @@ import ListingGrid from "@/components/Category/ListingGrid";
 import { ListingControls } from "@/components/Category/ListingControls";
 import { getProductsByCategory } from "@/lib/sanity/products";
 import { filterAndSortProducts, getProductFacets, ProductFilterParams } from "@/utils/productFilters";
+import { redirect } from "next/navigation";
 
 export default async function CategoryPage({
     params,
@@ -20,10 +21,14 @@ export default async function CategoryPage({
     const subCategoryPath = slug[1];
     const activeStyle = subCategoryPath || styleQuery;
 
+    if (categoryPath === "sale") {
+        redirect(`/category/clearance${subCategoryPath ? `/${subCategoryPath}` : ""}`);
+    }
+
     let products = await getProductsByCategory(categoryPath);
 
     if (activeStyle) {
-        if (categoryPath === "sale") {
+        if (categoryPath === "clearance") {
             products = products.filter(p => p.category === activeStyle);
         } else {
             products = products.filter(p => p.subCategory === activeStyle);
@@ -55,10 +60,10 @@ export function generateStaticParams() {
         { slug: ["tops"] },
         { slug: ["occasion-wear"] },
         { slug: ["dresses"] },
-        { slug: ["sale"] },
-        { slug: ["sale", "abayas"] },
-        { slug: ["sale", "cord-sets"] },
-        { slug: ["sale", "tops"] },
-        { slug: ["sale", "dresses"] },
+        { slug: ["clearance"] },
+        { slug: ["clearance", "abayas"] },
+        { slug: ["clearance", "cord-sets"] },
+        { slug: ["clearance", "tops"] },
+        { slug: ["clearance", "dresses"] },
     ];
 }
