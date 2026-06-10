@@ -34,6 +34,7 @@ export const product = defineType({
       type: "text",
       rows: 3,
       description: "Used by current storefront components until rich text rendering is added.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "mainImage",
@@ -88,7 +89,15 @@ export const product = defineType({
       name: "salePrice",
       title: "Sale price",
       type: "number",
-      validation: (rule) => rule.min(0),
+      validation: (rule) =>
+        rule.min(0).custom((salePrice, context) => {
+          if (salePrice === undefined) return true;
+
+          const price = (context.document?.price as number | undefined) ?? undefined;
+          if (price === undefined) return true;
+
+          return salePrice < price || "Sale price must be lower than the regular price.";
+        }),
     }),
     defineField({
       name: "type",
@@ -111,6 +120,7 @@ export const product = defineType({
       type: "array",
       of: [{ type: "variation" }],
       description: "Stock is not stored here. Clickom IDs connect live stock lookups.",
+      validation: (rule) => rule.required().min(1),
     }),
     defineField({
       name: "materialSpecs",
@@ -139,6 +149,7 @@ export const product = defineType({
       name: "clickomProductId",
       title: "Clickom product ID",
       type: "number",
+      validation: (rule) => rule.required(),
     }),
   ],
   preview: {
