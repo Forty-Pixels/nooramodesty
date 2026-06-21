@@ -10,10 +10,11 @@ const terminalStatuses = new Set(["completed", "cancelled"]);
 function normalizeClickomStatus(status: string) {
   const normalized = status.toLowerCase();
 
-  if (["completed", "complete", "delivered"].includes(normalized)) return "completed";
-  if (["shipped", "dispatched"].includes(normalized)) return "shipped";
-  if (["cancelled", "canceled"].includes(normalized)) return "cancelled";
-  if (["processing", "approved"].includes(normalized)) return "processing";
+  if (["completed", "complete", "delivered", "final", "cp"].includes(normalized)) return "completed";
+  if (["shipped", "dispatched", "sp"].includes(normalized)) return "shipped";
+  if (["cancelled", "canceled", "cn", "failed", "fl", "refunded", "rf"].includes(normalized)) return "cancelled";
+  if (["processing", "approved", "pc"].includes(normalized)) return "processing";
+  if (["pending", "pd", "on hold", "on_hold", "oh"].includes(normalized)) return "pending";
 
   return "pending";
 }
@@ -28,9 +29,10 @@ export async function POST(request: Request) {
       `*[
         _type == "order" &&
         adminStatus == "approved" &&
-        defined(clickomSaleId) &&
+        defined(clickomCustomOrderId) &&
+        (defined(clickomTransactionId) || defined(clickomSaleId)) &&
         !(status in $terminalStatuses)
-      ]{_id, status}`,
+      ]{_id, status, clickomCustomOrderId}`,
       { terminalStatuses: Array.from(terminalStatuses) },
     );
 
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
 
     for (const order of orders) {
       try {
-        const clickomStatus = await getClickomSaleStatus(order._id);
+        const clickomStatus = await getClickomSaleStatus(String(order.clickomCustomOrderId));
         await client.patch(order._id).set({ status: normalizeClickomStatus(clickomStatus) }).commit();
         synced += 1;
       } catch (error) {

@@ -1,37 +1,10 @@
 import { validateAdminSecret } from "@/lib/server/adminAuth";
-import { createClickomSale, ClickomSalePayload } from "@/lib/server/clickom";
+import { createClickomSale } from "@/lib/server/clickom";
+import { buildClickomCustomOrderId, buildClickomSalePayload } from "@/lib/server/clickomOrderPayload";
 import { requireSanityWriteClient } from "@/lib/server/sanity";
 import { SanityOrder } from "@/types/sanityOrder";
 
 export const runtime = "nodejs";
-
-function buildSalePayload(order: SanityOrder): ClickomSalePayload {
-  return {
-    invoice_no: order.orderNumber,
-    custom_order_id: order._id,
-    mobile: order.customer.mobile,
-    customer_full_name: order.customer.fullName,
-    customer_address_line_1: order.customer.addressLine1,
-    customer_address_line_2: order.customer.addressLine2,
-    customer_city: order.customer.city,
-    customer_zip_code: order.customer.zipCode,
-    customer_country: "Sri Lanka",
-    products: order.items.map((item) => ({
-      product_id: item.clickomProductId,
-      variation_id: item.clickomVariationId,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      unit_price_inc_tax: item.unitPrice,
-      enable_stock: 0,
-    })),
-    payment: [
-      {
-        amount: order.totalAmount,
-        method: order.paymentMethod === "cod" ? "cash" : "bank_transfer",
-      },
-    ],
-  };
-}
 
 export async function POST(request: Request) {
   const authError = validateAdminSecret(request.headers);
@@ -55,7 +28,10 @@ export async function POST(request: Request) {
         adminStatus,
         status,
         clickomSaleId,
-        totalAmount
+        clickomTransactionId,
+        clickomCustomOrderId,
+        totalAmount,
+        discountAmount
       }`,
       { orderId },
     );
@@ -64,23 +40,33 @@ export async function POST(request: Request) {
       return Response.json({ error: "Order not found." }, { status: 404 });
     }
 
-    if (order.adminStatus !== "pending_approval" || order.clickomSaleId) {
+    if (order.adminStatus !== "pending_approval" || order.clickomSaleId || order.clickomTransactionId) {
       return Response.json({ error: "Order cannot be approved." }, { status: 409 });
     }
 
-    const clickomSale = await createClickomSale(buildSalePayload(order));
+    const clickomSale = await createClickomSale(buildClickomSalePayload(order));
     const approvedAt = new Date().toISOString();
+    const clickomCustomOrderId = order.clickomCustomOrderId || buildClickomCustomOrderId(order.orderNumber);
 
     await client
       .patch(order._id)
       .set({
-        clickomSaleId: clickomSale.saleId,
+        clickomCustomOrderId,
+        clickomSaleId: clickomSale.transactionId,
+        clickomTransactionId: clickomSale.transactionId,
+        clickomInvoiceNo: clickomSale.invoiceNo,
         adminStatus: "approved",
+        status: "processing",
         approvedAt,
       })
       .commit();
 
-    return Response.json({ ok: true, clickomSaleId: clickomSale.saleId, approvedAt });
+    return Response.json({
+      ok: true,
+      clickomTransactionId: clickomSale.transactionId,
+      clickomInvoiceNo: clickomSale.invoiceNo,
+      approvedAt,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to approve order.";
     return Response.json({ error: message }, { status: 400 });

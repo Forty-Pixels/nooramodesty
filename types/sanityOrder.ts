@@ -9,6 +9,9 @@ export interface SanityOrder {
   adminStatus: AdminStatus;
   status: OrderStatus;
   clickomSaleId?: string;
+  clickomTransactionId?: string;
+  clickomCustomOrderId?: number;
+  clickomInvoiceNo?: string;
   placedAt?: string;
   approvedAt?: string;
   discountAmount?: number;

@@ -1,8 +1,17 @@
 import "server-only";
 
+const DEFAULT_CLICKOM_BASE_URL = "https://nooramodestynew.clickom.lk";
+const TOKEN_CACHE_TTL_MS = 10 * 60 * 1000;
+const TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
+
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
+export type ClickomStatusCode = "pd" | "pc" | "oh" | "cp" | "cn" | "rf" | "fl" | "sp";
+
 export interface ClickomSalePayload {
   invoice_no: string;
-  custom_order_id: string;
+  custom_order_id: number;
+  transaction_date: string;
   mobile: string;
   customer_full_name: string;
   customer_address_line_1: string;
@@ -10,6 +19,9 @@ export interface ClickomSalePayload {
   customer_city: string;
   customer_zip_code: string;
   customer_country: string;
+  discount_type?: "fixed" | "percentage";
+  discount_amount?: number;
+  status?: ClickomStatusCode;
   products: Array<{
     product_id: number;
     variation_id: number;
@@ -21,51 +33,262 @@ export interface ClickomSalePayload {
   payment: Array<{
     amount: number;
     method: "cash" | "bank_transfer";
+    note?: string;
   }>;
 }
 
-function getClickomConfig() {
-  const apiKey = process.env.CLICKOM_API_KEY;
-  const baseUrl = process.env.CLICKOM_BASE_URL || "https://rcholdings.clickom.lk";
-
-  if (!apiKey) {
-    throw new Error("Clickom is not configured yet.");
-  }
-
-  return { apiKey, baseUrl };
+export interface ClickomSaleResult {
+  transactionId: string;
+  invoiceNo: string;
+  raw: unknown;
 }
 
-export async function createClickomSale(payload: ClickomSalePayload): Promise<{ saleId: string }> {
-  const { apiKey, baseUrl } = getClickomConfig();
+export interface ClickomStockResult {
+  variationId: string;
+  inStock: boolean;
+  stock: number;
+  raw: unknown;
+}
 
-  const response = await fetch(`${baseUrl}/customapi/sales`, {
+function normalizeBaseUrl(baseUrl: string) {
+  return baseUrl.replace(/\/$/, "");
+}
+
+function getClickomConfig() {
+  const baseUrl = normalizeBaseUrl(process.env.CLICKOM_BASE_URL || DEFAULT_CLICKOM_BASE_URL);
+  const clientId = process.env.CLICKOM_CLIENT_ID;
+  const clientSecret = process.env.CLICKOM_CLIENT_SECRET;
+  const username = process.env.CLICKOM_USERNAME;
+  const password = process.env.CLICKOM_PASSWORD;
+
+  if (!clientId || !clientSecret || !username || !password) {
+    throw new Error("Clickom credentials are not configured.");
+  }
+
+  return { baseUrl, clientId, clientSecret, username, password };
+}
+
+function readToken(data: unknown): string | null {
+  if (!data || typeof data !== "object") return null;
+
+  const record = data as Record<string, unknown>;
+  const directToken = record.access_token || record.token || record.api_token;
+
+  if (typeof directToken === "string" && directToken) return directToken;
+
+  if (record.data && typeof record.data === "object") {
+    const nested = record.data as Record<string, unknown>;
+    const nestedToken = nested.access_token || nested.token || nested.api_token;
+    if (typeof nestedToken === "string" && nestedToken) return nestedToken;
+  }
+
+  return null;
+}
+
+function readJwtExpiry(token: string): number | null {
+  const [, payload] = token.split(".");
+  if (!payload) return null;
+
+  try {
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { exp?: unknown };
+    return typeof decoded.exp === "number" ? decoded.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getClickomToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh && cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.token;
+  }
+
+  const { baseUrl, clientId, clientSecret, username, password } = getClickomConfig();
+  const formData = new FormData();
+  formData.append("client_id", clientId);
+  formData.append("client_secret", clientSecret);
+  formData.append("username", username);
+  formData.append("password", password);
+
+  const response = await fetch(`${baseUrl}/api/customapi/login`, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-    },
-    body: JSON.stringify(payload),
+    headers: { accept: "application/json" },
+    body: formData,
+    cache: "no-store",
   });
 
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.message || "Clickom sale creation failed.");
+    throw new Error(data?.message || "Clickom login failed.");
+  }
+
+  const token = readToken(data);
+
+  if (!token) {
+    throw new Error("Clickom login response did not include a token.");
+  }
+
+  const jwtExpiry = readJwtExpiry(token);
+
+  cachedToken = {
+    token,
+    expiresAt: jwtExpiry ? jwtExpiry - TOKEN_REFRESH_BUFFER_MS : Date.now() + TOKEN_CACHE_TTL_MS,
+  };
+
+  return token;
+}
+
+async function clickomFetch(path: string, init?: RequestInit, retry = true): Promise<Response> {
+  const { baseUrl } = getClickomConfig();
+  const token = await getClickomToken(!retry);
+  const response = await fetch(`${baseUrl}/api/customapi${path}`, {
+    ...init,
+    headers: {
+      accept: "application/json",
+      authorization: `Bearer ${token}`,
+      ...init?.headers,
+    },
+    cache: "no-store",
+  });
+
+  if (response.status === 401 && retry) {
+    cachedToken = null;
+    return clickomFetch(path, init, false);
+  }
+
+  return response;
+}
+
+function isDuplicateInvoiceError(data: unknown) {
+  const message = data && typeof data === "object" ? String((data as Record<string, unknown>).message || "") : "";
+  return /duplicate/i.test(message) && /(invoice|custom[_\s-]?order|order)/i.test(message);
+}
+
+function isSkippedSale(data: unknown) {
+  if (!data || typeof data !== "object") return false;
+  const record = data as Record<string, unknown>;
+  return record.skipped === true || (record.success === false && record.status_code === 422);
+}
+
+function readClickomMessage(data: unknown, fallback: string) {
+  if (!data || typeof data !== "object") return fallback;
+  const record = data as Record<string, unknown>;
+  const message = typeof record.message === "string" && record.message ? record.message : fallback;
+
+  if (record.errors && typeof record.errors === "object") {
+    return `${message}: ${JSON.stringify(record.errors)}`;
+  }
+
+  return message;
+}
+
+function extractTransactionId(data: unknown): string | null {
+  if (!data || typeof data !== "object") return null;
+  const record = data as Record<string, unknown>;
+  const value = record.transaction_id || record.id || record.sale_id;
+
+  if (typeof value === "string" || typeof value === "number") return String(value);
+
+  if (record.data && typeof record.data === "object") {
+    const nested = record.data as Record<string, unknown>;
+    const nestedValue = nested.transaction_id || nested.id || nested.sale_id;
+    if (typeof nestedValue === "string" || typeof nestedValue === "number") return String(nestedValue);
+  }
+
+  return null;
+}
+
+function extractInvoiceNo(data: unknown, fallback: string): string {
+  if (!data || typeof data !== "object") return fallback;
+  const record = data as Record<string, unknown>;
+  const value = record.invoice_no;
+
+  if (typeof value === "string" && value) return value;
+
+  if (record.data && typeof record.data === "object") {
+    const nested = record.data as Record<string, unknown>;
+    if (typeof nested.invoice_no === "string" && nested.invoice_no) return nested.invoice_no;
+  }
+
+  return fallback;
+}
+
+async function postClickomSale(payload: ClickomSalePayload): Promise<ClickomSaleResult> {
+  const response = await clickomFetch("/sales", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => null);
+
+  if (isSkippedSale(data)) {
+    const error = new Error(readClickomMessage(data, "Clickom skipped the sale."));
+    error.cause = data;
+    throw error;
+  }
+
+  if (!response.ok) {
+    const duplicatePrefix = isDuplicateInvoiceError(data) ? "Clickom duplicate sale: " : "";
+    const error = new Error(`${duplicatePrefix}${readClickomMessage(data, "Clickom sale creation failed.")}`);
+    error.cause = data;
+    throw error;
   }
 
   return {
-    saleId: String(data?.id || data?.sale_id || data?.data?.id || data?.data?.sale_id || payload.invoice_no),
+    transactionId: extractTransactionId(data) || payload.invoice_no,
+    invoiceNo: extractInvoiceNo(data, payload.invoice_no),
+    raw: data,
+  };
+}
+
+export async function createClickomSale(payload: ClickomSalePayload): Promise<ClickomSaleResult> {
+  return postClickomSale(payload);
+}
+
+export async function updateClickomSale(payload: ClickomSalePayload): Promise<ClickomSaleResult> {
+  const response = await clickomFetch(`/sales/${encodeURIComponent(payload.custom_order_id)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(readClickomMessage(data, "Clickom sale update failed."));
+  }
+
+  return {
+    transactionId: extractTransactionId(data) || String(payload.custom_order_id),
+    invoiceNo: extractInvoiceNo(data, payload.invoice_no),
+    raw: data,
+  };
+}
+
+export async function getClickomStock(variationId: string): Promise<ClickomStockResult> {
+  const response = await clickomFetch(`/stocks/${encodeURIComponent(variationId)}`);
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Clickom stock lookup failed.");
+  }
+
+  const stockValue =
+    data && typeof data === "object"
+      ? Number((data as Record<string, unknown>).qty_available ?? 0)
+      : 0;
+  const stock = Number.isFinite(stockValue) ? stockValue : 0;
+
+  return {
+    variationId,
+    stock,
+    inStock: stock > 0,
+    raw: data,
   };
 }
 
 export async function getClickomSaleStatus(orderId: string): Promise<string> {
-  const { apiKey, baseUrl } = getClickomConfig();
-
-  const response = await fetch(
-    `${baseUrl}/customapi/sales_status?customer_order_id=${encodeURIComponent(orderId)}`,
-    {
-      headers: { "x-api-key": apiKey },
-    },
+  const response = await clickomFetch(
+    `/sales_status/${encodeURIComponent(orderId)}`,
   );
   const data = await response.json().catch(() => null);
 
@@ -74,4 +297,8 @@ export async function getClickomSaleStatus(orderId: string): Promise<string> {
   }
 
   return String(data?.status || data?.data?.status || "processing");
+}
+
+export async function setClickomSaleStatus(payload: ClickomSalePayload, status: ClickomStatusCode): Promise<ClickomSaleResult> {
+  return updateClickomSale({ ...payload, status });
 }

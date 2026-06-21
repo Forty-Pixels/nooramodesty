@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { definePlugin, useClient } from "sanity";
 import { SanityOrder } from "@/types/sanityOrder";
+import { OrderStatus } from "@/types/order";
 
 const ordersQuery = `*[_type == "order" && adminStatus in $statuses] | order(placedAt desc){
   _id,
@@ -14,6 +15,7 @@ const ordersQuery = `*[_type == "order" && adminStatus in $statuses] | order(pla
   adminStatus,
   status,
   clickomSaleId,
+  clickomCustomOrderId,
   placedAt,
   approvedAt,
   totalAmount,
@@ -37,6 +39,7 @@ function OrdersTool() {
   const [activeView, setActiveView] = useState<"pending_approval" | "approved" | "rejected">("pending_approval");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [draftStatusByOrderId, setDraftStatusByOrderId] = useState<Record<string, OrderStatus>>({});
 
   const loadOrders = useCallback(async () => {
     setIsLoading(true);
@@ -55,7 +58,7 @@ function OrdersTool() {
     void loadOrders();
   }, [loadOrders]);
 
-  const callAdminRoute = async (path: string, orderId?: string) => {
+  const callAdminRoute = async (path: string, body: Record<string, unknown>) => {
     setError("");
     const response = await fetch(path, {
       method: "POST",
@@ -63,7 +66,7 @@ function OrdersTool() {
         "content-type": "application/json",
         "x-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET || "",
       },
-      body: JSON.stringify(orderId ? { orderId } : {}),
+      body: JSON.stringify(body),
     });
     const data = await response.json().catch(() => ({}));
 
@@ -99,7 +102,7 @@ function OrdersTool() {
             Refresh
           </button>
           {activeView === "approved" && (
-            <button onClick={() => callAdminRoute("/api/orders/status-sync")} style={{ padding: "8px 12px", border: "1px solid #ddd", background: "#fff" }}>
+            <button onClick={() => callAdminRoute("/api/orders/status-sync", {})} style={{ padding: "8px 12px", border: "1px solid #ddd", background: "#fff" }}>
               Sync Status
             </button>
           )}
@@ -144,6 +147,12 @@ function OrdersTool() {
                       <small>{order.clickomSaleId}</small>
                     </>
                   )}
+                  {order.clickomCustomOrderId && (
+                    <>
+                      <br />
+                      <small>Custom: {order.clickomCustomOrderId}</small>
+                    </>
+                  )}
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {order.paymentSlipUrl && isImageUrl(order.paymentSlipUrl) ? (
@@ -159,8 +168,31 @@ function OrdersTool() {
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {order.adminStatus === "pending_approval" && (
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => callAdminRoute("/api/orders/approve", order._id)}>Approve</button>
-                      <button onClick={() => callAdminRoute("/api/orders/reject", order._id)}>Reject</button>
+                      <button onClick={() => callAdminRoute("/api/orders/approve", { orderId: order._id })}>Approve</button>
+                      <button onClick={() => callAdminRoute("/api/orders/reject", { orderId: order._id })}>Reject</button>
+                    </div>
+                  )}
+                  {order.adminStatus === "approved" && (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <select
+                        value={draftStatusByOrderId[order._id] || order.status}
+                        onChange={(event) => {
+                          const status = event.currentTarget.value as OrderStatus;
+                          setDraftStatusByOrderId((current) => ({ ...current, [order._id]: status }));
+                        }}
+                      >
+                        {(["pending", "processing", "shipped", "completed", "cancelled"] as OrderStatus[]).map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => callAdminRoute("/api/orders/status", {
+                          orderId: order._id,
+                          status: draftStatusByOrderId[order._id] || order.status,
+                        })}
+                      >
+                        Push
+                      </button>
                     </div>
                   )}
                 </td>
