@@ -24,6 +24,7 @@ export interface Product {
     slug: string;
     mainImage: string;
     images?: string[];
+    sizeGuideImage?: string;
     price: number;
     salePrice?: number;
     createdAt?: string;
@@ -39,6 +40,9 @@ export interface Product {
     materialSpecs?: MaterialSpecs;
     enablePreOrders?: boolean;
     enableCustomSizes?: boolean;
+    isNewArrival?: boolean;
+    showLowStock?: boolean;
+    manualStockCount?: number;
     isVisible?: boolean;
     clickomProductId?: number;
     stockCount?: number;

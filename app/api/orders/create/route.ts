@@ -9,6 +9,7 @@ import {
   parseCheckoutPayload,
 } from "@/lib/server/orderValidation";
 import { requireSanityWriteClient } from "@/lib/server/sanity";
+import { fetchPublicSiteSettings } from "@/lib/server/siteSettings";
 import { CheckoutOrderPayload } from "@/types/order";
 
 export const runtime = "nodejs";
@@ -54,10 +55,11 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const payload = parsePayload(formData.get("payload"));
     const paymentSlip = validateSlip(formData.get("paymentSlip"));
+    const siteSettings = await fetchPublicSiteSettings();
 
-    const items = await buildOrderItems(payload.items);
+    const items = await buildOrderItems(payload.items, siteSettings);
     const coupon = await findCoupon(payload.couponCode);
-    const totals = calculateTotals(items, coupon);
+    const totals = calculateTotals(items, coupon, siteSettings);
     const orderNumber = await generateOrderNumber();
     const placedAt = new Date().toISOString();
 
@@ -93,6 +95,9 @@ export async function POST(request: Request) {
       paymentSlipUploadedAt,
       adminStatus: "pending_approval",
       status: "pending",
+      paymentStatus: "due",
+      paidAmount: 0,
+      balanceAmount: totals.totalAmount,
       placedAt,
       couponCode: coupon?.code,
       discountAmount: totals.discountAmount,

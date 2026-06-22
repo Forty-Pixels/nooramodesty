@@ -20,8 +20,9 @@ export const product = defineType({
     }),
     defineField({
       name: "sku",
-      title: "SKU",
+      title: "Clickom product SKU",
       type: "string",
+      description: "Visible product SKU from Clickom, for example 0068. Used by the sync to fill the hidden Clickom product ID.",
     }),
     defineField({
       name: "description",
@@ -48,6 +49,13 @@ export const product = defineType({
       title: "Product gallery",
       type: "array",
       of: [{ type: "image", options: { hotspot: true } }],
+    }),
+    defineField({
+      name: "sizeGuideImage",
+      title: "Size guide image",
+      type: "image",
+      options: { hotspot: true },
+      description: "Optional size guide shown on the product page. Upload the finished chart/image here instead of using a hardcoded table.",
     }),
     defineField({
       name: "category",
@@ -116,10 +124,10 @@ export const product = defineType({
     }),
     defineField({
       name: "variations",
-      title: "Variations",
+      title: "Storefront variations",
       type: "array",
       of: [{ type: "variation" }],
-      description: "Stock is not stored here. Clickom IDs connect live stock lookups.",
+      description: "Colors/sizes shown on the storefront. Each size should include its Clickom variation SKU so sync can connect live stock and order approval.",
       validation: (rule) => rule.required().min(1),
     }),
     defineField({
@@ -140,6 +148,27 @@ export const product = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "isNewArrival",
+      title: "New arrival badge",
+      type: "boolean",
+      description: "Show a New Arrival badge on product cards and product detail.",
+      initialValue: false,
+    }),
+    defineField({
+      name: "showLowStock",
+      title: "Show manual low stock badge",
+      type: "boolean",
+      description: "Show a low-stock message using the manual count below. This is display-only and does not replace Clickom stock.",
+      initialValue: false,
+    }),
+    defineField({
+      name: "manualStockCount",
+      title: "Manual low stock count",
+      type: "number",
+      description: "Display count for the low-stock badge, for example 3.",
+      validation: (rule) => rule.min(0),
+    }),
+    defineField({
       name: "isVisible",
       title: "Visible on storefront",
       type: "boolean",
@@ -147,8 +176,9 @@ export const product = defineType({
     }),
     defineField({
       name: "clickomProductId",
-      title: "Clickom product ID",
+      title: "Clickom product ID (synced)",
       type: "number",
+      description: "Internal numeric product ID from Clickom. Usually filled by Clickom sync from the product SKU. Required before orders can be approved into Clickom.",
       validation: (rule) => rule.required(),
     }),
   ],

@@ -9,9 +9,16 @@ export interface CartItem {
   image: string;
   quantity: number;
   color?: string;
+  colorName?: string;
+  colorHex?: string;
   size?: string;
   clickomVariationId?: number;
   customSize?: boolean;
+  preOrder?: boolean;
+  customLength?: string;
+  customBust?: string;
+  customHip?: string;
+  customSleeve?: string;
   customNote?: string;
   slug: string;
   originalPrice?: number;

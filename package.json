@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sanity:seed-categories": "node --env-file=.env.local sanity/lib/seedCategories.mjs"
+    "sanity:seed-categories": "node --env-file=.env.local sanity/lib/seedCategories.mjs",
+    "sanity:sync-clickom": "node --env-file=.env.local sanity/lib/syncClickomProducts.mjs",
+    "sanity:sync-clickom:apply": "node --env-file=.env.local sanity/lib/syncClickomProducts.mjs --apply"
   },
   "dependencies": {
     "@netlify/functions": "^5.2.1",

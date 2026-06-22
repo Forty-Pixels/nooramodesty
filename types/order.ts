@@ -2,7 +2,9 @@ export type PaymentMethod = "cod" | "bank_transfer";
 
 export type AdminStatus = "pending_approval" | "approved" | "rejected";
 
-export type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "cancelled";
+export type OrderStatus = "pending" | "confirmed" | "processing" | "dispatched" | "shipped" | "completed" | "cancelled";
+
+export type PaymentStatus = "due" | "partial" | "paid";
 
 export type CouponDiscountType = "fixed" | "percentage";
 
@@ -21,8 +23,14 @@ export interface OrderItemInput {
   clickomVariationId: number;
   quantity: number;
   selectedColor?: string;
+  selectedColorHex?: string;
   selectedSize?: string;
   customSize: boolean;
+  preOrder?: boolean;
+  customLength?: string;
+  customBust?: string;
+  customHip?: string;
+  customSleeve?: string;
   customNote?: string;
 }
 

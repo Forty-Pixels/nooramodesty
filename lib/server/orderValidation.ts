@@ -2,6 +2,7 @@ import "server-only";
 
 import { z, ZodError } from "zod";
 import { sanityClient } from "@/lib/sanity/client";
+import { calculateShippingQuote, DEFAULT_SITE_SETTINGS } from "@/lib/shipping";
 import {
   CheckoutOrderPayload,
   Coupon,
@@ -9,11 +10,13 @@ import {
   OrderItemSnapshot,
   OrderTotals,
 } from "@/types/order";
+import { PublicSiteSettings } from "@/types/siteSettings";
 
-const CUSTOM_SIZE_CHARGE = 1500;
-const FREE_SHIPPING_THRESHOLD = 50000;
-const STANDARD_SHIPPING = 1500;
 const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
+const optionalString = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z.string().trim().optional(),
+);
 
 function isValidPhoneNumber(value: string): boolean {
   const digitCount = value.replace(/\D/g, "").length;
@@ -24,10 +27,16 @@ const orderItemInputSchema = z.object({
   productId: z.string({ error: "Product is required." }).trim().min(1, { error: "Product is required." }),
   clickomVariationId: z.coerce.number({ error: "Please choose a valid size for every item." }).int({ error: "Please choose a valid size for every item." }).positive({ error: "Please choose a valid size for every item." }),
   quantity: z.coerce.number({ error: "Item quantity is required." }).int({ error: "Item quantity must be a whole number." }).min(1, { error: "Item quantity must be at least 1." }).max(20, { error: "Item quantity cannot be more than 20." }),
-  selectedColor: z.string().trim().optional(),
-  selectedSize: z.string().trim().optional(),
+  selectedColor: optionalString,
+  selectedColorHex: optionalString,
+  selectedSize: optionalString,
   customSize: z.boolean({ error: "Custom size selection is invalid." }).default(false),
-  customNote: z.string().trim().optional(),
+  preOrder: z.boolean().optional(),
+  customLength: optionalString,
+  customBust: optionalString,
+  customHip: optionalString,
+  customSleeve: optionalString,
+  customNote: optionalString,
 });
 
 export const checkoutOrderSchema = z.object({
@@ -66,6 +75,7 @@ interface ProductForOrder {
   salePrice?: number;
   isVisible?: boolean;
   clickomProductId?: number;
+  enablePreOrders?: boolean;
   variations?: Array<{
     name: string;
     colorHex?: string;
@@ -95,6 +105,7 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
       salePrice,
       isVisible,
       clickomProductId,
+      enablePreOrders,
       variations[]{
         name,
         colorHex,
@@ -109,7 +120,26 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
   );
 }
 
-function validateItem(input: OrderItemInput, product: ProductForOrder): OrderItemSnapshot {
+function formatCustomSizeLabel(input: OrderItemInput): string {
+  if (!input.customSize) {
+    return input.selectedSize || "";
+  }
+
+  const measurements = [
+    input.customLength ? `Length ${input.customLength}` : "",
+    input.customBust ? `Bust ${input.customBust}` : "",
+    input.customHip ? `Hip ${input.customHip}` : "",
+    input.customSleeve ? `Sleeve ${input.customSleeve}` : "",
+  ].filter(Boolean);
+
+  return measurements.length > 0 ? `Custom (${measurements.join(", ")})` : "Custom";
+}
+
+function validateItem(
+  input: OrderItemInput,
+  product: ProductForOrder,
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
+): OrderItemSnapshot {
   if (product.isVisible === false) {
     throw new Error(`${product.title} is not available.`);
   }
@@ -122,21 +152,29 @@ function validateItem(input: OrderItemInput, product: ProductForOrder): OrderIte
     throw new Error(`${product.title} has an invalid size selection.`);
   }
 
+  if (!product.clickomProductId) {
+    throw new Error(`${product.title} is missing a Clickom product ID.`);
+  }
+
   const unitPrice = product.salePrice || product.price;
-  const customCharge = input.customSize ? CUSTOM_SIZE_CHARGE : 0;
+  const customCharge = input.customSize ? siteSettings.customSizeCharge : 0;
 
   return {
     ...input,
     title: product.title,
     slug: product.slug,
     image: product.mainImage,
-    selectedSize: input.selectedSize || matchingSubVariation?.size,
-    clickomProductId: product.clickomProductId || 1,
+    selectedSize: input.customSize ? formatCustomSizeLabel(input) : input.selectedSize || matchingSubVariation?.size,
+    preOrder: input.preOrder || product.enablePreOrders || input.customSize,
+    clickomProductId: product.clickomProductId,
     unitPrice: unitPrice + customCharge,
   };
 }
 
-export async function buildOrderItems(items: OrderItemInput[]): Promise<OrderItemSnapshot[]> {
+export async function buildOrderItems(
+  items: OrderItemInput[],
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
+): Promise<OrderItemSnapshot[]> {
   const productIds = Array.from(new Set(items.map((item) => item.productId)));
   const products = await fetchProducts(productIds);
   const productById = new Map(products.map((product) => [product._id, product]));
@@ -148,13 +186,17 @@ export async function buildOrderItems(items: OrderItemInput[]): Promise<OrderIte
       throw new Error("One or more products are no longer available.");
     }
 
-    return validateItem(item, product);
+    return validateItem(item, product, siteSettings);
   });
 }
 
-export function calculateBaseTotals(items: OrderItemSnapshot[]): Omit<OrderTotals, "discountAmount" | "totalAmount"> {
+export function calculateBaseTotals(
+  items: OrderItemSnapshot[],
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
+): Omit<OrderTotals, "discountAmount" | "totalAmount"> {
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const shipping = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
+  const itemQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const shipping = calculateShippingQuote(itemQuantity, siteSettings).shipping;
 
   return { subtotal, shipping };
 }
@@ -209,8 +251,9 @@ export function calculateCouponDiscount(coupon: Coupon | null, subtotal: number)
 export function calculateTotals(
   items: OrderItemSnapshot[],
   coupon: Coupon | null,
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
 ): OrderTotals {
-  const { subtotal, shipping } = calculateBaseTotals(items);
+  const { subtotal, shipping } = calculateBaseTotals(items, siteSettings);
   const discountAmount = calculateCouponDiscount(coupon, subtotal);
 
   return {

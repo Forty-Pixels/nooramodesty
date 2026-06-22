@@ -1,5 +1,4 @@
 import Hero from "@/components/LandingPage/Hero";
-import MediaCarousel from "@/components/LandingPage/MediaCarousel";
 import { InNoora } from "@/components/LandingPage/InNoora";
 import { HomepageProductSection } from "@/components/LandingPage/HomepageProductSection";
 import { getHomepageContent } from "@/lib/sanity/homepage";
@@ -24,7 +23,6 @@ export default async function Home() {
           products={section.products}
         />
       ))}
-      <MediaCarousel />
       <InNoora images={homepage.inNooraImages} />
     </div>
   );

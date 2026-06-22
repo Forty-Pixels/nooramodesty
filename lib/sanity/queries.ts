@@ -7,6 +7,7 @@ const productProjection = `
   "slug": slug.current,
   "mainImage": mainImage.asset->url,
   "images": coalesce(images[].asset->url, [mainImage.asset->url]),
+  "sizeGuideImage": sizeGuideImage.asset->url,
   price,
   salePrice,
   plainDescription,
@@ -22,6 +23,9 @@ const productProjection = `
   "sizes": array::unique(variations[].subVariations[].size),
   enablePreOrders,
   enableCustomSizes,
+  isNewArrival,
+  showLowStock,
+  manualStockCount,
   isVisible,
   clickomProductId,
   variations[]{

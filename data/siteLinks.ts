@@ -6,7 +6,7 @@ const whatsappHref = (message: string) =>
   `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
 export const siteLinks: SiteLinks = {
-  contactPhone: "+94 777 828 836",
+  contactPhone: "+94 77 782 8836",
   social: [
     {
       label: "Instagram",
@@ -28,6 +28,7 @@ export const siteLinks: SiteLinks = {
     { label: "Home", href: "/" },
     { label: "Catalog", href: "/category/abayas" },
     { label: "Product", href: "/product/abaya-one" },
+    { label: "Track Order", href: "/order-tracking" },
     { label: "Suggestions", href: "/suggestions" },
     { label: "Store Locator", href: "/store-locator" },
   ],
@@ -47,6 +48,10 @@ export const siteLinks: SiteLinks = {
     {
       label: "Returns & Exchanges",
       href: "/returns-and-exchanges",
+    },
+    {
+      label: "Track Order",
+      href: "/order-tracking",
     },
   ],
   support: [

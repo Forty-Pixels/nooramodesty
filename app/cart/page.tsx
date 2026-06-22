@@ -1,21 +1,49 @@
 "use client";
 
 import React from "react";
+import { useEffect, useState } from "react";
 import useCartStore from "@/store";
 import Link from "next/link";
 import Image from "next/image";
 import { Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { siteLinks } from "@/data/siteLinks";
+import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
+import { PublicSiteSettings } from "@/types/siteSettings";
 import { isStoreLocatorActive } from "@/utils/featureFlags";
+
+function formatCartItemSize(item: { size?: string; customSize?: boolean; customNote?: string }) {
+    return item.customSize && item.customNote ? item.customNote : item.size;
+}
 
 export default function CartPage() {
     const { items, removeItem, updateQuantity } = useCartStore();
+    const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
 
     const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const originalSubtotal = items.reduce((acc, item) => acc + (item.originalPrice || item.price) * item.quantity, 0);
     const discount = originalSubtotal - subtotal;
-    const shipping = subtotal > 0 ? 500 : 0;
+    const itemQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
+    const shippingQuote = calculateShippingQuote(itemQuantity, siteSettings);
+    const shipping = shippingQuote.shipping;
     const total = subtotal + shipping;
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadSiteSettings() {
+            const response = await fetch("/api/site-settings", { cache: "no-store" });
+            const data = (await response.json().catch(() => null)) as Partial<PublicSiteSettings> | null;
+            if (isMounted && response.ok) {
+                setSiteSettings(normalizeSiteSettings(data));
+            }
+        }
+
+        void loadSiteSettings();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     if (items.length === 0) {
         return (
@@ -81,15 +109,16 @@ export default function CartPage() {
                                                             <span>Color:</span>
                                                             <div 
                                                                 className="w-2.5 h-2.5 rounded-full border border-black/10" 
-                                                                style={{ backgroundColor: item.color }}
+                                                                style={{ backgroundColor: item.colorHex || item.color }}
                                                             />
+                                                            {item.colorName && <span className="text-black font-bold">{item.colorName}</span>}
                                                         </div>
                                                     )}
                                                     {item.size && (
                                                         <div className="flex items-center gap-2">
                                                             <span>Size:</span>
                                                             <span className="text-black font-bold">
-                                                                {item.size} {item.customSize && "(+ LKR 1,500)"}
+                                                                {formatCartItemSize(item)} {item.customSize && `(+ LKR ${siteSettings.customSizeCharge.toLocaleString()})`}
                                                             </span>
                                                         </div>
                                                     )}
@@ -169,6 +198,10 @@ export default function CartPage() {
                                     <span>Estimated Shipping</span>
                                     <span className="text-black">LKR {shipping.toLocaleString()}</span>
                                 </div>
+                                <div className="flex justify-between text-[9px] uppercase tracking-widest font-medium text-gray-400">
+                                    <span>Billable Weight</span>
+                                    <span>{shippingQuote.billableKg}KG</span>
+                                </div>
                                 {discount > 0 && (
                                     <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-[#B21E1E]">
                                         <span>Discount</span>
@@ -207,7 +240,7 @@ export default function CartPage() {
 
                             <div className="pt-4 space-y-4">
                                 <p className="text-[9px] text-gray-400 uppercase tracking-widest leading-relaxed text-center">
-                                    Complimentary delivery on orders above LKR 50,000. 
+                                    Final delivery charge is calculated from item weight.
                                     Secure checkout guaranteed.
                                 </p>
                             </div>
