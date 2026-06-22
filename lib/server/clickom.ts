@@ -35,7 +35,7 @@ export interface ClickomSalePayload {
     note?: string;
     sell_line_note?: string;
   }>;
-  payment: Array<{
+  payment?: Array<{
     amount: number;
     method: "cash" | "bank_transfer";
     note?: string;
@@ -52,6 +52,16 @@ export interface ClickomStockResult {
   variationId: string;
   inStock: boolean;
   stock: number;
+  raw: unknown;
+}
+
+export interface ClickomSaleStatusDetails {
+  status: string;
+  callStatus?: string;
+  orderStatus?: string;
+  shippingStatus?: string;
+  paymentStatus?: string;
+  waybillNumber?: string;
   raw: unknown;
 }
 
@@ -302,6 +312,39 @@ export async function getClickomSaleStatus(orderId: string): Promise<string> {
   }
 
   return String(data?.status || data?.data?.status || "processing");
+}
+
+function readNestedString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value) return value;
+    if (typeof value === "number") return String(value);
+  }
+
+  return undefined;
+}
+
+export async function getClickomSaleStatusDetails(orderId: string): Promise<ClickomSaleStatusDetails> {
+  const response = await clickomFetch(`/sales_status/${encodeURIComponent(orderId)}`);
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Clickom status sync failed.");
+  }
+
+  const root = data && typeof data === "object" ? data as Record<string, unknown> : {};
+  const details = root.data && typeof root.data === "object" ? root.data as Record<string, unknown> : root;
+  const status = readNestedString(details, ["status", "order_status"]) || "pending";
+
+  return {
+    status,
+    callStatus: readNestedString(details, ["call_status", "callStatus"]),
+    orderStatus: readNestedString(details, ["order_status", "orderStatus"]),
+    shippingStatus: readNestedString(details, ["shipping_status", "shippingStatus", "delivery_status"]),
+    paymentStatus: readNestedString(details, ["payment_status", "paymentStatus"]),
+    waybillNumber: readNestedString(details, ["waybill_no", "waybill", "waybill_number", "waybillNumber"]),
+    raw: data,
+  };
 }
 
 export async function setClickomSaleStatus(payload: ClickomSalePayload, status: ClickomStatusCode): Promise<ClickomSaleResult> {

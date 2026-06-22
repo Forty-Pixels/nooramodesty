@@ -13,6 +13,10 @@ import {
 import { PublicSiteSettings } from "@/types/siteSettings";
 
 const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
+const optionalString = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z.string().trim().optional(),
+);
 
 function isValidPhoneNumber(value: string): boolean {
   const digitCount = value.replace(/\D/g, "").length;
@@ -23,16 +27,16 @@ const orderItemInputSchema = z.object({
   productId: z.string({ error: "Product is required." }).trim().min(1, { error: "Product is required." }),
   clickomVariationId: z.coerce.number({ error: "Please choose a valid size for every item." }).int({ error: "Please choose a valid size for every item." }).positive({ error: "Please choose a valid size for every item." }),
   quantity: z.coerce.number({ error: "Item quantity is required." }).int({ error: "Item quantity must be a whole number." }).min(1, { error: "Item quantity must be at least 1." }).max(20, { error: "Item quantity cannot be more than 20." }),
-  selectedColor: z.string().trim().optional(),
-  selectedColorHex: z.string().trim().optional(),
-  selectedSize: z.string().trim().optional(),
+  selectedColor: optionalString,
+  selectedColorHex: optionalString,
+  selectedSize: optionalString,
   customSize: z.boolean({ error: "Custom size selection is invalid." }).default(false),
   preOrder: z.boolean().optional(),
-  customLength: z.string().trim().optional(),
-  customBust: z.string().trim().optional(),
-  customHip: z.string().trim().optional(),
-  customSleeve: z.string().trim().optional(),
-  customNote: z.string().trim().optional(),
+  customLength: optionalString,
+  customBust: optionalString,
+  customHip: optionalString,
+  customSleeve: optionalString,
+  customNote: optionalString,
 });
 
 export const checkoutOrderSchema = z.object({

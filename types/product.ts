@@ -40,6 +40,9 @@ export interface Product {
     materialSpecs?: MaterialSpecs;
     enablePreOrders?: boolean;
     enableCustomSizes?: boolean;
+    isNewArrival?: boolean;
+    showLowStock?: boolean;
+    manualStockCount?: number;
     isVisible?: boolean;
     clickomProductId?: number;
     stockCount?: number;

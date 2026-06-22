@@ -1,5 +1,8 @@
 export interface PublicSiteSettings {
   whatsappNumber?: string;
+  announcementEnabled?: boolean;
+  announcementText?: string;
+  announcementHref?: string;
   bankName?: string;
   bankAccountName?: string;
   bankAccountNumber?: string;
@@ -12,4 +15,3 @@ export interface PublicSiteSettings {
   shippingExtraFeePerKg: number;
   shippingRoundingGraceGrams: number;
 }
-

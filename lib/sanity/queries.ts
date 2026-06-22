@@ -23,6 +23,9 @@ const productProjection = `
   "sizes": array::unique(variations[].subVariations[].size),
   enablePreOrders,
   enableCustomSizes,
+  isNewArrival,
+  showLowStock,
+  manualStockCount,
   isVisible,
   clickomProductId,
   variations[]{
