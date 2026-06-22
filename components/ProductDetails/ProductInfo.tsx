@@ -7,14 +7,20 @@ import useCartStore from "@/store";
 import { Heart, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { isStoreLocatorActive } from "@/utils/featureFlags";
+import { DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
+import { PublicSiteSettings } from "@/types/siteSettings";
 
 interface ProductInfoProps {
     product: Product;
 }
 
 export const ProductInfo = ({ product }: ProductInfoProps) => {
-    const displayColors = product.colors && product.colors.length > 0 ? product.colors : ["#8B8378"];
-    const displaySizes = product.sizes && product.sizes.length > 0 ? product.sizes : ["54", "56", "58"];
+    const displayVariations = useMemo(
+        () => product.variations?.filter((variation) => variation.subVariations?.length) || [],
+        [product.variations],
+    );
+    const firstVariation = displayVariations[0];
+    const firstSize = firstVariation?.subVariations?.[0]?.size || "";
     const materialProperties = product.materialSpecs?.properties || [];
     const hasMaterialSpecs = Boolean(
         product.materialSpecs?.macroImage ||
@@ -22,15 +28,16 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         product.materialSpecs?.gsm ||
         materialProperties.length > 0
     );
-    const [selectedColor, setSelectedColor] = useState(displayColors[0]);
-    const [selectedSize, setSelectedSize] = useState(displaySizes[0]);
+    const [selectedVariationName, setSelectedVariationName] = useState(firstVariation?.name || "");
+    const [selectedSize, setSelectedSize] = useState(firstSize);
     const [showCustomModal, setShowCustomModal] = useState(false);
-    const [customMeasurements, setCustomMeasurements] = useState({ length: "", bustHip: "", sleeve: "" });
+    const [customMeasurements, setCustomMeasurements] = useState({ length: "", bust: "", hip: "", sleeve: "" });
     const [isCustomSize, setIsCustomSize] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
     const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
     const [showStoreLocatorModal, setShowStoreLocatorModal] = useState(false);
+    const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
     
     const { addItem, toggleWishlist, wishlistItems, setBuyNowItem } = useCartStore();
     const isWishlisted = wishlistItems.some(item => item._id === product._id);
@@ -40,49 +47,100 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         setOpenAccordion(openAccordion === id ? null : id);
     };
 
+    const selectedVariation = useMemo(() => {
+        return displayVariations.find((variation) => variation.name === selectedVariationName) || displayVariations[0];
+    }, [displayVariations, selectedVariationName]);
+
+    const displaySizes = selectedVariation?.subVariations?.map((subVariation) => subVariation.size).filter(Boolean) || [];
+
     const selectedSubVariation = useMemo(() => {
-        const selectedVariation = product.variations?.find((variation) => variation.colorHex === selectedColor) || product.variations?.[0];
         return selectedVariation?.subVariations?.find((subVariation) => subVariation.size === selectedSize);
-    }, [product.variations, selectedColor, selectedSize]);
+    }, [selectedVariation, selectedSize]);
+    const isSelectedOutOfStock = selectedSubVariation?.clickomVariationId
+        ? stockByVariationId[selectedSubVariation.clickomVariationId] === false
+        : false;
+    const canOrderSelectedVariation = Boolean(selectedSubVariation && (!isSelectedOutOfStock || product.enablePreOrders || isCustomSize));
+
+    useEffect(() => {
+        if (!selectedVariation) {
+            setSelectedVariationName("");
+            setSelectedSize("");
+            return;
+        }
+
+        if (selectedVariation.name !== selectedVariationName) {
+            setSelectedVariationName(selectedVariation.name);
+        }
+
+        if (!selectedVariation.subVariations?.some((subVariation) => subVariation.size === selectedSize)) {
+            setSelectedSize(selectedVariation.subVariations?.[0]?.size || "");
+        }
+    }, [selectedSize, selectedVariation, selectedVariationName]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadSiteSettings() {
+            const response = await fetch("/api/site-settings", { cache: "no-store" });
+            const data = (await response.json().catch(() => null)) as Partial<PublicSiteSettings> | null;
+            if (isMounted && response.ok) {
+                setSiteSettings(normalizeSiteSettings(data));
+            }
+        }
+
+        void loadSiteSettings();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     useEffect(() => {
         const subVariations = product.variations?.flatMap((variation) => variation.subVariations || []) || [];
+        const variationIds = Array.from(
+            new Set(
+                subVariations
+                    .map((subVariation) => subVariation.clickomVariationId)
+                    .filter((variationId): variationId is number => Number.isFinite(variationId) && variationId > 0),
+            ),
+        );
 
-        subVariations.forEach((subVariation) => {
-            fetch(`/api/stocks/${subVariation.clickomVariationId}`)
-                .then((response) => response.json())
-                .then((data: { inStock?: boolean }) => {
-                    setStockByVariationId((current) => ({
-                        ...current,
-                        [subVariation.clickomVariationId]: data.inStock !== false,
-                    }));
-                })
-                .catch(() => {
-                    setStockByVariationId((current) => ({
-                        ...current,
-                        [subVariation.clickomVariationId]: true,
-                    }));
-                });
-        });
+        if (variationIds.length === 0) return;
+
+        fetch("/api/stocks", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ variationIds }),
+        })
+            .then((response) => response.json())
+            .then((data: { stocks?: Array<{ variationId: string | number; inStock?: boolean }> }) => {
+                const nextStockByVariationId = Object.fromEntries(
+                    (data.stocks || []).map((stock) => [Number(stock.variationId), stock.inStock === true]),
+                );
+                setStockByVariationId(nextStockByVariationId);
+            })
+            .catch(() => {
+                setStockByVariationId(Object.fromEntries(variationIds.map((variationId) => [variationId, false])));
+            });
     }, [product.variations]);
 
     const getCustomNote = () => {
         if (!isCustomSize) return undefined;
-        return `Custom — Length: ${customMeasurements.length}", Bust & Hip: ${customMeasurements.bustHip}", Sleeve: ${customMeasurements.sleeve}"`;
+        return `Custom — Length: ${customMeasurements.length}", Bust: ${customMeasurements.bust}", Hip: ${customMeasurements.hip}", Sleeve: ${customMeasurements.sleeve}"`;
     };
 
     const handleAddToBag = () => {
-        if (!selectedSubVariation) return;
+        if (!canOrderSelectedVariation) return;
 
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
         const basePrice = product.salePrice || product.price;
-        const finalPrice = isCustomSize ? basePrice + 1500 : basePrice;
+        const finalPrice = isCustomSize ? basePrice + siteSettings.customSizeCharge : basePrice;
         const originalPrice = product.salePrice ? product.price : undefined;
-        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 1500 : originalPrice;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + siteSettings.customSizeCharge : originalPrice;
         
         addItem({
-            _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
+            _id: `${product._id}-${selectedVariation?.name || ""}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
@@ -90,10 +148,17 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedColor,
+            color: selectedVariation?.colorHex || selectedVariation?.name,
+            colorName: selectedVariation?.name,
+            colorHex: selectedVariation?.colorHex,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
             customSize: isCustomSize,
+            preOrder: product.enablePreOrders || isCustomSize,
+            customLength: isCustomSize ? customMeasurements.length : undefined,
+            customBust: isCustomSize ? customMeasurements.bust : undefined,
+            customHip: isCustomSize ? customMeasurements.hip : undefined,
+            customSleeve: isCustomSize ? customMeasurements.sleeve : undefined,
             customNote: customNote
         });
         setIsAdded(true);
@@ -111,17 +176,17 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     };
 
     const handleBuyNow = () => {
-        if (!selectedSubVariation) return;
+        if (!canOrderSelectedVariation) return;
 
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
         const basePrice = product.salePrice || product.price;
-        const finalPrice = isCustomSize ? basePrice + 1500 : basePrice;
+        const finalPrice = isCustomSize ? basePrice + siteSettings.customSizeCharge : basePrice;
         const originalPrice = product.salePrice ? product.price : undefined;
-        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + 1500 : originalPrice;
+        const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + siteSettings.customSizeCharge : originalPrice;
 
         setBuyNowItem({
-            _id: `${product._id}-${selectedColor}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
+            _id: `${product._id}-${selectedVariation?.name || ""}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
@@ -129,10 +194,17 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedColor,
+            color: selectedVariation?.colorHex || selectedVariation?.name,
+            colorName: selectedVariation?.name,
+            colorHex: selectedVariation?.colorHex,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
             customSize: isCustomSize,
+            preOrder: product.enablePreOrders || isCustomSize,
+            customLength: isCustomSize ? customMeasurements.length : undefined,
+            customBust: isCustomSize ? customMeasurements.bust : undefined,
+            customHip: isCustomSize ? customMeasurements.hip : undefined,
+            customSleeve: isCustomSize ? customMeasurements.sleeve : undefined,
             customNote: customNote
         });
         router.push("/checkout?buyNow=true");
@@ -206,7 +278,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
             {/* Collection Info */}
             <div className="mt-1 space-y-2">
-                <h2 className="text-[11px] font-bold uppercase tracking-wider">Woman Collection</h2>
+                
                 
                 <div className="space-y-0.5">
                     <p className="text-[10px] text-black tracking-wide font-bold">
@@ -234,19 +306,28 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
                     <div className="flex gap-2 pt-3.5">
-                        {displayColors.map((c) => {
-                            const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(c);
+                        {displayVariations.map((variation) => {
+                            const colorValue = variation.colorHex || variation.name;
+                            const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(colorValue);
+                            const isSelected = selectedVariation?.name === variation.name;
                             return (
                                 <button
-                                    key={c}
-                                    onClick={() => setSelectedColor(c)}
+                                    key={variation.name}
+                                    onClick={() => {
+                                        setSelectedVariationName(variation.name);
+                                        setSelectedSize(variation.subVariations?.[0]?.size || "");
+                                        setIsCustomSize(false);
+                                    }}
                                     disabled={isOutOfStock}
-                                    className={`w-7 h-7 rounded-full border border-gray-200 transition-all duration-300 relative overflow-hidden ${
-                                        selectedColor === c && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
+                                    className={`${variation.colorHex ? "w-7 h-7 rounded-full" : "min-w-7 h-7 px-2"} border border-gray-200 transition-all duration-300 relative overflow-hidden ${
+                                        isSelected && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
                                     } ${isOutOfStock ? "opacity-30 cursor-not-allowed grayscale" : "cursor-pointer"}`}
-                                    style={{ backgroundColor: c }}
+                                    style={variation.colorHex ? { backgroundColor: variation.colorHex } : undefined}
                                     title={isOutOfStock ? "Out of Stock" : undefined}
                                 >
+                                    {!variation.colorHex && (
+                                        <span className="text-[9px] font-bold uppercase tracking-widest">{variation.name}</span>
+                                    )}
                                     {isOutOfStock && (
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                             <div className="absolute w-[120%] h-[1px] bg-white/80 rotate-45" />
@@ -264,17 +345,17 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Size</label>
                     <div className="flex gap-2 items-end">
                         {displaySizes.map((s) => {
-                            const variation = product.variations
-                                ?.find((item) => item.colorHex === selectedColor || !selectedColor)
-                                ?.subVariations?.find((subVariation) => subVariation.size === s);
-                            const isMissingClickomVariation = !variation;
-                            const isOutOfStock = variation ? stockByVariationId[variation.clickomVariationId] === false : false;
+                            const subVariation = selectedVariation
+                                ?.subVariations?.find((item) => item.size === s);
+                            const isMissingClickomVariation = !subVariation?.clickomVariationId;
+                            const isOutOfStock = subVariation?.clickomVariationId ? stockByVariationId[subVariation.clickomVariationId] === false : false;
+                            const isBlockedByStock = isOutOfStock && !product.enablePreOrders;
                             return (
                                 <button
                                     key={s}
-                                    disabled={isMissingClickomVariation || (isOutOfStock && !isStoreLocatorActive)}
+                                    disabled={isMissingClickomVariation || (isBlockedByStock && !isStoreLocatorActive)}
                                     onClick={() => {
-                                        if (isOutOfStock && isStoreLocatorActive) {
+                                        if (isBlockedByStock && isStoreLocatorActive) {
                                             setShowStoreLocatorModal(true);
                                         } else {
                                             setSelectedSize(s);
@@ -282,14 +363,14 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                         }
                                     }}
                                     className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 relative overflow-hidden ${
-                                        selectedSize === s && !isCustomSize && !isOutOfStock && !isMissingClickomVariation
+                                        selectedSize === s && !isCustomSize && (!isOutOfStock || product.enablePreOrders) && !isMissingClickomVariation
                                         ? "bg-[#8B8378] text-white border-[#8B8378]" 
                                         : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
-                                    } ${isMissingClickomVariation || isOutOfStock ? `opacity-25 ${isStoreLocatorActive && !isMissingClickomVariation ? "cursor-pointer" : "cursor-not-allowed"}` : "cursor-pointer"}`}
-                                    title={isMissingClickomVariation ? "Unavailable" : isOutOfStock ? "Out of Stock" : undefined}
+                                    } ${isMissingClickomVariation || isBlockedByStock ? `opacity-25 ${isStoreLocatorActive && !isMissingClickomVariation ? "cursor-pointer" : "cursor-not-allowed"}` : "cursor-pointer"}`}
+                                    title={isMissingClickomVariation ? "Unavailable" : isOutOfStock && product.enablePreOrders ? "Available for pre-order" : isOutOfStock ? "Out of Stock" : undefined}
                                 >
                                     {s}
-                                    {(isMissingClickomVariation || isOutOfStock) && (
+                                    {(isMissingClickomVariation || isBlockedByStock) && (
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                             <div className="absolute w-[140%] h-[1px] bg-black/40 rotate-45" />
                                             <div className="absolute w-[140%] h-[1px] bg-black/40 -rotate-45" />
@@ -298,7 +379,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 </button>
                             );
                         })}
-                        <div className="relative flex flex-col items-center">
+                        {product.enableCustomSizes && <div className="relative flex flex-col items-center">
                             <span className="text-[6px] md:text-[7px] text-[#8B8378] font-bold uppercase tracking-wider mb-1.5 whitespace-nowrap animate-pulse">
                                 Pre-Order
                             </span>
@@ -313,7 +394,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             >
                                 +
                             </button>
-                        </div>
+                        </div>}
                     </div>
                 </div>
             </div>
@@ -325,7 +406,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             <div className="space-y-2">
                                 <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-black">Custom Size</h3>
                                 <p className="text-[10px] uppercase tracking-[0.18em] text-gray-500 font-bold leading-relaxed">
-                                    Custom sizes are made to order and include an additional LKR 1,500.
+                                    Custom sizes are made to order and include an additional LKR {siteSettings.customSizeCharge.toLocaleString()}.
                                 </p>
                             </div>
                             <button
@@ -347,9 +428,16 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
                             <input
-                                value={customMeasurements.bustHip}
-                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, bustHip: event.target.value }))}
-                                placeholder="Bust & Hip"
+                                value={customMeasurements.bust}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, bust: event.target.value }))}
+                                placeholder="Bust"
+                                required
+                                className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
+                            />
+                            <input
+                                value={customMeasurements.hip}
+                                onChange={(event) => setCustomMeasurements((current) => ({ ...current, hip: event.target.value }))}
+                                placeholder="Hip"
                                 required
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
@@ -431,9 +519,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             <div className="mt-5 flex items-center gap-4">
                 <button 
                     onClick={handleBuyNow}
-                    disabled={!selectedSubVariation}
+                    disabled={!canOrderSelectedVariation}
                     className={`w-44 h-11 text-white text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
-                        !selectedSubVariation 
+                        !canOrderSelectedVariation
                         ? "bg-gray-300 cursor-not-allowed" 
                         : "bg-[#8B8378] hover:bg-[#7a7166]"
                     }`}
@@ -442,9 +530,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 </button>
                 <button 
                     onClick={handleAddToBag}
-                    disabled={!selectedSubVariation}
+                    disabled={!canOrderSelectedVariation}
                     className={`w-44 h-11 bg-white border text-[11px] font-bold uppercase tracking-widest transition-all relative overflow-hidden cursor-pointer ${
-                        !selectedSubVariation
+                        !canOrderSelectedVariation
                         ? "border-gray-200 text-gray-300 cursor-not-allowed"
                         : "border-[#8B8378] text-[#8B8378] hover:bg-gray-50"
                     }`}
@@ -453,7 +541,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         ADDED TO BAG
                     </span>
                     <span className={`${isAdded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
-                        {!selectedSubVariation ? "Unavailable" : "Add to Bag"}
+                        {!canOrderSelectedVariation ? "Unavailable" : product.enablePreOrders || isCustomSize ? "Pre-Order" : "Add to Bag"}
                     </span>
                 </button>
                 <button className="w-11 h-11 border border-gray-300 hover:border-black transition-all flex items-center justify-center group cursor-pointer">
@@ -538,7 +626,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 </div>
 
                 {/* Size Guide */}
-                <div className="border-b border-gray-100">
+                {product.sizeGuideImage && <div className="border-b border-gray-100">
                     <button 
                         onClick={() => toggleAccordion('measurements')}
                         className="w-full py-3.5 flex items-center justify-between group"
@@ -549,21 +637,18 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                     </button>
                     <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'measurements' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
                         <div className="overflow-hidden">
-                            <div className="space-y-2">
-                                <p className="text-[10px] text-gray-600 leading-relaxed font-bold uppercase">Measurements (inches)</p>
-                                <div className="grid grid-cols-4 gap-2 text-[10px] text-gray-600">
-                                    <div className="font-bold">Size</div>
-                                    <div className="font-bold">Length</div>
-                                    <div className="font-bold">Sleeve</div>
-                                    <div className="font-bold">Shoulder</div>
-                                    <div>54</div><div>54"</div><div>27"</div><div>16"</div>
-                                    <div>56</div><div>56"</div><div>28"</div><div>16.5"</div>
-                                    <div>58</div><div>58"</div><div>29"</div><div>17"</div>
-                                </div>
+                            <div className="relative w-full aspect-[4/3] bg-gray-50 border border-gray-100">
+                                <Image
+                                    src={product.sizeGuideImage}
+                                    alt={`Size guide for ${product.title}`}
+                                    fill
+                                    className="object-contain"
+                                    sizes="(max-width: 768px) 100vw, 420px"
+                                />
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>}
             </div>
         </div>
     );

@@ -6,7 +6,7 @@ const whatsappHref = (message: string) =>
   `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
 export const siteLinks: SiteLinks = {
-  contactPhone: "+94 777 828 836",
+  contactPhone: "+94 77 782 8836",
   social: [
     {
       label: "Instagram",

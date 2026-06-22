@@ -36,6 +36,10 @@ const ALLOWED_PAYMENT_SLIP_TYPES = new Set(["image/jpeg", "image/png", "image/we
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
 
+function formatCartItemSize(item: { size?: string; customSize?: boolean; customNote?: string }) {
+  return item.customSize && item.customNote ? item.customNote : item.size;
+}
+
 interface CheckoutOrderResponse {
   orderNumber?: string;
   error?: string;
@@ -81,9 +85,15 @@ function CheckoutContent() {
       productId: item.productId || item._id.split("-")[0],
       clickomVariationId: item.clickomVariationId || 0,
       quantity: item.quantity,
-      selectedColor: item.color,
+      selectedColor: item.colorName || item.color,
+      selectedColorHex: item.colorHex,
       selectedSize: item.size,
       customSize: item.customSize || item.size === "Custom",
+      preOrder: item.preOrder,
+      customLength: item.customLength,
+      customBust: item.customBust,
+      customHip: item.customHip,
+      customSleeve: item.customSleeve,
       customNote: item.customNote,
     })),
   };
@@ -365,7 +375,7 @@ function CheckoutContent() {
                 <div className="flex-1">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest">{item.title}</h3>
                   <p className="text-[9px] uppercase tracking-widest text-gray-400 mt-1">
-                    {item.size} {item.customSize ? `(+ LKR ${siteSettings.customSizeCharge.toLocaleString()})` : ""}
+                    {formatCartItemSize(item)} {item.customSize ? `(+ LKR ${siteSettings.customSizeCharge.toLocaleString()})` : ""}
                   </p>
                   <div className="flex items-center gap-3 mt-3">
                     <button type="button" onClick={() => {

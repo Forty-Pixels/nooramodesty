@@ -24,8 +24,14 @@ const orderItemInputSchema = z.object({
   clickomVariationId: z.coerce.number({ error: "Please choose a valid size for every item." }).int({ error: "Please choose a valid size for every item." }).positive({ error: "Please choose a valid size for every item." }),
   quantity: z.coerce.number({ error: "Item quantity is required." }).int({ error: "Item quantity must be a whole number." }).min(1, { error: "Item quantity must be at least 1." }).max(20, { error: "Item quantity cannot be more than 20." }),
   selectedColor: z.string().trim().optional(),
+  selectedColorHex: z.string().trim().optional(),
   selectedSize: z.string().trim().optional(),
   customSize: z.boolean({ error: "Custom size selection is invalid." }).default(false),
+  preOrder: z.boolean().optional(),
+  customLength: z.string().trim().optional(),
+  customBust: z.string().trim().optional(),
+  customHip: z.string().trim().optional(),
+  customSleeve: z.string().trim().optional(),
   customNote: z.string().trim().optional(),
 });
 
@@ -65,6 +71,7 @@ interface ProductForOrder {
   salePrice?: number;
   isVisible?: boolean;
   clickomProductId?: number;
+  enablePreOrders?: boolean;
   variations?: Array<{
     name: string;
     colorHex?: string;
@@ -94,6 +101,7 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
       salePrice,
       isVisible,
       clickomProductId,
+      enablePreOrders,
       variations[]{
         name,
         colorHex,
@@ -106,6 +114,21 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
     { ids: productIds },
     { next: { revalidate: 0 } },
   );
+}
+
+function formatCustomSizeLabel(input: OrderItemInput): string {
+  if (!input.customSize) {
+    return input.selectedSize || "";
+  }
+
+  const measurements = [
+    input.customLength ? `Length ${input.customLength}` : "",
+    input.customBust ? `Bust ${input.customBust}` : "",
+    input.customHip ? `Hip ${input.customHip}` : "",
+    input.customSleeve ? `Sleeve ${input.customSleeve}` : "",
+  ].filter(Boolean);
+
+  return measurements.length > 0 ? `Custom (${measurements.join(", ")})` : "Custom";
 }
 
 function validateItem(
@@ -137,7 +160,8 @@ function validateItem(
     title: product.title,
     slug: product.slug,
     image: product.mainImage,
-    selectedSize: input.selectedSize || matchingSubVariation?.size,
+    selectedSize: input.customSize ? formatCustomSizeLabel(input) : input.selectedSize || matchingSubVariation?.size,
+    preOrder: input.preOrder || product.enablePreOrders || input.customSize,
     clickomProductId: product.clickomProductId,
     unitPrice: unitPrice + customCharge,
   };

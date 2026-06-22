@@ -21,8 +21,14 @@ export interface OrderItemInput {
   clickomVariationId: number;
   quantity: number;
   selectedColor?: string;
+  selectedColorHex?: string;
   selectedSize?: string;
   customSize: boolean;
+  preOrder?: boolean;
+  customLength?: string;
+  customBust?: string;
+  customHip?: string;
+  customSleeve?: string;
   customNote?: string;
 }
 

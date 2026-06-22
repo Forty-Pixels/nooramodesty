@@ -22,6 +22,7 @@ export interface ClickomSalePayload {
   customer_country: string;
   discount_type?: "fixed" | "percentage";
   discount_amount?: number;
+  additional_notes?: string;
   status?: ClickomStatusCode;
   payment_status?: ClickomPaymentStatus;
   products: Array<{
@@ -30,7 +31,9 @@ export interface ClickomSalePayload {
     quantity: number;
     unit_price: number;
     unit_price_inc_tax: number;
-    enable_stock: 0;
+    enable_stock: 0 | 1;
+    note?: string;
+    sell_line_note?: string;
   }>;
   payment: Array<{
     amount: number;

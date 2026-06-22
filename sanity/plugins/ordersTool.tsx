@@ -33,6 +33,28 @@ function isImageUrl(url: string) {
   return /\.(png|jpe?g|webp|gif)(\?|$)/i.test(url);
 }
 
+function formatItemSummary(item: SanityOrder["items"][number]) {
+  const details = [
+    item.selectedColor ? `Colour: ${item.selectedColor}` : "",
+    item.selectedColorHex ? `Hex: ${item.selectedColorHex}` : "",
+    item.selectedSize ? `Size: ${item.selectedSize}` : "",
+    item.preOrder ? "Pre-order" : "",
+  ].filter(Boolean);
+
+  return `${item.title} x ${item.quantity}${details.length ? ` (${details.join(", ")})` : ""}`;
+}
+
+function formatCustomMeasurements(item: SanityOrder["items"][number]) {
+  if (!item.customSize) return "";
+
+  return [
+    item.customLength ? `Length ${item.customLength}` : "",
+    item.customBust ? `Bust ${item.customBust}` : "",
+    item.customHip ? `Hip ${item.customHip}` : "",
+    item.customSleeve ? `Sleeve ${item.customSleeve}` : "",
+  ].filter(Boolean).join(", ");
+}
+
 function OrdersTool() {
   const client = useClient({ apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-03-01" });
   const [orders, setOrders] = useState<SanityOrder[]>([]);
@@ -134,7 +156,17 @@ function OrdersTool() {
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>{order.paymentMethod}</td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
-                  {(order.items || []).map((item) => `${item.title} x ${item.quantity}`).join(", ")}
+                  {(order.items || []).map((item) => (
+                    <div key={`${item.productId}-${item.clickomVariationId}-${item.selectedSize || ""}`} style={{ marginBottom: 6 }}>
+                      {formatItemSummary(item)}
+                      {formatCustomMeasurements(item) && (
+                        <>
+                          <br />
+                          <small>{formatCustomMeasurements(item)}</small>
+                        </>
+                      )}
+                    </div>
+                  ))}
                   <br />
                   <strong>LKR {order.totalAmount?.toLocaleString()}</strong>
                 </td>

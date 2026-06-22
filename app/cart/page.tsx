@@ -11,6 +11,10 @@ import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } 
 import { PublicSiteSettings } from "@/types/siteSettings";
 import { isStoreLocatorActive } from "@/utils/featureFlags";
 
+function formatCartItemSize(item: { size?: string; customSize?: boolean; customNote?: string }) {
+    return item.customSize && item.customNote ? item.customNote : item.size;
+}
+
 export default function CartPage() {
     const { items, removeItem, updateQuantity } = useCartStore();
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
@@ -105,15 +109,16 @@ export default function CartPage() {
                                                             <span>Color:</span>
                                                             <div 
                                                                 className="w-2.5 h-2.5 rounded-full border border-black/10" 
-                                                                style={{ backgroundColor: item.color }}
+                                                                style={{ backgroundColor: item.colorHex || item.color }}
                                                             />
+                                                            {item.colorName && <span className="text-black font-bold">{item.colorName}</span>}
                                                         </div>
                                                     )}
                                                     {item.size && (
                                                         <div className="flex items-center gap-2">
                                                             <span>Size:</span>
                                                             <span className="text-black font-bold">
-                                                                {item.size} {item.customSize && "(+ LKR 1,500)"}
+                                                                {formatCartItemSize(item)} {item.customSize && `(+ LKR ${siteSettings.customSizeCharge.toLocaleString()})`}
                                                             </span>
                                                         </div>
                                                     )}

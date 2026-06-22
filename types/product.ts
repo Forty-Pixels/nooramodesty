@@ -24,6 +24,7 @@ export interface Product {
     slug: string;
     mainImage: string;
     images?: string[];
+    sizeGuideImage?: string;
     price: number;
     salePrice?: number;
     createdAt?: string;

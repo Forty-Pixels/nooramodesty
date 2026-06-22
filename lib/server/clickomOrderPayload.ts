@@ -13,8 +13,37 @@ export function buildClickomCustomOrderId(orderNumber: string) {
   return 100000000 + (Date.now() % 900000000);
 }
 
+function buildOrderItemNote(item: SanityOrder["items"][number]) {
+  const lines = [
+    item.selectedColor ? `Colour: ${item.selectedColor}` : "",
+    item.selectedColorHex ? `Colour hex: ${item.selectedColorHex}` : "",
+    item.selectedSize ? `Size: ${item.selectedSize}` : "",
+  ];
+
+  if (item.customSize) {
+    lines.push("Custom size: Yes");
+    if (item.customLength) lines.push(`Length: ${item.customLength}`);
+    if (item.customBust) lines.push(`Bust: ${item.customBust}`);
+    if (item.customHip) lines.push(`Hip: ${item.customHip}`);
+    if (item.customSleeve) lines.push(`Sleeve: ${item.customSleeve}`);
+    if (item.customNote) lines.push(`Note: ${item.customNote}`);
+  }
+
+  if (item.preOrder) {
+    lines.push("Pre-order: Yes");
+  }
+
+  return lines.filter(Boolean).join(" | ");
+}
+
 export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStatusCode): ClickomSalePayload {
   const clickomCustomOrderId = order.clickomCustomOrderId || buildClickomCustomOrderId(order.orderNumber);
+  const itemNotes = order.items
+    .map((item) => {
+      const itemNote = buildOrderItemNote(item);
+      return itemNote ? `${item.title}: ${itemNote}` : "";
+    })
+    .filter(Boolean);
 
   return {
     invoice_no: order.orderNumber,
@@ -29,16 +58,23 @@ export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStat
     customer_country: "Sri Lanka",
     discount_type: "fixed",
     discount_amount: order.discountAmount || 0,
+    additional_notes: itemNotes.join("\n"),
     status,
     payment_status: order.paymentMethod === "cod" ? "due" : "paid",
-    products: order.items.map((item) => ({
-      product_id: item.clickomProductId,
-      variation_id: item.clickomVariationId,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      unit_price_inc_tax: item.unitPrice,
-      enable_stock: 0,
-    })),
+    products: order.items.map((item) => {
+      const itemNote = buildOrderItemNote(item);
+
+      return {
+        product_id: item.clickomProductId,
+        variation_id: item.clickomVariationId,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        unit_price_inc_tax: item.unitPrice,
+        enable_stock: item.preOrder || item.customSize ? 0 as const : 1 as const,
+        note: itemNote,
+        sell_line_note: itemNote,
+      };
+    }),
     payment: [
       {
         amount: order.paymentMethod === "cod" ? 0 : order.totalAmount,
