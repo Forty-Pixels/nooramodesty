@@ -9,7 +9,9 @@ export const runtime = "nodejs";
 
 const clickomStatusByOrderStatus: Record<OrderStatus, ClickomStatusCode> = {
   pending: "pd",
+  confirmed: "pc",
   processing: "pc",
+  dispatched: "sp",
   shipped: "sp",
   completed: "cp",
   cancelled: "cn",
@@ -48,7 +50,10 @@ export async function POST(request: Request) {
         clickomTransactionId,
         clickomCustomOrderId,
         totalAmount,
-        discountAmount
+        discountAmount,
+        paymentStatus,
+        paidAmount,
+        balanceAmount
       }`,
       { orderId },
     );

@@ -1,17 +1,39 @@
 import { validateAdminSecret } from "@/lib/server/adminAuth";
-import { createClickomSale } from "@/lib/server/clickom";
-import { buildClickomCustomOrderId, buildClickomSalePayload } from "@/lib/server/clickomOrderPayload";
+import { createClickomOmsWebOrder } from "@/lib/server/clickomOmsWeb";
 import { requireSanityWriteClient } from "@/lib/server/sanity";
 import { SanityOrder } from "@/types/sanityOrder";
+import { PaymentStatus } from "@/types/order";
 
 export const runtime = "nodejs";
+
+const paymentStatuses = new Set<PaymentStatus>(["due", "partial", "paid"]);
+
+function resolvePayment(status: unknown, paidAmount: unknown, order: SanityOrder) {
+  const paymentStatus = paymentStatuses.has(status as PaymentStatus)
+    ? status as PaymentStatus
+    : order.paymentStatus || "due";
+  const totalAmount = Math.max(0, Number(order.totalAmount || 0));
+  const inputPaidAmount = Math.max(0, Number(paidAmount ?? order.paidAmount ?? 0));
+  const resolvedPaidAmount =
+    paymentStatus === "paid"
+      ? totalAmount
+      : paymentStatus === "due"
+        ? 0
+        : inputPaidAmount;
+
+  return {
+    paymentStatus,
+    paidAmount: resolvedPaidAmount,
+    balanceAmount: Math.max(0, totalAmount - resolvedPaidAmount),
+  };
+}
 
 export async function POST(request: Request) {
   const authError = validateAdminSecret(request.headers);
   if (authError) return authError;
 
   try {
-    const { orderId } = await request.json();
+    const { orderId, paymentStatus, paidAmount } = await request.json();
 
     if (typeof orderId !== "string" || !orderId) {
       return Response.json({ error: "Order ID is required." }, { status: 400 });
@@ -31,7 +53,10 @@ export async function POST(request: Request) {
         clickomTransactionId,
         clickomCustomOrderId,
         totalAmount,
-        discountAmount
+        discountAmount,
+        paymentStatus,
+        paidAmount,
+        balanceAmount
       }`,
       { orderId },
     );
@@ -44,19 +69,29 @@ export async function POST(request: Request) {
       return Response.json({ error: "Order cannot be approved." }, { status: 409 });
     }
 
-    const clickomSale = await createClickomSale(buildClickomSalePayload(order));
+    const resolvedPayment = resolvePayment(paymentStatus, paidAmount, order);
+    const orderForClickom: SanityOrder = {
+      ...order,
+      paymentStatus: resolvedPayment.paymentStatus,
+      paidAmount: resolvedPayment.paidAmount,
+      balanceAmount: resolvedPayment.balanceAmount,
+    };
+    const clickomSale = await createClickomOmsWebOrder(orderForClickom);
     const approvedAt = new Date().toISOString();
-    const clickomCustomOrderId = order.clickomCustomOrderId || buildClickomCustomOrderId(order.orderNumber);
 
     await client
       .patch(order._id)
       .set({
-        clickomCustomOrderId,
+        clickomCustomOrderId: clickomSale.customOrderId,
         clickomSaleId: clickomSale.transactionId,
         clickomTransactionId: clickomSale.transactionId,
         clickomInvoiceNo: clickomSale.invoiceNo,
         adminStatus: "approved",
-        status: "processing",
+        status: "pending",
+        paymentStatus: resolvedPayment.paymentStatus,
+        paidAmount: resolvedPayment.paidAmount,
+        balanceAmount: resolvedPayment.balanceAmount,
+        paymentVerifiedAt: resolvedPayment.paymentStatus === "due" ? null : approvedAt,
         approvedAt,
       })
       .commit();
