@@ -42,10 +42,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
     const selectedSubVariation = useMemo(() => {
         const selectedVariation = product.variations?.find((variation) => variation.colorHex === selectedColor) || product.variations?.[0];
-        return selectedVariation?.subVariations?.find((subVariation) => subVariation.size === selectedSize) || {
-            size: selectedSize || displaySizes[0],
-            clickomVariationId: 1,
-        };
+        return selectedVariation?.subVariations?.find((subVariation) => subVariation.size === selectedSize);
     }, [product.variations, selectedColor, selectedSize]);
 
     useEffect(() => {
@@ -75,6 +72,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     };
 
     const handleAddToBag = () => {
+        if (!selectedSubVariation) return;
+
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
         const basePrice = product.salePrice || product.price;
@@ -112,6 +111,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     };
 
     const handleBuyNow = () => {
+        if (!selectedSubVariation) return;
+
         const customNote = getCustomNote();
         const size = isCustomSize ? "Custom" : selectedSize;
         const basePrice = product.salePrice || product.price;
@@ -266,11 +267,12 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             const variation = product.variations
                                 ?.find((item) => item.colorHex === selectedColor || !selectedColor)
                                 ?.subVariations?.find((subVariation) => subVariation.size === s);
+                            const isMissingClickomVariation = !variation;
                             const isOutOfStock = variation ? stockByVariationId[variation.clickomVariationId] === false : false;
                             return (
                                 <button
                                     key={s}
-                                    disabled={isOutOfStock && !isStoreLocatorActive}
+                                    disabled={isMissingClickomVariation || (isOutOfStock && !isStoreLocatorActive)}
                                     onClick={() => {
                                         if (isOutOfStock && isStoreLocatorActive) {
                                             setShowStoreLocatorModal(true);
@@ -280,14 +282,14 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                         }
                                     }}
                                     className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 relative overflow-hidden ${
-                                        selectedSize === s && !isCustomSize && !isOutOfStock
+                                        selectedSize === s && !isCustomSize && !isOutOfStock && !isMissingClickomVariation
                                         ? "bg-[#8B8378] text-white border-[#8B8378]" 
                                         : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
-                                    } ${isOutOfStock ? `opacity-25 ${isStoreLocatorActive ? "cursor-pointer" : "cursor-not-allowed"}` : "cursor-pointer"}`}
-                                    title={isOutOfStock ? "Out of Stock" : undefined}
+                                    } ${isMissingClickomVariation || isOutOfStock ? `opacity-25 ${isStoreLocatorActive && !isMissingClickomVariation ? "cursor-pointer" : "cursor-not-allowed"}` : "cursor-pointer"}`}
+                                    title={isMissingClickomVariation ? "Unavailable" : isOutOfStock ? "Out of Stock" : undefined}
                                 >
                                     {s}
-                                    {isOutOfStock && (
+                                    {(isMissingClickomVariation || isOutOfStock) && (
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                             <div className="absolute w-[140%] h-[1px] bg-black/40 rotate-45" />
                                             <div className="absolute w-[140%] h-[1px] bg-black/40 -rotate-45" />
@@ -566,4 +568,3 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         </div>
     );
 };
-

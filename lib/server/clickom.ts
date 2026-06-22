@@ -7,6 +7,7 @@ const TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 export type ClickomStatusCode = "pd" | "pc" | "oh" | "cp" | "cn" | "rf" | "fl" | "sp";
+export type ClickomPaymentStatus = "paid" | "partial" | "due";
 
 export interface ClickomSalePayload {
   invoice_no: string;
@@ -22,6 +23,7 @@ export interface ClickomSalePayload {
   discount_type?: "fixed" | "percentage";
   discount_amount?: number;
   status?: ClickomStatusCode;
+  payment_status?: ClickomPaymentStatus;
   products: Array<{
     product_id: number;
     variation_id: number;

@@ -122,6 +122,10 @@ function validateItem(input: OrderItemInput, product: ProductForOrder): OrderIte
     throw new Error(`${product.title} has an invalid size selection.`);
   }
 
+  if (!product.clickomProductId) {
+    throw new Error(`${product.title} is missing a Clickom product ID.`);
+  }
+
   const unitPrice = product.salePrice || product.price;
   const customCharge = input.customSize ? CUSTOM_SIZE_CHARGE : 0;
 
@@ -131,7 +135,7 @@ function validateItem(input: OrderItemInput, product: ProductForOrder): OrderIte
     slug: product.slug,
     image: product.mainImage,
     selectedSize: input.selectedSize || matchingSubVariation?.size,
-    clickomProductId: product.clickomProductId || 1,
+    clickomProductId: product.clickomProductId,
     unitPrice: unitPrice + customCharge,
   };
 }

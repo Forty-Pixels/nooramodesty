@@ -30,6 +30,7 @@ export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStat
     discount_type: "fixed",
     discount_amount: order.discountAmount || 0,
     status,
+    payment_status: order.paymentMethod === "cod" ? "due" : "paid",
     products: order.items.map((item) => ({
       product_id: item.clickomProductId,
       variation_id: item.clickomVariationId,
@@ -40,7 +41,7 @@ export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStat
     })),
     payment: [
       {
-        amount: order.totalAmount,
+        amount: order.paymentMethod === "cod" ? 0 : order.totalAmount,
         method: order.paymentMethod === "cod" ? "cash" : "bank_transfer",
         note: order.paymentMethod === "cod" ? "COD order via Noora Modesty" : "Bank transfer order via Noora Modesty",
       },
