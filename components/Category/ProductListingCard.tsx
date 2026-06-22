@@ -34,14 +34,19 @@ const ProductListingCard: React.FC<ProductListingCardProps> = ({ product }) => {
           {/* Badges Container (Sale & Low Stock only) */}
           {product.stockStatus !== "out-of-stock" && (
             <div className="absolute top-0 left-0 z-10 flex flex-col gap-0">
+              {product.isNewArrival && (
+                <div className="bg-black text-white text-[0.55rem] font-bold tracking-[0.2em] px-3 py-1.5 uppercase">
+                  New Arrival
+                </div>
+              )}
               {product.salePrice && (
                 <div className="bg-[#B21E1E] text-white text-[0.55rem] font-bold tracking-[0.2em] px-3 py-1.5 uppercase">
                   {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
                 </div>
               )}
-              {product.stockStatus === "low-stock" && (
+              {(product.showLowStock || product.stockStatus === "low-stock") && (
                 <div className="bg-[#8B8378] text-white text-[0.55rem] font-bold tracking-[0.2em] px-3 py-1.5 uppercase">
-                  Low Stock
+                  {product.manualStockCount ? `Only ${product.manualStockCount} Left` : "Low Stock"}
                 </div>
               )}
             </div>

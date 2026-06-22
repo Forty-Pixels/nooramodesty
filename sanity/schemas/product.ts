@@ -148,6 +148,27 @@ export const product = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "isNewArrival",
+      title: "New arrival badge",
+      type: "boolean",
+      description: "Show a New Arrival badge on product cards and product detail.",
+      initialValue: false,
+    }),
+    defineField({
+      name: "showLowStock",
+      title: "Show manual low stock badge",
+      type: "boolean",
+      description: "Show a low-stock message using the manual count below. This is display-only and does not replace Clickom stock.",
+      initialValue: false,
+    }),
+    defineField({
+      name: "manualStockCount",
+      title: "Manual low stock count",
+      type: "number",
+      description: "Display count for the low-stock badge, for example 3.",
+      validation: (rule) => rule.min(0),
+    }),
+    defineField({
       name: "isVisible",
       title: "Visible on storefront",
       type: "boolean",
