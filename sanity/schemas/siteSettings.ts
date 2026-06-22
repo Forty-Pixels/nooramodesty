@@ -6,6 +6,25 @@ export const siteSettings = defineType({
   type: "document",
   fields: [
     defineField({ name: "whatsappNumber", title: "WhatsApp number", type: "string" }),
+    defineField({
+      name: "announcementEnabled",
+      title: "Show announcement bar",
+      type: "boolean",
+      description: "Turns on the thin announcement message at the very top of the website.",
+      initialValue: false,
+    }),
+    defineField({
+      name: "announcementText",
+      title: "Announcement text",
+      type: "string",
+      description: "Short message shown in the top announcement bar.",
+    }),
+    defineField({
+      name: "announcementHref",
+      title: "Announcement link",
+      type: "string",
+      description: "Optional URL. Leave empty for plain text.",
+    }),
     defineField({ name: "bankName", title: "Bank name", type: "string" }),
     defineField({ name: "bankAccountName", title: "Bank account name", type: "string" }),
     defineField({ name: "bankAccountNumber", title: "Bank account number", type: "string" }),

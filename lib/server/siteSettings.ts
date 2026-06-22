@@ -6,6 +6,9 @@ import { PublicSiteSettings } from "@/types/siteSettings";
 
 const siteSettingsQuery = `*[_type == "siteSettings"][0]{
   whatsappNumber,
+  announcementEnabled,
+  announcementText,
+  announcementHref,
   bankName,
   bankAccountName,
   bankAccountNumber,
@@ -32,4 +35,3 @@ export async function fetchPublicSiteSettings(): Promise<PublicSiteSettings> {
 
   return normalizeSiteSettings(settings);
 }
-

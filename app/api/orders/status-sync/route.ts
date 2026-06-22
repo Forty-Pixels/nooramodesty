@@ -1,5 +1,5 @@
 import { validateAdminSecret } from "@/lib/server/adminAuth";
-import { getClickomSaleStatus } from "@/lib/server/clickom";
+import { getClickomSaleStatusDetails } from "@/lib/server/clickom";
 import { requireSanityWriteClient } from "@/lib/server/sanity";
 import { SanityOrder } from "@/types/sanityOrder";
 
@@ -10,8 +10,10 @@ const terminalStatuses = new Set(["completed", "cancelled"]);
 function normalizeClickomStatus(status: string) {
   const normalized = status.toLowerCase();
 
-  if (["completed", "complete", "delivered", "final", "cp"].includes(normalized)) return "completed";
-  if (["shipped", "dispatched", "sp"].includes(normalized)) return "shipped";
+  if (["completed", "complete", "delivered", "cp"].includes(normalized)) return "completed";
+  if (["shipped", "sp"].includes(normalized)) return "shipped";
+  if (["dispatched", "dispatch"].includes(normalized)) return "dispatched";
+  if (["confirmed", "final"].includes(normalized)) return "confirmed";
   if (["cancelled", "canceled", "cn", "failed", "fl", "refunded", "rf"].includes(normalized)) return "cancelled";
   if (["processing", "approved", "pc"].includes(normalized)) return "processing";
   if (["pending", "pd", "on hold", "on_hold", "oh"].includes(normalized)) return "pending";
@@ -41,8 +43,15 @@ export async function POST(request: Request) {
 
     for (const order of orders) {
       try {
-        const clickomStatus = await getClickomSaleStatus(String(order.clickomCustomOrderId));
-        await client.patch(order._id).set({ status: normalizeClickomStatus(clickomStatus) }).commit();
+        const clickomStatus = await getClickomSaleStatusDetails(String(order.clickomCustomOrderId));
+        const patch: Record<string, unknown> = {
+          status: normalizeClickomStatus(clickomStatus.orderStatus || clickomStatus.status),
+          clickomRawStatus: JSON.stringify(clickomStatus.raw),
+        };
+        if (clickomStatus.paymentStatus) patch.paymentStatus = clickomStatus.paymentStatus;
+        if (clickomStatus.waybillNumber) patch.waybillNumber = clickomStatus.waybillNumber;
+        if (clickomStatus.shippingStatus) patch.courierStatus = clickomStatus.shippingStatus;
+        await client.patch(order._id).set(patch).commit();
         synced += 1;
       } catch (error) {
         failures.push({

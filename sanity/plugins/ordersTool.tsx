@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { definePlugin, useClient } from "sanity";
 import { SanityOrder } from "@/types/sanityOrder";
-import { OrderStatus } from "@/types/order";
+import { PaymentStatus } from "@/types/order";
 
 const ordersQuery = `*[_type == "order" && adminStatus in $statuses] | order(placedAt desc){
   _id,
@@ -19,6 +19,11 @@ const ordersQuery = `*[_type == "order" && adminStatus in $statuses] | order(pla
   placedAt,
   approvedAt,
   totalAmount,
+  paymentStatus,
+  paidAmount,
+  balanceAmount,
+  waybillNumber,
+  courierStatus,
   "paymentSlipUrl": coalesce(paymentSlipUrl, paymentSlip.asset->url)
 }`;
 
@@ -55,13 +60,31 @@ function formatCustomMeasurements(item: SanityOrder["items"][number]) {
   ].filter(Boolean).join(", ");
 }
 
+function resolvePaymentDraft(order: SanityOrder, draft?: { paymentStatus: PaymentStatus; paidAmount: number }) {
+  const paymentStatus = draft?.paymentStatus || order.paymentStatus || "due";
+  const totalAmount = Math.max(0, Number(order.totalAmount || 0));
+  const inputPaidAmount = Math.max(0, Number(draft?.paidAmount ?? order.paidAmount ?? 0));
+  const paidAmount =
+    paymentStatus === "paid"
+      ? totalAmount
+      : paymentStatus === "due"
+        ? 0
+        : inputPaidAmount;
+
+  return {
+    paymentStatus,
+    paidAmount,
+    balanceAmount: Math.max(0, totalAmount - paidAmount),
+  };
+}
+
 function OrdersTool() {
   const client = useClient({ apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-03-01" });
   const [orders, setOrders] = useState<SanityOrder[]>([]);
   const [activeView, setActiveView] = useState<"pending_approval" | "approved" | "rejected">("pending_approval");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [draftStatusByOrderId, setDraftStatusByOrderId] = useState<Record<string, OrderStatus>>({});
+  const [draftPaymentByOrderId, setDraftPaymentByOrderId] = useState<Record<string, { paymentStatus: PaymentStatus; paidAmount: number }>>({});
 
   const loadOrders = useCallback(async () => {
     setIsLoading(true);
@@ -98,6 +121,27 @@ function OrdersTool() {
     }
 
     await loadOrders();
+  };
+
+  const savePayment = async (order: SanityOrder) => {
+    const draft = resolvePaymentDraft(order, draftPaymentByOrderId[order._id]);
+
+    await callAdminRoute("/api/orders/payment", {
+      orderId: order._id,
+      paymentStatus: draft.paymentStatus,
+      paidAmount: draft.paidAmount,
+      totalAmount: order.totalAmount,
+    });
+  };
+
+  const approveOrder = async (order: SanityOrder) => {
+    const draft = resolvePaymentDraft(order, draftPaymentByOrderId[order._id]);
+
+    await callAdminRoute("/api/orders/approve", {
+      orderId: order._id,
+      paymentStatus: draft.paymentStatus,
+      paidAmount: draft.paidAmount,
+    });
   };
 
   return (
@@ -148,13 +192,24 @@ function OrdersTool() {
           <tbody>
             {orders.map((order) => (
               <tr key={order._id}>
+                {(() => {
+                  const paymentDraft = resolvePaymentDraft(order, draftPaymentByOrderId[order._id]);
+
+                  return (
+                    <>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>{order.orderNumber}</td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   <strong>{order.customer?.fullName}</strong>
                   <br />
                   {order.customer?.mobile}
                 </td>
-                <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>{order.paymentMethod}</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
+                  {order.paymentMethod}
+                  <br />
+                  <small>{order.paymentStatus || "due"} / Paid LKR {(order.paidAmount || 0).toLocaleString()}</small>
+                  <br />
+                  <small>Balance LKR {(order.balanceAmount ?? order.totalAmount ?? 0).toLocaleString()}</small>
+                </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {(order.items || []).map((item) => (
                     <div key={`${item.productId}-${item.clickomVariationId}-${item.selectedSize || ""}`} style={{ marginBottom: 6 }}>
@@ -185,6 +240,18 @@ function OrdersTool() {
                       <small>Custom: {order.clickomCustomOrderId}</small>
                     </>
                   )}
+                  {order.waybillNumber && (
+                    <>
+                      <br />
+                      <small>Waybill: {order.waybillNumber}</small>
+                    </>
+                  )}
+                  {order.courierStatus && (
+                    <>
+                      <br />
+                      <small>Courier: {order.courierStatus}</small>
+                    </>
+                  )}
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {order.paymentSlipUrl && isImageUrl(order.paymentSlipUrl) ? (
@@ -199,35 +266,61 @@ function OrdersTool() {
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {order.adminStatus === "pending_approval" && (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => callAdminRoute("/api/orders/approve", { orderId: order._id })}>Approve</button>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <select
+                        value={(draftPaymentByOrderId[order._id]?.paymentStatus || order.paymentStatus || "due")}
+                        onChange={(event) => {
+                          const paymentStatus = event.currentTarget.value as PaymentStatus;
+                          const paidAmount =
+                            paymentStatus === "paid"
+                              ? order.totalAmount || 0
+                              : paymentStatus === "due"
+                                ? 0
+                                : draftPaymentByOrderId[order._id]?.paidAmount ?? order.paidAmount ?? 0;
+                          setDraftPaymentByOrderId((current) => ({
+                            ...current,
+                            [order._id]: {
+                              paymentStatus,
+                              paidAmount,
+                            },
+                          }));
+                        }}
+                      >
+                        {(["due", "partial", "paid"] as PaymentStatus[]).map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min={0}
+                        value={draftPaymentByOrderId[order._id]?.paidAmount ?? order.paidAmount ?? 0}
+                        onChange={(event) => {
+                          const paidAmount = Number(event.currentTarget.value || 0);
+                          setDraftPaymentByOrderId((current) => ({
+                            ...current,
+                            [order._id]: {
+                              paymentStatus: current[order._id]?.paymentStatus || order.paymentStatus || "due",
+                              paidAmount,
+                            },
+                          }));
+                        }}
+                        style={{ width: 100 }}
+                      />
+                      <small>Balance LKR {paymentDraft.balanceAmount.toLocaleString()}</small>
+                      <button onClick={() => savePayment(order)}>Save Payment</button>
+                      <button onClick={() => approveOrder(order)}>Approve</button>
                       <button onClick={() => callAdminRoute("/api/orders/reject", { orderId: order._id })}>Reject</button>
                     </div>
                   )}
                   {order.adminStatus === "approved" && (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <select
-                        value={draftStatusByOrderId[order._id] || order.status}
-                        onChange={(event) => {
-                          const status = event.currentTarget.value as OrderStatus;
-                          setDraftStatusByOrderId((current) => ({ ...current, [order._id]: status }));
-                        }}
-                      >
-                        {(["pending", "processing", "shipped", "completed", "cancelled"] as OrderStatus[]).map((status) => (
-                          <option key={status} value={status}>{status}</option>
-                        ))}
-                      </select>
-                      <button
-                        onClick={() => callAdminRoute("/api/orders/status", {
-                          orderId: order._id,
-                          status: draftStatusByOrderId[order._id] || order.status,
-                        })}
-                      >
-                        Push
-                      </button>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <small>{order.clickomSaleId ? "Synced to OMS Orders" : "Approved locally"}</small>
                     </div>
                   )}
                 </td>
+                    </>
+                  );
+                })()}
               </tr>
             ))}
           </tbody>

@@ -36,8 +36,21 @@ function buildOrderItemNote(item: SanityOrder["items"][number]) {
   return lines.filter(Boolean).join(" | ");
 }
 
-export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStatusCode): ClickomSalePayload {
+interface BuildClickomSalePayloadOptions {
+  seedTotalPayment?: boolean;
+}
+
+export function buildClickomSalePayload(
+  order: SanityOrder,
+  status?: ClickomStatusCode,
+  options: BuildClickomSalePayloadOptions = {},
+): ClickomSalePayload {
   const clickomCustomOrderId = order.clickomCustomOrderId || buildClickomCustomOrderId(order.orderNumber);
+  const paymentStatus = order.paymentStatus || "due";
+  const paidAmount = Math.max(0, order.paidAmount || 0);
+  const seedPaymentAmount = options.seedTotalPayment ? Math.max(0, order.totalAmount || 0) : 0;
+  const clickomPaymentAmount = Math.max(paidAmount, seedPaymentAmount);
+  const paymentMethod = paidAmount > 0 ? "bank_transfer" : "cash";
   const itemNotes = order.items
     .map((item) => {
       const itemNote = buildOrderItemNote(item);
@@ -45,7 +58,7 @@ export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStat
     })
     .filter(Boolean);
 
-  return {
+  const payload: ClickomSalePayload = {
     invoice_no: order.orderNumber,
     custom_order_id: clickomCustomOrderId,
     transaction_date: new Date().toISOString().slice(0, 10),
@@ -60,7 +73,7 @@ export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStat
     discount_amount: order.discountAmount || 0,
     additional_notes: itemNotes.join("\n"),
     status,
-    payment_status: order.paymentMethod === "cod" ? "due" : "paid",
+    payment_status: paymentStatus,
     products: order.items.map((item) => {
       const itemNote = buildOrderItemNote(item);
 
@@ -70,17 +83,24 @@ export function buildClickomSalePayload(order: SanityOrder, status?: ClickomStat
         quantity: item.quantity,
         unit_price: item.unitPrice,
         unit_price_inc_tax: item.unitPrice,
-        enable_stock: item.preOrder || item.customSize ? 0 as const : 1 as const,
+        enable_stock: 1 as const,
         note: itemNote,
         sell_line_note: itemNote,
       };
     }),
-    payment: [
-      {
-        amount: order.paymentMethod === "cod" ? 0 : order.totalAmount,
-        method: order.paymentMethod === "cod" ? "cash" : "bank_transfer",
-        note: order.paymentMethod === "cod" ? "COD order via Noora Modesty" : "Bank transfer order via Noora Modesty",
-      },
-    ],
   };
+
+  if (clickomPaymentAmount > 0) {
+    payload.payment = [
+      {
+        amount: clickomPaymentAmount,
+        method: paymentMethod,
+        note: options.seedTotalPayment
+          ? "Clickom total seed via Noora Modesty"
+          : "Verified bank transfer via Noora Modesty",
+      },
+    ];
+  }
+
+  return payload;
 }

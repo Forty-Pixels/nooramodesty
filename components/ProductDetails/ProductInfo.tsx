@@ -150,7 +150,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             quantity: 1,
             color: selectedVariation?.colorHex || selectedVariation?.name,
             colorName: selectedVariation?.name,
-            colorHex: selectedVariation?.colorHex,
+            colorHex: selectedVariation?.colorHex || undefined,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
             customSize: isCustomSize,
@@ -196,7 +196,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             quantity: 1,
             color: selectedVariation?.colorHex || selectedVariation?.name,
             colorName: selectedVariation?.name,
-            colorHex: selectedVariation?.colorHex,
+            colorHex: selectedVariation?.colorHex || undefined,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
             customSize: isCustomSize,
@@ -238,8 +238,15 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 </div>
                 {product.salePrice ? (
                     <div className="space-y-1.5">
-                        <div className="bg-[#B21E1E] text-white text-[0.65rem] font-bold tracking-[0.1em] px-2.5 py-1 uppercase w-max rounded-sm">
-                            {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
+                        <div className="flex flex-wrap gap-1.5">
+                            {product.isNewArrival && (
+                                <span className="bg-black text-white text-[0.65rem] font-bold tracking-[0.1em] px-2.5 py-1 uppercase w-max rounded-sm">
+                                    New Arrival
+                                </span>
+                            )}
+                            <span className="bg-[#B21E1E] text-white text-[0.65rem] font-bold tracking-[0.1em] px-2.5 py-1 uppercase w-max rounded-sm">
+                                {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
+                            </span>
                         </div>
                         <div className="flex items-center gap-3">
                             <p className="text-xl font-bold text-[#B21E1E]">
@@ -251,9 +258,16 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         </div>
                     </div>
                 ) : (
-                    <p className="text-lg font-bold">
-                        LKR {product.price.toLocaleString()}
-                    </p>
+                    <div className="space-y-1.5">
+                        {product.isNewArrival && (
+                            <span className="inline-flex bg-black text-white text-[0.65rem] font-bold tracking-[0.1em] px-2.5 py-1 uppercase w-max rounded-sm">
+                                New Arrival
+                            </span>
+                        )}
+                        <p className="text-lg font-bold">
+                            LKR {product.price.toLocaleString()}
+                        </p>
+                    </div>
                 )}
                 
                 {/* Stock Status - Only show if Low or Out of Stock */}
@@ -269,6 +283,14 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         }`}>
                             {product.stockStatus === "low-stock" && `Hurry! Only ${product.stockCount} left in stock`}
                             {product.stockStatus === "out-of-stock" && "Out of Stock"}
+                        </span>
+                    </div>
+                )}
+                {product.showLowStock && product.stockStatus !== "out-of-stock" && (
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
+                            {product.manualStockCount ? `Only ${product.manualStockCount} left` : "Low stock"}
                         </span>
                     </div>
                 )}

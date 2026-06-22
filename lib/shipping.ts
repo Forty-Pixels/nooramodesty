@@ -1,6 +1,7 @@
 import { PublicSiteSettings } from "@/types/siteSettings";
 
 export const DEFAULT_SITE_SETTINGS: PublicSiteSettings = {
+  announcementEnabled: false,
   customSizeCharge: 1500,
   customSizeDispatchDays: 14,
   bankTransferDeadlineDays: 3,
@@ -53,4 +54,3 @@ export function calculateShippingQuote(quantity: number, settings?: Partial<Publ
     shipping: normalizedSettings.shippingBaseFee + extraKg * normalizedSettings.shippingExtraFeePerKg,
   };
 }
-

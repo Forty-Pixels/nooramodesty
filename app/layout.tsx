@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar/Navbar";
 import { Footer } from "@/components/LandingPage/Footer";
 import { siteLinks } from "@/data/siteLinks";
+import { fetchPublicSiteSettings } from "@/lib/server/siteSettings";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,11 +37,13 @@ export const viewport: Viewport = {
 import PageTransitionProvider from "@/components/Providers/PageTransitionProvider";
 import { ScrollToTop } from "@/components/Providers/ScrollToTop";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteSettings = await fetchPublicSiteSettings();
+
   return (
     <html
       lang="en"
@@ -47,6 +51,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <ScrollToTop />
+        {siteSettings.announcementEnabled && (
+          <AnnouncementBar text={siteSettings.announcementText} href={siteSettings.announcementHref} />
+        )}
         <Navbar />
         <main className="flex-grow overflow-x-clip">
           <PageTransitionProvider>
@@ -58,4 +65,3 @@ export default function RootLayout({
     </html>
   );
 }
-
