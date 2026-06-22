@@ -2,6 +2,7 @@ import "server-only";
 
 import { z, ZodError } from "zod";
 import { sanityClient } from "@/lib/sanity/client";
+import { calculateShippingQuote, DEFAULT_SITE_SETTINGS } from "@/lib/shipping";
 import {
   CheckoutOrderPayload,
   Coupon,
@@ -9,10 +10,8 @@ import {
   OrderItemSnapshot,
   OrderTotals,
 } from "@/types/order";
+import { PublicSiteSettings } from "@/types/siteSettings";
 
-const CUSTOM_SIZE_CHARGE = 1500;
-const FREE_SHIPPING_THRESHOLD = 50000;
-const STANDARD_SHIPPING = 1500;
 const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
 
 function isValidPhoneNumber(value: string): boolean {
@@ -109,7 +108,11 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
   );
 }
 
-function validateItem(input: OrderItemInput, product: ProductForOrder): OrderItemSnapshot {
+function validateItem(
+  input: OrderItemInput,
+  product: ProductForOrder,
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
+): OrderItemSnapshot {
   if (product.isVisible === false) {
     throw new Error(`${product.title} is not available.`);
   }
@@ -127,7 +130,7 @@ function validateItem(input: OrderItemInput, product: ProductForOrder): OrderIte
   }
 
   const unitPrice = product.salePrice || product.price;
-  const customCharge = input.customSize ? CUSTOM_SIZE_CHARGE : 0;
+  const customCharge = input.customSize ? siteSettings.customSizeCharge : 0;
 
   return {
     ...input,
@@ -140,7 +143,10 @@ function validateItem(input: OrderItemInput, product: ProductForOrder): OrderIte
   };
 }
 
-export async function buildOrderItems(items: OrderItemInput[]): Promise<OrderItemSnapshot[]> {
+export async function buildOrderItems(
+  items: OrderItemInput[],
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
+): Promise<OrderItemSnapshot[]> {
   const productIds = Array.from(new Set(items.map((item) => item.productId)));
   const products = await fetchProducts(productIds);
   const productById = new Map(products.map((product) => [product._id, product]));
@@ -152,13 +158,17 @@ export async function buildOrderItems(items: OrderItemInput[]): Promise<OrderIte
       throw new Error("One or more products are no longer available.");
     }
 
-    return validateItem(item, product);
+    return validateItem(item, product, siteSettings);
   });
 }
 
-export function calculateBaseTotals(items: OrderItemSnapshot[]): Omit<OrderTotals, "discountAmount" | "totalAmount"> {
+export function calculateBaseTotals(
+  items: OrderItemSnapshot[],
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
+): Omit<OrderTotals, "discountAmount" | "totalAmount"> {
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const shipping = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
+  const itemQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const shipping = calculateShippingQuote(itemQuantity, siteSettings).shipping;
 
   return { subtotal, shipping };
 }
@@ -213,8 +223,9 @@ export function calculateCouponDiscount(coupon: Coupon | null, subtotal: number)
 export function calculateTotals(
   items: OrderItemSnapshot[],
   coupon: Coupon | null,
+  siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
 ): OrderTotals {
-  const { subtotal, shipping } = calculateBaseTotals(items);
+  const { subtotal, shipping } = calculateBaseTotals(items, siteSettings);
   const discountAmount = calculateCouponDiscount(coupon, subtotal);
 
   return {

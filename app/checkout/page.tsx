@@ -1,13 +1,15 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Lock, ShieldCheck, Truck, X } from "lucide-react";
 import { CheckoutAssistance } from "@/components/CheckoutPage/CheckoutAssistance";
+import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import useCartStore from "@/store";
 import { CheckoutOrderPayload, PaymentMethod } from "@/types/order";
+import { PublicSiteSettings } from "@/types/siteSettings";
 
 interface CheckoutFormState {
   fullName: string;
@@ -63,9 +65,12 @@ function CheckoutContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
+  const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
 
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shipping = subtotal > 50000 ? 0 : 1500;
+  const itemQuantity = checkoutItems.reduce((acc, item) => acc + item.quantity, 0);
+  const shippingQuote = calculateShippingQuote(itemQuantity, siteSettings);
+  const shipping = shippingQuote.shipping;
   const total = subtotal + shipping - discountAmount;
 
   const payload: CheckoutOrderPayload = {
@@ -86,6 +91,24 @@ function CheckoutContent() {
   const updateField = (field: keyof CheckoutFormState, value: string) => {
     setFormState((current) => ({ ...current, [field]: value }));
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSiteSettings() {
+      const response = await fetch("/api/site-settings", { cache: "no-store" });
+      const data = (await response.json().catch(() => null)) as Partial<PublicSiteSettings> | null;
+      if (isMounted && response.ok) {
+        setSiteSettings(normalizeSiteSettings(data));
+      }
+    }
+
+    void loadSiteSettings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const validateClient = () => {
     const validationErrors: string[] = [];
@@ -281,8 +304,17 @@ function CheckoutContent() {
               <div className="p-8 bg-white border border-black/5 space-y-6">
                 <div className="bg-[#fcfcfc] p-6 border border-black/5 space-y-2 text-[10px] uppercase tracking-widest">
                   <p className="font-bold">Bank transfer details</p>
-                  <p>Use the bank details shown in Sanity site settings once configured.</p>
-                  <p className="text-gray-400">Payment slips not received within 3 days will automatically convert this order to Cash on Delivery.</p>
+                  {siteSettings.bankName || siteSettings.bankAccountName || siteSettings.bankAccountNumber || siteSettings.bankBranch ? (
+                    <>
+                      {siteSettings.bankName && <p>Bank: {siteSettings.bankName}</p>}
+                      {siteSettings.bankAccountName && <p>Name: {siteSettings.bankAccountName}</p>}
+                      {siteSettings.bankAccountNumber && <p>Account: {siteSettings.bankAccountNumber}</p>}
+                      {siteSettings.bankBranch && <p>Branch: {siteSettings.bankBranch}</p>}
+                    </>
+                  ) : (
+                    <p>Bank details are not configured yet.</p>
+                  )}
+                  <p className="text-gray-400">Payment slips not received within {siteSettings.bankTransferDeadlineDays} days will automatically convert this order to Cash on Delivery.</p>
                 </div>
                 <div className="relative border-2 border-dashed border-black/5 p-8 text-center">
                   <input type="file" onChange={(e) => setPaymentSlip(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*,application/pdf" />
@@ -333,7 +365,7 @@ function CheckoutContent() {
                 <div className="flex-1">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest">{item.title}</h3>
                   <p className="text-[9px] uppercase tracking-widest text-gray-400 mt-1">
-                    {item.size} {item.customSize ? "(+ LKR 1,500)" : ""}
+                    {item.size} {item.customSize ? `(+ LKR ${siteSettings.customSizeCharge.toLocaleString()})` : ""}
                   </p>
                   <div className="flex items-center gap-3 mt-3">
                     <button type="button" onClick={() => {
@@ -378,6 +410,7 @@ function CheckoutContent() {
           <div className="space-y-4 pt-8 border-t border-black/5">
             <div className="flex justify-between text-[10px] font-medium uppercase tracking-widest text-gray-500"><span>Subtotal</span><span>LKR {subtotal.toLocaleString()}</span></div>
             <div className="flex justify-between text-[10px] font-medium uppercase tracking-widest text-gray-500"><span>Shipping</span><span>{shipping === 0 ? "FREE" : `LKR ${shipping.toLocaleString()}`}</span></div>
+            <div className="flex justify-between text-[9px] font-medium uppercase tracking-widest text-gray-400"><span>Billable Weight</span><span>{shippingQuote.billableKg}KG</span></div>
             {discountAmount > 0 && <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-[#B21E1E]"><span>Discount</span><span>- LKR {discountAmount.toLocaleString()}</span></div>}
             <div className="flex justify-between text-base font-bold uppercase tracking-[0.2em] pt-4 border-t border-black/5"><span>Total</span><span>LKR {total.toLocaleString()}</span></div>
           </div>
