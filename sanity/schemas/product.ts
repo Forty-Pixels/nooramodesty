@@ -20,8 +20,9 @@ export const product = defineType({
     }),
     defineField({
       name: "sku",
-      title: "SKU",
+      title: "Clickom product SKU",
       type: "string",
+      description: "Visible product SKU from Clickom, for example 0068. Used by the sync to fill the hidden Clickom product ID.",
     }),
     defineField({
       name: "description",
@@ -116,10 +117,10 @@ export const product = defineType({
     }),
     defineField({
       name: "variations",
-      title: "Variations",
+      title: "Storefront variations",
       type: "array",
       of: [{ type: "variation" }],
-      description: "Stock is not stored here. Clickom IDs connect live stock lookups.",
+      description: "Colors/sizes shown on the storefront. Each size should include its Clickom variation SKU so sync can connect live stock and order approval.",
       validation: (rule) => rule.required().min(1),
     }),
     defineField({
@@ -147,8 +148,9 @@ export const product = defineType({
     }),
     defineField({
       name: "clickomProductId",
-      title: "Clickom product ID",
+      title: "Clickom product ID (synced)",
       type: "number",
+      description: "Internal numeric product ID from Clickom. Usually filled by Clickom sync from the product SKU. Required before orders can be approved into Clickom.",
       validation: (rule) => rule.required(),
     }),
   ],
