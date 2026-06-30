@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ShieldCheck, ArrowRight, ChevronDown, Check } from "lucide-react";
 import Link from "next/link";
+import { uniqueMessages, validatePhone, validateRequiredText } from "@/utils/formValidation";
 
 type RequestType = "return" | "exchange";
 
@@ -45,8 +46,6 @@ const initialFormState: RequestFormState = {
   details: "",
 };
 
-const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
-
 export default function ReturnsAndExchangesPage() {
   const [requestType, setRequestType] = useState<RequestType>("return");
   const [formState, setFormState] = useState(initialFormState);
@@ -61,24 +60,15 @@ export default function ReturnsAndExchangesPage() {
   };
 
   const validateClient = () => {
-    const validationErrors: string[] = [];
-    const customerName = formState.customerName.trim();
-    const orderNumber = formState.orderNumber.trim();
-    const phone = formState.phone.trim();
-    const details = formState.details.trim();
-    const phoneDigitCount = phone.replace(/\D/g, "").length;
+    const validationErrors = uniqueMessages([
+      ...validateRequiredText(formState.customerName, "Full name", { minLength: 2, maxLength: 80 }),
+      ...validateRequiredText(formState.orderNumber, "Order number", { minLength: 3, maxLength: 40 }),
+      ...validatePhone(formState.phone),
+      ...validateRequiredText(reason, "Reason"),
+      ...validateRequiredText(formState.details, "Additional details", { minLength: 10, maxLength: 1000 }),
+    ]);
 
-    if (!customerName) validationErrors.push("Full name is required.");
-    if (customerName && customerName.length < 2) validationErrors.push("Full name must be at least 2 characters.");
-    if (!orderNumber) validationErrors.push("Order number is required.");
-    if (!phone) validationErrors.push("Phone number is required.");
-    if (phone && (!PHONE_PATTERN.test(phone) || phoneDigitCount < 7 || phoneDigitCount > 15)) {
-      validationErrors.push("Phone number must contain 7 to 15 digits and no letters.");
-    }
-    if (!reason) validationErrors.push("Reason is required.");
-    if (!details) validationErrors.push("Additional details are required.");
-
-    return Array.from(new Set(validationErrors));
+    return validationErrors;
   };
 
   const handleSubmit = async (event: React.FormEvent) => {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, MessageCircle, PackageSearch } from "lucide-react";
+import { uniqueMessages, validatePhone, validateRequiredText } from "@/utils/formValidation";
 
 interface TrackingOrder {
   orderNumber: string;
@@ -48,12 +49,23 @@ export default function OrderTrackingPage() {
     event.preventDefault();
     setError("");
     setOrder(null);
+
+    const validationErrors = uniqueMessages([
+      ...validateRequiredText(orderNumber, "Order number", { minLength: 3, maxLength: 40 }),
+      ...validatePhone(mobile),
+    ]);
+
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join(" "));
+      return;
+    }
+
     setIsLoading(true);
 
     const response = await fetch("/api/orders/tracking", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ orderNumber, mobile }),
+      body: JSON.stringify({ orderNumber: orderNumber.trim(), mobile: mobile.trim() }),
     });
     const data = (await response.json().catch(() => ({}))) as TrackingResponse;
     setIsLoading(false);
@@ -76,17 +88,22 @@ export default function OrderTrackingPage() {
               <h1 className="text-3xl font-bold uppercase tracking-[0.18em] text-black md:text-5xl">Track Your Order</h1>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6">
+            <form onSubmit={handleSubmit} noValidate className="space-y-4 bg-white p-6">
               <input
                 value={orderNumber}
                 onChange={(event) => setOrderNumber(event.currentTarget.value)}
                 placeholder="Order Number"
+                aria-invalid={Boolean(error && error.toLowerCase().includes("order number"))}
+                autoComplete="off"
                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-black"
               />
               <input
+                type="tel"
                 value={mobile}
                 onChange={(event) => setMobile(event.currentTarget.value)}
                 placeholder="Phone Number"
+                aria-invalid={Boolean(error && error.toLowerCase().includes("phone"))}
+                autoComplete="tel"
                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-black"
               />
               {error && <p className="text-[10px] font-bold uppercase tracking-widest text-[#B21E1E]">{error}</p>}
