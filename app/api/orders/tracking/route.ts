@@ -4,6 +4,13 @@ import { SanityOrder } from "@/types/sanityOrder";
 
 export const runtime = "nodejs";
 
+const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
+
+function isValidPhone(value: string) {
+  const digitCount = value.replace(/\D/g, "").length;
+  return PHONE_PATTERN.test(value) && digitCount >= 7 && digitCount <= 15;
+}
+
 function normalizePhone(value: string) {
   return value.replace(/\D/g, "");
 }
@@ -26,6 +33,10 @@ export async function POST(request: Request) {
 
     if (typeof mobile !== "string" || !mobile.trim()) {
       return Response.json({ error: "Phone number is required." }, { status: 400 });
+    }
+
+    if (!isValidPhone(mobile.trim())) {
+      return Response.json({ error: "Phone number must contain 7 to 15 digits and no letters." }, { status: 400 });
     }
 
     const order = await sanityClient.fetch<SanityOrder | null>(
@@ -93,4 +104,3 @@ export async function POST(request: Request) {
     return Response.json({ error: message }, { status: 400 });
   }
 }
-

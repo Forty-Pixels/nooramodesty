@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { isStoreLocatorActive } from "@/utils/featureFlags";
 import { DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import { PublicSiteSettings } from "@/types/siteSettings";
+import { uniqueMessages, validateMeasurement } from "@/utils/formValidation";
 
 interface ProductInfoProps {
     product: Product;
@@ -33,6 +34,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [selectedSize, setSelectedSize] = useState(firstSize);
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [customMeasurements, setCustomMeasurements] = useState({ length: "", bust: "", hip: "", sleeve: "" });
+    const [customMeasurementErrors, setCustomMeasurementErrors] = useState<string[]>([]);
     const [isCustomSize, setIsCustomSize] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
@@ -219,6 +221,25 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
     const handleCustomSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const validationErrors = uniqueMessages([
+            ...validateMeasurement(customMeasurements.length, "Length"),
+            ...validateMeasurement(customMeasurements.bust, "Bust"),
+            ...validateMeasurement(customMeasurements.hip, "Hip"),
+            ...validateMeasurement(customMeasurements.sleeve, "Sleeve"),
+        ]);
+
+        if (validationErrors.length > 0) {
+            setCustomMeasurementErrors(validationErrors);
+            return;
+        }
+
+        setCustomMeasurementErrors([]);
+        setCustomMeasurements({
+            length: customMeasurements.length.trim(),
+            bust: customMeasurements.bust.trim(),
+            hip: customMeasurements.hip.trim(),
+            sleeve: customMeasurements.sleeve.trim(),
+        });
         setIsCustomSize(true);
         setShowCustomModal(false);
     };
@@ -412,7 +433,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             </span>
                             <button
                                 type="button"
-                                onClick={() => setShowCustomModal(true)}
+                                onClick={() => {
+                                    setCustomMeasurementErrors([]);
+                                    setShowCustomModal(true);
+                                }}
                                 className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
                                     isCustomSize
                                     ? "bg-black text-white border-black" 
@@ -438,7 +462,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setShowCustomModal(false)}
+                                onClick={() => {
+                                    setCustomMeasurementErrors([]);
+                                    setShowCustomModal(false);
+                                }}
                                 className="text-gray-400 hover:text-black transition-colors"
                                 aria-label="Close custom size form"
                             >
@@ -446,39 +473,60 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleCustomSubmit} className="mt-8 space-y-5">
+                        <form onSubmit={handleCustomSubmit} noValidate className="mt-8 space-y-5">
                             <input
                                 value={customMeasurements.length}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, length: event.target.value }))}
                                 placeholder="Length"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Length"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
                             <input
                                 value={customMeasurements.bust}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, bust: event.target.value }))}
                                 placeholder="Bust"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Bust"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
                             <input
                                 value={customMeasurements.hip}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, hip: event.target.value }))}
                                 placeholder="Hip"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Hip"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
                             <input
                                 value={customMeasurements.sleeve}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, sleeve: event.target.value }))}
                                 placeholder="Sleeve"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Sleeve"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
+                            {customMeasurementErrors.length > 0 && (
+                                <div className="border border-[#B21E1E]/20 bg-[#B21E1E]/5 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[#B21E1E]" aria-live="polite">
+                                    {customMeasurementErrors.length === 1 ? (
+                                        <p>{customMeasurementErrors[0]}</p>
+                                    ) : (
+                                        <ul className="list-disc space-y-1 pl-4">
+                                            {customMeasurementErrors.map((error) => (
+                                                <li key={error}>{error}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="flex gap-3 pt-3">
                                 <button
                                     type="button"
-                                    onClick={() => setShowCustomModal(false)}
+                                    onClick={() => {
+                                    setCustomMeasurementErrors([]);
+                                    setShowCustomModal(false);
+                                }}
                                     className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-black/10 text-gray-500 hover:text-black transition-all"
                                 >
                                     Cancel
