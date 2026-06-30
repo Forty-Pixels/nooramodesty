@@ -10,6 +10,7 @@ import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } 
 import useCartStore from "@/store";
 import { CheckoutOrderPayload, PaymentMethod } from "@/types/order";
 import { PublicSiteSettings } from "@/types/siteSettings";
+import { uniqueMessages, validateEmail, validatePhone, validateRequiredText } from "@/utils/formValidation";
 
 interface CheckoutFormState {
   fullName: string;
@@ -33,8 +34,6 @@ const initialFormState: CheckoutFormState = {
 
 const MAX_PAYMENT_SLIP_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PAYMENT_SLIP_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
 
 function formatCartItemSize(item: { size?: string; customSize?: boolean; customNote?: string }) {
   return item.customSize && item.customNote ? item.customNote : item.size;
@@ -129,30 +128,16 @@ function CheckoutContent() {
   }, []);
 
   const validateClient = () => {
-    const validationErrors: string[] = [];
-    const fullName = formState.fullName.trim();
-    const mobile = formState.mobile.trim();
-    const email = formState.email.trim();
-    const addressLine1 = formState.addressLine1.trim();
-    const city = formState.city.trim();
-    const zipCode = formState.zipCode.trim();
-    const mobileDigitCount = mobile.replace(/\D/g, "").length;
+    const validationErrors: string[] = uniqueMessages([
+      ...validateRequiredText(formState.fullName, "Full name", { minLength: 2, maxLength: 80 }),
+      ...validatePhone(formState.mobile),
+      ...validateEmail(formState.email),
+      ...validateRequiredText(formState.addressLine1, "Address", { minLength: 3, maxLength: 160 }),
+      ...validateRequiredText(formState.city, "City", { minLength: 2, maxLength: 80 }),
+      ...validateRequiredText(formState.zipCode, "Postal code", { minLength: 2, maxLength: 20 }),
+    ]);
 
     if (checkoutItems.length === 0) validationErrors.push("Your bag is empty.");
-    if (!fullName) validationErrors.push("Full name is required.");
-    if (fullName && fullName.length < 2) validationErrors.push("Full name must be at least 2 characters.");
-    if (!mobile) validationErrors.push("Phone number is required.");
-    if (mobile && (!PHONE_PATTERN.test(mobile) || mobileDigitCount < 7 || mobileDigitCount > 15)) {
-      validationErrors.push("Phone number must contain 7 to 15 digits and no letters.");
-    }
-    if (!email) validationErrors.push("Email address is required.");
-    if (email && !EMAIL_PATTERN.test(email)) validationErrors.push("Please enter a valid email address.");
-    if (!addressLine1) validationErrors.push("Address is required.");
-    if (addressLine1 && addressLine1.length < 3) validationErrors.push("Address must be at least 3 characters.");
-    if (!city) validationErrors.push("City is required.");
-    if (city && city.length < 2) validationErrors.push("City must be at least 2 characters.");
-    if (!zipCode) validationErrors.push("Postal code is required.");
-    if (zipCode && zipCode.length < 2) validationErrors.push("Postal code must be at least 2 characters.");
     if (checkoutItems.some((item) => !item.clickomVariationId)) validationErrors.push("Please choose a valid size for every item.");
     if (checkoutItems.some((item) => item.quantity < 1)) validationErrors.push("Item quantity must be at least 1.");
     if (checkoutItems.some((item) => item.quantity > 20)) validationErrors.push("Item quantity cannot be more than 20.");
@@ -161,7 +146,7 @@ function CheckoutContent() {
     }
     if (paymentSlip && paymentSlip.size > MAX_PAYMENT_SLIP_SIZE) validationErrors.push("Payment slip must be 5MB or smaller.");
 
-    return Array.from(new Set(validationErrors));
+    return uniqueMessages(validationErrors);
   };
 
   const validateCouponRequest = () => {

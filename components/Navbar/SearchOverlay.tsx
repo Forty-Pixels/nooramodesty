@@ -14,6 +14,7 @@ import {
     getProductFacets,
     sortFilterOptions,
 } from "@/utils/productFilters";
+import { validatePriceRange } from "@/utils/formValidation";
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -31,6 +32,7 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
     const [maxPrice, setMaxPrice] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [searchError, setSearchError] = useState("");
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const facets = getProductFacets(products);
@@ -101,9 +103,18 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
         setMinPrice("");
         setMaxPrice("");
         setIsFilterOpen(false);
+        setSearchError("");
     };
 
     const goToResults = () => {
+        const priceErrors = validatePriceRange(minPrice, maxPrice);
+
+        if (priceErrors.length > 0) {
+            setSearchError(priceErrors[0]);
+            return;
+        }
+
+        setSearchError("");
         router.push(buildSearchUrl());
         onClose();
         resetSearchState();
@@ -148,7 +159,7 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto w-full group">
+                        <form onSubmit={handleSubmit} noValidate className="relative max-w-4xl mx-auto w-full group">
                             <input
                                 ref={inputRef}
                                 type="text"
@@ -177,6 +188,10 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                                 </button>
                                 <FilterDropdown label="Sort By" value={sort} options={sortFilterOptions} onChange={setSort} />
                             </div>
+
+                            {searchError && (
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#B21E1E]" aria-live="polite">{searchError}</p>
+                            )}
 
                             <FilterDrawer
                                 isOpen={isFilterOpen}

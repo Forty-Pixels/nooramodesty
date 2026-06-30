@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FilterDrawer } from "@/components/Category/FilterDrawer";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
 import { ProductFacets, sortFilterOptions } from "@/utils/productFilters";
+import { validatePriceRange } from "@/utils/formValidation";
 
 interface FilterDraft extends Record<string, string> {
   category: string;
@@ -31,6 +32,7 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
 }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [nameQuery, setNameQuery] = useState("");
+  const [filterError, setFilterError] = useState("");
   const [filterDraft, setFilterDraft] = useState<FilterDraft>({
     category: "",
     availability: "",
@@ -89,12 +91,14 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
 
   const handleNameSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFilterError("");
     updateParams({ q: nameQuery.trim() });
   };
 
   const handleReset = () => {
     router.push(pathname, { scroll: false });
     setIsFilterOpen(false);
+    setFilterError("");
   };
 
   const updateFilterDraft = (updates: Record<string, string>) => {
@@ -102,6 +106,7 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
   };
 
   const clearFilterDraft = () => {
+    setFilterError("");
     setFilterDraft({
       category: "",
       availability: "",
@@ -113,7 +118,19 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
   };
 
   const applyFilterDraft = () => {
-    updateParams(filterDraft);
+    const priceErrors = validatePriceRange(filterDraft.minPrice, filterDraft.maxPrice);
+
+    if (priceErrors.length > 0) {
+      setFilterError(priceErrors[0]);
+      return;
+    }
+
+    setFilterError("");
+    updateParams({
+      ...filterDraft,
+      minPrice: filterDraft.minPrice.trim(),
+      maxPrice: filterDraft.maxPrice.trim(),
+    });
     setIsFilterOpen(false);
   };
 
@@ -132,7 +149,7 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
             </button>
 
             {showSearchInput && (
-              <form onSubmit={handleNameSubmit}>
+              <form onSubmit={handleNameSubmit} noValidate>
                 <input
                   value={nameQuery}
                   onChange={(event) => setNameQuery(event.target.value)}
@@ -163,6 +180,11 @@ export const ListingControls: React.FC<ListingControlsProps> = ({
           </div>
         </div>
       </div>
+      {filterError && (
+        <div className="mx-auto w-full max-w-7xl px-4 pb-4 text-[10px] font-bold uppercase tracking-widest text-[#B21E1E] md:px-6 lg:px-8" aria-live="polite">
+          {filterError}
+        </div>
+      )}
       <FilterDrawer
         isOpen={isFilterOpen}
         facets={facets}
