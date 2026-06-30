@@ -31,6 +31,7 @@ const productProjection = `
   variations[]{
     name,
     colorHex,
+    "image": coalesce(image.asset->url, imageUrl),
     clickomVariationId,
     subVariations[]{
       size,

@@ -23,6 +23,7 @@ interface TrackingOrder {
     title: string;
     quantity: number;
     selectedColor?: string;
+    size?: string;
     selectedSize?: string;
   }>;
 }
@@ -134,8 +135,8 @@ export default function OrderTrackingPage() {
                 {order.items.map((item, index) => (
                   <div key={`${item.title}-${index}`} className="text-xs font-medium uppercase tracking-widest text-black">
                     {item.title} x {item.quantity}
-                    {(item.selectedColor || item.selectedSize) && (
-                      <span className="text-gray-400"> / {[item.selectedColor, item.selectedSize].filter(Boolean).join(" / ")}</span>
+                    {(item.selectedColor || item.size || item.selectedSize) && (
+                      <span className="text-gray-400"> / {[item.selectedColor, item.size || item.selectedSize].filter(Boolean).join(" / ")}</span>
                     )}
                   </div>
                 ))}
@@ -168,4 +169,3 @@ export default function OrderTrackingPage() {
     </div>
   );
 }
-

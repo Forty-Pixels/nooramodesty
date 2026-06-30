@@ -42,7 +42,8 @@ function formatItemSummary(item: SanityOrder["items"][number]) {
   const details = [
     item.selectedColor ? `Colour: ${item.selectedColor}` : "",
     item.selectedColorHex ? `Hex: ${item.selectedColorHex}` : "",
-    item.selectedSize ? `Size: ${item.selectedSize}` : "",
+    (item.size || item.selectedSize) ? `Size: ${item.size || item.selectedSize}` : "",
+    item.sku ? `SKU: ${item.sku}` : "",
     item.preOrder ? "Pre-order" : "",
   ].filter(Boolean);
 
@@ -212,7 +213,7 @@ function OrdersTool() {
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {(order.items || []).map((item) => (
-                    <div key={`${item.productId}-${item.clickomVariationId}-${item.selectedSize || ""}`} style={{ marginBottom: 6 }}>
+                    <div key={`${item.productId}-${item.clickomVariationId}-${item.size || item.selectedSize || ""}`} style={{ marginBottom: 6 }}>
                       {formatItemSummary(item)}
                       {formatCustomMeasurements(item) && (
                         <>

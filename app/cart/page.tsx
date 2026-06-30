@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import useCartStore from "@/store";
 import Link from "next/link";
 import Image from "next/image";
-import { Trash2, Plus, Minus, ArrowRight } from "lucide-react";
+import { Trash2, Plus, Minus, ArrowRight, X } from "lucide-react";
 import { siteLinks } from "@/data/siteLinks";
 import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import { PublicSiteSettings } from "@/types/siteSettings";
@@ -15,9 +15,15 @@ function formatCartItemSize(item: { size?: string; customSize?: boolean; customN
     return item.customSize && item.customNote ? item.customNote : item.size;
 }
 
+interface ColorPreviewModalState {
+    src: string;
+    alt: string;
+}
+
 export default function CartPage() {
     const { items, removeItem, updateQuantity } = useCartStore();
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
+    const [previewImage, setPreviewImage] = useState<ColorPreviewModalState | null>(null);
 
     const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const originalSubtotal = items.reduce((acc, item) => acc + (item.originalPrice || item.price) * item.quantity, 0);
@@ -69,6 +75,23 @@ export default function CartPage() {
 
     return (
         <div className="bg-[#f6f5f3] min-h-screen">
+            {previewImage && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-6 py-10" onClick={() => setPreviewImage(null)}>
+                    <div className="relative w-full max-w-sm bg-white p-3 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                        <button
+                            type="button"
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center bg-white text-black shadow-sm transition-colors hover:bg-[#f6f5f3]"
+                            aria-label="Close color preview"
+                        >
+                            <X size={16} strokeWidth={1.5} />
+                        </button>
+                        <div className="relative aspect-[3/4] w-full bg-[#f6f5f3]">
+                            <Image src={previewImage.src} alt={previewImage.alt} fill className="object-cover" sizes="(max-width: 640px) 90vw, 384px" />
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="max-w-[1440px] mx-auto px-6 md:px-12 py-12 md:py-20">
                 <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-[0.3em] text-black mb-12 md:mb-16">
                     Shopping Bag <span className="text-gray-400 font-medium ml-2">({items.length})</span>
@@ -107,10 +130,26 @@ export default function CartPage() {
                                                     {item.color && (
                                                         <div className="flex items-center gap-2">
                                                             <span>Color:</span>
-                                                            <div 
-                                                                className="w-2.5 h-2.5 rounded-full border border-black/10" 
+                                                            <div
+                                                                className="w-2.5 h-2.5 rounded-full border border-black/10"
                                                                 style={{ backgroundColor: item.colorHex || item.color }}
                                                             />
+                                                            {item.colorPreviewImage && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (!item.colorPreviewImage) return;
+                                                                        setPreviewImage({
+                                                                            src: item.colorPreviewImage,
+                                                                            alt: `${item.colorName || item.title} color preview`,
+                                                                        });
+                                                                    }}
+                                                                    className="group relative h-10 w-8 overflow-hidden border border-black/10 bg-white transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-black/20"
+                                                                    aria-label={`Open ${item.colorName || item.title} color preview`}
+                                                                >
+                                                                    <Image src={item.colorPreviewImage} alt="" fill className="object-cover transition-transform duration-300 group-hover:scale-110" sizes="32px" />
+                                                                </button>
+                                                            )}
                                                             {item.colorName && <span className="text-black font-bold">{item.colorName}</span>}
                                                         </div>
                                                     )}

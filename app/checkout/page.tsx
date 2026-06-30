@@ -52,6 +52,11 @@ interface CouponValidationResponse {
   discountAmount?: number;
 }
 
+interface ColorPreviewModalState {
+  src: string;
+  alt: string;
+}
+
 function CheckoutContent() {
   const { items, clearCart, updateQuantity, buyNowItem, setBuyNowItem, updateBuyNowQuantity } = useCartStore();
   const searchParams = useSearchParams();
@@ -70,6 +75,7 @@ function CheckoutContent() {
   const [errors, setErrors] = useState<string[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
   const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
+  const [previewImage, setPreviewImage] = useState<ColorPreviewModalState | null>(null);
 
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const itemQuantity = checkoutItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -87,7 +93,9 @@ function CheckoutContent() {
       quantity: item.quantity,
       selectedColor: item.colorName || item.color || undefined,
       selectedColorHex: item.colorHex || undefined,
+      size: item.size || undefined,
       selectedSize: item.size || undefined,
+      sku: item.sku || undefined,
       customSize: item.customSize || item.size === "Custom",
       preOrder: item.preOrder,
       customLength: item.customLength || undefined,
@@ -271,6 +279,23 @@ function CheckoutContent() {
 
   return (
     <form onSubmit={handlePlaceOrder} noValidate className="bg-[#f6f5f3] min-h-screen font-sans text-black">
+      {previewImage && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-6 py-10" onClick={() => setPreviewImage(null)}>
+          <div className="relative w-full max-w-sm bg-white p-3 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center bg-white text-black shadow-sm transition-colors hover:bg-[#f6f5f3]"
+              aria-label="Close color preview"
+            >
+              <X size={16} strokeWidth={1.5} />
+            </button>
+            <div className="relative aspect-[3/4] w-full bg-[#f6f5f3]">
+              <Image src={previewImage.src} alt={previewImage.alt} fill className="object-cover" sizes="(max-width: 640px) 90vw, 384px" />
+            </div>
+          </div>
+        </div>
+      )}
       <header className="py-12 px-6 md:px-12 flex justify-between items-center bg-transparent">
         <Link href="/cart" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity">
           <ArrowLeft size={14} />
@@ -374,9 +399,26 @@ function CheckoutContent() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest">{item.title}</h3>
-                  <p className="text-[9px] uppercase tracking-widest text-gray-400 mt-1">
-                    {formatCartItemSize(item)} {item.customSize ? `(+ LKR ${siteSettings.customSizeCharge.toLocaleString()})` : ""}
-                  </p>
+                  <div className="mt-1 flex items-center gap-2 text-[9px] uppercase tracking-widest text-gray-400">
+                    {item.colorHex && <span className="h-2.5 w-2.5 rounded-full border border-black/10" style={{ backgroundColor: item.colorHex }} />}
+                    {item.colorPreviewImage && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!item.colorPreviewImage) return;
+                          setPreviewImage({
+                            src: item.colorPreviewImage,
+                            alt: `${item.colorName || item.title} color preview`,
+                          });
+                        }}
+                        className="group relative h-10 w-8 overflow-hidden border border-black/10 bg-white transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-black/20"
+                        aria-label={`Open ${item.colorName || item.title} color preview`}
+                      >
+                        <Image src={item.colorPreviewImage} alt="" fill className="object-cover transition-transform duration-300 group-hover:scale-110" sizes="32px" />
+                      </button>
+                    )}
+                    <span>{[item.colorName, formatCartItemSize(item)].filter(Boolean).join(" / ")} {item.customSize ? `(+ LKR ${siteSettings.customSizeCharge.toLocaleString()})` : ""}</span>
+                  </div>
                   <div className="flex items-center gap-3 mt-3">
                     <button type="button" onClick={() => {
                       if (isBuyNow) {

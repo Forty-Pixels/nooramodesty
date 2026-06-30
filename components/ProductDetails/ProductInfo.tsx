@@ -20,6 +20,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         [product.variations],
     );
     const firstVariation = displayVariations[0];
+    const colorVariations = displayVariations;
     const firstSize = firstVariation?.subVariations?.[0]?.size || "";
     const materialProperties = product.materialSpecs?.properties || [];
     const hasMaterialSpecs = Boolean(
@@ -51,6 +52,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         return displayVariations.find((variation) => variation.name === selectedVariationName) || displayVariations[0];
     }, [displayVariations, selectedVariationName]);
 
+    const selectedColorPreviewImage = selectedVariation?.image;
+    const selectedColorName = selectedVariation?.colorHex ? selectedVariation.name : undefined;
     const displaySizes = selectedVariation?.subVariations?.map((subVariation) => subVariation.size).filter(Boolean) || [];
 
     const selectedSubVariation = useMemo(() => {
@@ -148,11 +151,13 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedVariation?.colorHex || selectedVariation?.name,
-            colorName: selectedVariation?.name,
+            color: selectedVariation?.colorHex || undefined,
+            colorName: selectedColorName,
             colorHex: selectedVariation?.colorHex || undefined,
+            colorPreviewImage: selectedColorPreviewImage,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
+            sku: selectedSubVariation?.sku,
             customSize: isCustomSize,
             preOrder: product.enablePreOrders || isCustomSize,
             customLength: isCustomSize ? customMeasurements.length : undefined,
@@ -194,11 +199,13 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedVariation?.colorHex || selectedVariation?.name,
-            colorName: selectedVariation?.name,
+            color: selectedVariation?.colorHex || undefined,
+            colorName: selectedColorName,
             colorHex: selectedVariation?.colorHex || undefined,
+            colorPreviewImage: selectedColorPreviewImage,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
+            sku: selectedSubVariation?.sku,
             customSize: isCustomSize,
             preOrder: product.enablePreOrders || isCustomSize,
             customLength: isCustomSize ? customMeasurements.length : undefined,
@@ -307,9 +314,6 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         Type: <span className="text-gray-400 font-normal">{product.type}</span>
                     </p>
                     <p className="text-[10px] text-black tracking-wide font-bold">
-                        Color: <span className="text-gray-400 font-normal">{product.color}</span>
-                    </p>
-                    <p className="text-[10px] text-black tracking-wide font-bold">
                         Collection: <span className="text-gray-400 font-normal">{product.collection}</span>
                     </p>
                 </div>
@@ -325,42 +329,43 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             {/* Selectors (Aligned with Buttons) */}
             <div className="flex gap-4 mt-2">
                 {/* Color Selector */}
-                <div className="w-44 space-y-1.5">
-                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
-                    <div className="flex gap-2 pt-3.5">
-                        {displayVariations.map((variation) => {
-                            const colorValue = variation.colorHex || variation.name;
-                            const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(colorValue);
-                            const isSelected = selectedVariation?.name === variation.name;
-                            return (
-                                <button
-                                    key={variation.name}
-                                    onClick={() => {
-                                        setSelectedVariationName(variation.name);
-                                        setSelectedSize(variation.subVariations?.[0]?.size || "");
-                                        setIsCustomSize(false);
-                                    }}
-                                    disabled={isOutOfStock}
-                                    className={`${variation.colorHex ? "w-7 h-7 rounded-full" : "min-w-7 h-7 px-2"} border border-gray-200 transition-all duration-300 relative overflow-hidden ${
-                                        isSelected && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
-                                    } ${isOutOfStock ? "opacity-30 cursor-not-allowed grayscale" : "cursor-pointer"}`}
-                                    style={variation.colorHex ? { backgroundColor: variation.colorHex } : undefined}
-                                    title={isOutOfStock ? "Out of Stock" : undefined}
-                                >
-                                    {!variation.colorHex && (
-                                        <span className="text-[9px] font-bold uppercase tracking-widest">{variation.name}</span>
-                                    )}
-                                    {isOutOfStock && (
-                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <div className="absolute w-[120%] h-[1px] bg-white/80 rotate-45" />
-                                            <div className="absolute w-[120%] h-[1px] bg-white/80 -rotate-45" />
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
+                {colorVariations.length > 0 && (
+                    <div className="w-44 space-y-1.5">
+                        <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
+                        <div className="flex gap-2 pt-3.5">
+                            {colorVariations.map((variation) => {
+                                const colorValue = variation.colorHex || variation.name;
+                                const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(colorValue);
+                                const isSelected = selectedVariation?.name === variation.name;
+                                return (
+                                    <button
+                                        key={variation.name}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedVariationName(variation.name);
+                                            setSelectedSize(variation.subVariations?.[0]?.size || "");
+                                            setIsCustomSize(false);
+                                        }}
+                                        disabled={isOutOfStock}
+                                        aria-label={`Select ${variation.name}`}
+                                        className={`w-7 h-7 rounded-full border border-gray-200 transition-all duration-300 relative overflow-hidden ${
+                                            isSelected && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
+                                        } ${isOutOfStock ? "opacity-30 cursor-not-allowed grayscale" : "cursor-pointer"}`}
+                                        style={{ backgroundColor: variation.colorHex || "#fff" }}
+                                        title={isOutOfStock ? `${variation.name} - Out of Stock` : variation.name}
+                                    >
+                                        {isOutOfStock && (
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <div className="absolute w-[120%] h-[1px] bg-white/80 rotate-45" />
+                                                <div className="absolute w-[120%] h-[1px] bg-white/80 -rotate-45" />
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Size Selector */}
                 <div className="w-44 space-y-1.5">

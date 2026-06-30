@@ -2,14 +2,14 @@ import { defineField, defineType } from "sanity";
 
 export const subVariation = defineType({
   name: "subVariation",
-  title: "Sub variation",
+  title: "Size for color",
   type: "object",
   fields: [
     defineField({
       name: "size",
-      title: "Storefront size/style label",
+      title: "Size",
       type: "string",
-      description: "Label shown to shoppers, for example XS, S, M, Custom, Bow - White, or another style label.",
+      description: "Size shown after a shopper selects this color, for example XS, S, M, 54, 56, or 58.",
       validation: (rule) => rule.required(),
     }),
     defineField({
@@ -21,9 +21,10 @@ export const subVariation = defineType({
     }),
     defineField({
       name: "sku",
-      title: "Clickom variation SKU",
+      title: "Unique SKU for this color + size",
       type: "string",
-      description: "Visible variation/sub-SKU from Clickom, for example 0068-1 for XS. Sync uses this to fill the Clickom variation ID.",
+      description: "Visible variation/sub-SKU from Clickom. This SKU must be unique for this exact color + size combination.",
+      validation: (rule) => rule.required(),
     }),
   ],
   preview: {
@@ -36,21 +37,35 @@ export const subVariation = defineType({
 
 export const variation = defineType({
   name: "variation",
-  title: "Variation",
+  title: "Color variation",
   type: "object",
   fields: [
     defineField({
       name: "name",
-      title: "Storefront variation group",
+      title: "Color name",
       type: "string",
-      description: "Group shown on the storefront, usually a color or parent option such as Black, Colour, or Size.",
+      description: "Parent color name shown to admins and used for cart/order snapshots, for example Black, Beige, or Navy.",
       validation: (rule) => rule.required(),
     }),
     defineField({
       name: "colorHex",
-      title: "Color swatch hex",
+      title: "Hex swatch color",
       type: "string",
-      description: "Optional color swatch shown on the storefront, for example #000000.",
+      description: "Required storefront swatch color, for example #000000.",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "image",
+      title: "Cart preview image for this color",
+      type: "image",
+      options: { hotspot: true },
+      description: "Optional image used only for cart and checkout previews after this color is selected. It is not the swatch.",
+    }),
+    defineField({
+      name: "imageUrl",
+      title: "Cart preview image URL for this color",
+      type: "url",
+      description: "Optional external preview image URL. Used only when no uploaded preview image is set.",
     }),
     defineField({
       name: "clickomVariationId",
@@ -60,10 +75,10 @@ export const variation = defineType({
     }),
     defineField({
       name: "subVariations",
-      title: "Storefront sizes/styles",
+      title: "Sizes available for this color",
       type: "array",
       of: [{ type: "subVariation" }],
-      description: "Sizes/styles customers can choose. Add Clickom variation SKU values here, then run sync to fill IDs.",
+      description: "Sizes customers can choose after selecting this color. Every size must have one unique SKU.",
       validation: (rule) => rule.min(1),
     }),
   ],
@@ -71,6 +86,7 @@ export const variation = defineType({
     select: {
       title: "name",
       subtitle: "clickomVariationId",
+      media: "image",
     },
     prepare({ title, subtitle }) {
       return {
