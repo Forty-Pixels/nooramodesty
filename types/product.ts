@@ -14,6 +14,7 @@ export interface ProductSubVariation {
 export interface ProductVariation {
     name: string;
     colorHex?: string;
+    image?: string;
     clickomVariationId?: number;
     subVariations: ProductSubVariation[];
 }

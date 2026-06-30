@@ -11,8 +11,10 @@ export interface CartItem {
   color?: string;
   colorName?: string;
   colorHex?: string;
+  colorPreviewImage?: string;
   size?: string;
   clickomVariationId?: number;
+  sku?: string;
   customSize?: boolean;
   preOrder?: boolean;
   customLength?: string;

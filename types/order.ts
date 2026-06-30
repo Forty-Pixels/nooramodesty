@@ -24,7 +24,9 @@ export interface OrderItemInput {
   quantity: number;
   selectedColor?: string;
   selectedColorHex?: string;
+  size?: string;
   selectedSize?: string;
+  sku?: string;
   customSize: boolean;
   preOrder?: boolean;
   customLength?: string;

@@ -1,5 +1,52 @@
 import { defineField, defineType } from "sanity";
 
+interface ProductSubVariationValue {
+  size?: string;
+  sku?: string;
+}
+
+interface ProductVariationValue {
+  name?: string;
+  colorHex?: string;
+  subVariations?: ProductSubVariationValue[];
+}
+
+function normalizeVariationValue(value: string | undefined) {
+  return value?.trim().toLowerCase();
+}
+
+function validateVariationHierarchy(value: unknown) {
+  if (!Array.isArray(value)) return true;
+
+  const colorNames = new Set<string>();
+  const skus = new Set<string>();
+
+  for (const variation of value as ProductVariationValue[]) {
+    const colorName = normalizeVariationValue(variation.name);
+
+    if (!colorName) return "Each parent variation must be a color name.";
+    if (colorNames.has(colorName)) return `Color "${variation.name}" is duplicated.`;
+    colorNames.add(colorName);
+
+    if (!variation.colorHex?.trim()) return `Color "${variation.name}" needs a hex swatch value.`;
+
+    const sizesForColor = new Set<string>();
+    for (const subVariation of variation.subVariations || []) {
+      const size = normalizeVariationValue(subVariation.size);
+      const sku = normalizeVariationValue(subVariation.sku);
+
+      if (!size) return `A size is missing under color "${variation.name}".`;
+      if (sizesForColor.has(size)) return `Size "${subVariation.size}" is duplicated under color "${variation.name}".`;
+      sizesForColor.add(size);
+
+      if (!sku) return `Size "${subVariation.size}" under color "${variation.name}" needs a unique SKU.`;
+      if (skus.has(sku)) return `SKU "${subVariation.sku}" is used more than once.`;
+      skus.add(sku);
+    }
+  }
+
+  return true;
+}
 export const product = defineType({
   name: "product",
   title: "Product",
@@ -114,8 +161,10 @@ export const product = defineType({
     }),
     defineField({
       name: "color",
-      title: "Display color",
+      title: "Legacy display color (deprecated)",
       type: "string",
+      description: "Deprecated. Use Storefront color variations below. Hidden to avoid conflicting color setup.",
+      hidden: true,
     }),
     defineField({
       name: "collection",
@@ -124,11 +173,11 @@ export const product = defineType({
     }),
     defineField({
       name: "variations",
-      title: "Storefront variations",
+      title: "Color variants and sizes",
       type: "array",
       of: [{ type: "variation" }],
-      description: "Colors/sizes shown on the storefront. Each size should include its Clickom variation SKU so sync can connect live stock and order approval.",
-      validation: (rule) => rule.required().min(1),
+      description: "One parent item per product color. Add sizes under each color. Each color + size row must map to one unique SKU.",
+      validation: (rule) => rule.required().min(1).custom(validateVariationHierarchy),
     }),
     defineField({
       name: "materialSpecs",

@@ -29,7 +29,9 @@ const orderItemInputSchema = z.object({
   quantity: z.coerce.number({ error: "Item quantity is required." }).int({ error: "Item quantity must be a whole number." }).min(1, { error: "Item quantity must be at least 1." }).max(20, { error: "Item quantity cannot be more than 20." }),
   selectedColor: optionalString,
   selectedColorHex: optionalString,
+  size: optionalString,
   selectedSize: optionalString,
+  sku: optionalString,
   customSize: z.boolean({ error: "Custom size selection is invalid." }).default(false),
   preOrder: z.boolean().optional(),
   customLength: optionalString,
@@ -81,6 +83,7 @@ interface ProductForOrder {
     colorHex?: string;
     subVariations?: Array<{
       size: string;
+      sku?: string;
       clickomVariationId?: number;
     }>;
   }>;
@@ -111,6 +114,7 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
         colorHex,
         subVariations[]{
           size,
+          sku,
           clickomVariationId
         }
       }
@@ -122,7 +126,7 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
 
 function formatCustomSizeLabel(input: OrderItemInput): string {
   if (!input.customSize) {
-    return input.selectedSize || "";
+    return input.size || input.selectedSize || "";
   }
 
   const measurements = [
@@ -158,13 +162,19 @@ function validateItem(
 
   const unitPrice = product.salePrice || product.price;
   const customCharge = input.customSize ? siteSettings.customSizeCharge : 0;
+  const resolvedSize = input.customSize
+    ? formatCustomSizeLabel(input)
+    : input.size || input.selectedSize || matchingSubVariation?.size;
+  const resolvedSku = input.sku || matchingSubVariation?.sku;
 
   return {
     ...input,
     title: product.title,
     slug: product.slug,
     image: product.mainImage,
-    selectedSize: input.customSize ? formatCustomSizeLabel(input) : input.selectedSize || matchingSubVariation?.size,
+    size: resolvedSize,
+    selectedSize: resolvedSize,
+    sku: resolvedSku,
     preOrder: input.preOrder || product.enablePreOrders || input.customSize,
     clickomProductId: product.clickomProductId,
     unitPrice: unitPrice + customCharge,

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import Image from "next/image";
 import { Upload, X, Check, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { uniqueMessages, validateEmail, validateFiles, validateRequiredText } from "@/utils/formValidation";
 
 interface SuggestionFile {
     file: File;
@@ -10,6 +12,10 @@ interface SuggestionFile {
 }
 
 type SuggestionType = "general" | "design";
+
+const MAX_SUGGESTION_FILES = 5;
+const MAX_SUGGESTION_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_SUGGESTION_FILE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 
 export default function SuggestionsPage() {
     const [suggestionType, setSuggestionType] = useState<SuggestionType>("general");
@@ -21,6 +27,7 @@ export default function SuggestionsPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isDragActive, setIsDragActive] = useState(false);
+    const [errors, setErrors] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleDrag = (e: React.DragEvent) => {
@@ -34,17 +41,24 @@ export default function SuggestionsPage() {
     };
 
     const processFiles = (uploadedFiles: FileList) => {
-        const newFiles: SuggestionFile[] = [];
-        for (let i = 0; i < uploadedFiles.length; i++) {
-            const file = uploadedFiles[i];
-            // Only allow images and PDFs
-            if (file.type.startsWith("image/") || file.type === "application/pdf") {
-                newFiles.push({
-                    file,
-                    previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
-                });
-            }
+        const incomingFiles = Array.from(uploadedFiles);
+        const validationErrors = validateFiles([...suggestionFiles.map((item) => item.file), ...incomingFiles], {
+            allowedTypes: ALLOWED_SUGGESTION_FILE_TYPES,
+            maxSizeBytes: MAX_SUGGESTION_FILE_SIZE,
+            maxFiles: MAX_SUGGESTION_FILES,
+            label: "Upload",
+        });
+
+        if (validationErrors.length > 0) {
+            setErrors(validationErrors);
+            return;
         }
+
+        const newFiles = incomingFiles.map((file) => ({
+            file,
+            previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
+        }));
+        setErrors([]);
         setSuggestionFiles((prev) => [...prev, ...newFiles]);
     };
 
@@ -76,8 +90,26 @@ export default function SuggestionsPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const validationErrors = uniqueMessages([
+            ...validateRequiredText(name, "Full name", { minLength: 2, maxLength: 80 }),
+            ...validateEmail(email),
+            ...validateRequiredText(title, suggestionType === "design" ? "Concept title" : "Feedback subject", { minLength: 3, maxLength: 120 }),
+            ...validateRequiredText(description, suggestionType === "design" ? "Inspiration and details" : "Suggestion", { minLength: 10, maxLength: 1000 }),
+            ...(suggestionType === "design" ? validateFiles(suggestionFiles.map((item) => item.file), {
+                allowedTypes: ALLOWED_SUGGESTION_FILE_TYPES,
+                maxSizeBytes: MAX_SUGGESTION_FILE_SIZE,
+                maxFiles: MAX_SUGGESTION_FILES,
+                label: "Upload",
+            }) : []),
+        ]);
+
+        if (validationErrors.length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setErrors([]);
         setIsProcessing(true);
-        // Simulate submission
         setTimeout(() => {
             setIsProcessing(false);
             setIsSubmitted(true);
@@ -126,7 +158,7 @@ export default function SuggestionsPage() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8 md:space-y-10">
+                <form onSubmit={handleSubmit} noValidate className="space-y-8 md:space-y-10">
                     {/* Suggestion Type Toggle */}
                     <div className="space-y-4">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Suggestion Type</label>
@@ -140,7 +172,11 @@ export default function SuggestionsPage() {
                                         // Reset files and title/description when switching
                                         setTitle("");
                                         setDescription("");
+                                        suggestionFiles.forEach((item) => {
+                                            if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+                                        });
                                         setSuggestionFiles([]);
+                                        setErrors([]);
                                     }}
                                     className={`py-3.5 md:py-4 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] border transition-all ${
                                         suggestionType === type 
@@ -275,12 +311,9 @@ export default function SuggestionsPage() {
                                             </button>
                                             
                                             {sFile.previewUrl ? (
-                                                /* eslint-disable-next-line @next/next/no-img-element */
-                                                <img 
-                                                    src={sFile.previewUrl} 
-                                                    alt={sFile.file.name} 
-                                                    className="w-full h-24 object-cover rounded"
-                                                />
+                                                <div className="relative h-24 w-full overflow-hidden rounded">
+                                                    <Image src={sFile.previewUrl} alt={sFile.file.name} fill unoptimized className="object-cover" sizes="160px" />
+                                                </div>
                                             ) : (
                                                 <div className="w-full h-24 bg-zinc-200 text-zinc-600 rounded flex flex-col items-center justify-center p-2 text-center">
                                                     <span className="text-[8px] font-bold uppercase tracking-wider truncate max-w-full">PDF File</span>
@@ -296,6 +329,20 @@ export default function SuggestionsPage() {
                         </div>
                     )}
 
+
+                    {errors.length > 0 && (
+                        <div className="border border-[#B21E1E]/20 bg-[#B21E1E]/5 px-4 py-3 text-sm font-bold text-[#B21E1E]" aria-live="polite">
+                            {errors.length === 1 ? (
+                                <p>{errors[0]}</p>
+                            ) : (
+                                <ul className="list-disc space-y-1 pl-5">
+                                    {errors.map((error) => (
+                                        <li key={error}>{error}</li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
                     {/* Submit Button */}
                     <div className="pt-6">
                         <button

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { isStoreLocatorActive } from "@/utils/featureFlags";
 import { DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import { PublicSiteSettings } from "@/types/siteSettings";
+import { uniqueMessages, validateMeasurement } from "@/utils/formValidation";
 
 interface ProductInfoProps {
     product: Product;
@@ -20,6 +21,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         [product.variations],
     );
     const firstVariation = displayVariations[0];
+    const colorVariations = displayVariations;
     const firstSize = firstVariation?.subVariations?.[0]?.size || "";
     const materialProperties = product.materialSpecs?.properties || [];
     const hasMaterialSpecs = Boolean(
@@ -32,6 +34,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [selectedSize, setSelectedSize] = useState(firstSize);
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [customMeasurements, setCustomMeasurements] = useState({ length: "", bust: "", hip: "", sleeve: "" });
+    const [customMeasurementErrors, setCustomMeasurementErrors] = useState<string[]>([]);
     const [isCustomSize, setIsCustomSize] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
@@ -51,6 +54,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         return displayVariations.find((variation) => variation.name === selectedVariationName) || displayVariations[0];
     }, [displayVariations, selectedVariationName]);
 
+    const selectedColorPreviewImage = selectedVariation?.image;
+    const selectedColorName = selectedVariation?.colorHex ? selectedVariation.name : undefined;
     const displaySizes = selectedVariation?.subVariations?.map((subVariation) => subVariation.size).filter(Boolean) || [];
 
     const selectedSubVariation = useMemo(() => {
@@ -148,11 +153,13 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedVariation?.colorHex || selectedVariation?.name,
-            colorName: selectedVariation?.name,
+            color: selectedVariation?.colorHex || undefined,
+            colorName: selectedColorName,
             colorHex: selectedVariation?.colorHex || undefined,
+            colorPreviewImage: selectedColorPreviewImage,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
+            sku: selectedSubVariation?.sku,
             customSize: isCustomSize,
             preOrder: product.enablePreOrders || isCustomSize,
             customLength: isCustomSize ? customMeasurements.length : undefined,
@@ -194,11 +201,13 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedVariation?.colorHex || selectedVariation?.name,
-            colorName: selectedVariation?.name,
+            color: selectedVariation?.colorHex || undefined,
+            colorName: selectedColorName,
             colorHex: selectedVariation?.colorHex || undefined,
+            colorPreviewImage: selectedColorPreviewImage,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
+            sku: selectedSubVariation?.sku,
             customSize: isCustomSize,
             preOrder: product.enablePreOrders || isCustomSize,
             customLength: isCustomSize ? customMeasurements.length : undefined,
@@ -212,6 +221,25 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
     const handleCustomSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const validationErrors = uniqueMessages([
+            ...validateMeasurement(customMeasurements.length, "Length"),
+            ...validateMeasurement(customMeasurements.bust, "Bust"),
+            ...validateMeasurement(customMeasurements.hip, "Hip"),
+            ...validateMeasurement(customMeasurements.sleeve, "Sleeve"),
+        ]);
+
+        if (validationErrors.length > 0) {
+            setCustomMeasurementErrors(validationErrors);
+            return;
+        }
+
+        setCustomMeasurementErrors([]);
+        setCustomMeasurements({
+            length: customMeasurements.length.trim(),
+            bust: customMeasurements.bust.trim(),
+            hip: customMeasurements.hip.trim(),
+            sleeve: customMeasurements.sleeve.trim(),
+        });
         setIsCustomSize(true);
         setShowCustomModal(false);
     };
@@ -307,9 +335,6 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         Type: <span className="text-gray-400 font-normal">{product.type}</span>
                     </p>
                     <p className="text-[10px] text-black tracking-wide font-bold">
-                        Color: <span className="text-gray-400 font-normal">{product.color}</span>
-                    </p>
-                    <p className="text-[10px] text-black tracking-wide font-bold">
                         Collection: <span className="text-gray-400 font-normal">{product.collection}</span>
                     </p>
                 </div>
@@ -325,42 +350,43 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             {/* Selectors (Aligned with Buttons) */}
             <div className="flex gap-4 mt-2">
                 {/* Color Selector */}
-                <div className="w-44 space-y-1.5">
-                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
-                    <div className="flex gap-2 pt-3.5">
-                        {displayVariations.map((variation) => {
-                            const colorValue = variation.colorHex || variation.name;
-                            const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(colorValue);
-                            const isSelected = selectedVariation?.name === variation.name;
-                            return (
-                                <button
-                                    key={variation.name}
-                                    onClick={() => {
-                                        setSelectedVariationName(variation.name);
-                                        setSelectedSize(variation.subVariations?.[0]?.size || "");
-                                        setIsCustomSize(false);
-                                    }}
-                                    disabled={isOutOfStock}
-                                    className={`${variation.colorHex ? "w-7 h-7 rounded-full" : "min-w-7 h-7 px-2"} border border-gray-200 transition-all duration-300 relative overflow-hidden ${
-                                        isSelected && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
-                                    } ${isOutOfStock ? "opacity-30 cursor-not-allowed grayscale" : "cursor-pointer"}`}
-                                    style={variation.colorHex ? { backgroundColor: variation.colorHex } : undefined}
-                                    title={isOutOfStock ? "Out of Stock" : undefined}
-                                >
-                                    {!variation.colorHex && (
-                                        <span className="text-[9px] font-bold uppercase tracking-widest">{variation.name}</span>
-                                    )}
-                                    {isOutOfStock && (
-                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <div className="absolute w-[120%] h-[1px] bg-white/80 rotate-45" />
-                                            <div className="absolute w-[120%] h-[1px] bg-white/80 -rotate-45" />
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
+                {colorVariations.length > 0 && (
+                    <div className="w-44 space-y-1.5">
+                        <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
+                        <div className="flex gap-2 pt-3.5">
+                            {colorVariations.map((variation) => {
+                                const colorValue = variation.colorHex || variation.name;
+                                const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(colorValue);
+                                const isSelected = selectedVariation?.name === variation.name;
+                                return (
+                                    <button
+                                        key={variation.name}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedVariationName(variation.name);
+                                            setSelectedSize(variation.subVariations?.[0]?.size || "");
+                                            setIsCustomSize(false);
+                                        }}
+                                        disabled={isOutOfStock}
+                                        aria-label={`Select ${variation.name}`}
+                                        className={`w-7 h-7 rounded-full border border-gray-200 transition-all duration-300 relative overflow-hidden ${
+                                            isSelected && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
+                                        } ${isOutOfStock ? "opacity-30 cursor-not-allowed grayscale" : "cursor-pointer"}`}
+                                        style={{ backgroundColor: variation.colorHex || "#fff" }}
+                                        title={isOutOfStock ? `${variation.name} - Out of Stock` : variation.name}
+                                    >
+                                        {isOutOfStock && (
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <div className="absolute w-[120%] h-[1px] bg-white/80 rotate-45" />
+                                                <div className="absolute w-[120%] h-[1px] bg-white/80 -rotate-45" />
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Size Selector */}
                 <div className="w-44 space-y-1.5">
@@ -407,7 +433,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             </span>
                             <button
                                 type="button"
-                                onClick={() => setShowCustomModal(true)}
+                                onClick={() => {
+                                    setCustomMeasurementErrors([]);
+                                    setShowCustomModal(true);
+                                }}
                                 className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
                                     isCustomSize
                                     ? "bg-black text-white border-black" 
@@ -433,7 +462,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setShowCustomModal(false)}
+                                onClick={() => {
+                                    setCustomMeasurementErrors([]);
+                                    setShowCustomModal(false);
+                                }}
                                 className="text-gray-400 hover:text-black transition-colors"
                                 aria-label="Close custom size form"
                             >
@@ -441,39 +473,60 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleCustomSubmit} className="mt-8 space-y-5">
+                        <form onSubmit={handleCustomSubmit} noValidate className="mt-8 space-y-5">
                             <input
                                 value={customMeasurements.length}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, length: event.target.value }))}
                                 placeholder="Length"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Length"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
                             <input
                                 value={customMeasurements.bust}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, bust: event.target.value }))}
                                 placeholder="Bust"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Bust"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
                             <input
                                 value={customMeasurements.hip}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, hip: event.target.value }))}
                                 placeholder="Hip"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Hip"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
                             <input
                                 value={customMeasurements.sleeve}
                                 onChange={(event) => setCustomMeasurements((current) => ({ ...current, sleeve: event.target.value }))}
                                 placeholder="Sleeve"
-                                required
+                                inputMode="decimal"
+                                aria-invalid={customMeasurementErrors.some((error) => error.startsWith("Sleeve"))}
                                 className="w-full border border-black/10 px-4 py-3 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-black/40 placeholder:text-gray-300"
                             />
+                            {customMeasurementErrors.length > 0 && (
+                                <div className="border border-[#B21E1E]/20 bg-[#B21E1E]/5 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[#B21E1E]" aria-live="polite">
+                                    {customMeasurementErrors.length === 1 ? (
+                                        <p>{customMeasurementErrors[0]}</p>
+                                    ) : (
+                                        <ul className="list-disc space-y-1 pl-4">
+                                            {customMeasurementErrors.map((error) => (
+                                                <li key={error}>{error}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="flex gap-3 pt-3">
                                 <button
                                     type="button"
-                                    onClick={() => setShowCustomModal(false)}
+                                    onClick={() => {
+                                    setCustomMeasurementErrors([]);
+                                    setShowCustomModal(false);
+                                }}
                                     className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest border border-black/10 text-gray-500 hover:text-black transition-all"
                                 >
                                     Cancel
