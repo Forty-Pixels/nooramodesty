@@ -195,17 +195,19 @@ function calculateShipping(order: SanityOrder) {
   return Math.max(0, Math.round((Math.max(0, order.totalAmount || 0) - subtotal + discount) * 100) / 100);
 }
 
-function buildItemNote(item: SanityOrder["items"][number]) {
+function buildCustomSizeNote(item: SanityOrder["items"][number]) {
+  if (!item.customSize) return "";
+
+  const measurements = [
+    item.customLength ? `Length ${item.customLength}` : "",
+    item.customBust ? `Bust ${item.customBust}` : "",
+    item.customHip ? `Hip ${item.customHip}` : "",
+    item.customSleeve ? `Sleeve ${item.customSleeve}` : "",
+  ].filter(Boolean);
   const lines = [
+    "Custom size",
     item.selectedColor ? `Colour: ${item.selectedColor}` : "",
-    item.selectedSize ? `Size: ${item.selectedSize}` : "",
-    item.customSize ? "Custom size: Yes" : "",
-    item.customLength ? `Length: ${item.customLength}` : "",
-    item.customBust ? `Bust: ${item.customBust}` : "",
-    item.customHip ? `Hip: ${item.customHip}` : "",
-    item.customSleeve ? `Sleeve: ${item.customSleeve}` : "",
-    item.customNote ? `Note: ${item.customNote}` : "",
-    item.preOrder ? "Pre-order: Yes" : "",
+    measurements.length > 0 ? `Measurements: ${measurements.join(", ")}` : "",
   ];
 
   return lines.filter(Boolean).join(" | ");
@@ -214,8 +216,8 @@ function buildItemNote(item: SanityOrder["items"][number]) {
 function buildOrderNote(order: SanityOrder) {
   return order.items
     .map((item) => {
-      const note = buildItemNote(item);
-      return note ? `${item.title}: ${note}` : "";
+      const note = buildCustomSizeNote(item);
+      return note ? `${item.title} - ${note}` : "";
     })
     .filter(Boolean)
     .join("\n");
@@ -225,7 +227,7 @@ function appendProduct(params: URLSearchParams, row: number, item: SanityOrder["
   const prefix = `products[${row}]`;
   const quantity = Math.max(1, item.quantity || 1);
   const price = Math.max(0, item.unitPrice || 0);
-  const note = buildItemNote(item);
+  const note = buildCustomSizeNote(item);
 
   params.set(`${prefix}[product_type]`, "variable");
   params.set(`${prefix}[product_id]`, String(item.clickomProductId));
@@ -458,22 +460,6 @@ function buildOmsOrderParams(order: SanityOrder, contactId: string) {
   params.set("is_save_and_print", "0");
 
   order.items.forEach((item, index) => appendProduct(params, index + 1, item));
-
-  console.log("[clickomOmsWeb] order payload", {
-    orderNumber: order.orderNumber,
-    finalTotal,
-    paidAmount,
-    items: order.items.map((item, index) => ({
-      row: index + 1,
-      title: item.title,
-      clickomProductId: item.clickomProductId,
-      clickomVariationId: item.clickomVariationId,
-      selectedColor: item.selectedColor,
-      selectedSize: item.selectedSize,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-    })),
-  });
 
   return {
     params,

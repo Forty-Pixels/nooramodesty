@@ -42,6 +42,8 @@
 3. Each product counts as the configured product weight, currently 700g.
 4. Base shipping covers first billable kg.
 5. Every extra billable kg adds the configured extra fee.
+6. Same product with the same color, size, and custom measurement key is merged into one cart line and quantity increases.
+7. Same product with a different size, color, or custom measurement key stays as a separate cart line.
 
 ### Checkout
 
@@ -87,10 +89,13 @@
 2. Order appears in Sanity Orders tool as `pending_approval`.
 3. Admin reviews customer details, items, totals, and payment slip if present.
 4. Admin approves order.
-5. Approved order is pushed to Clickom as a sale.
-6. Sale line items are sent with stock management enabled, so Clickom remains the final stock authority.
-7. Sanity stores Clickom transaction/custom order IDs.
-8. Admin can reject order if it should not go to Clickom.
+5. Approved order is pushed to Clickom OMS Orders through the live OMS order form route.
+6. Each Sanity order item becomes its own Clickom product row with its own product ID, variation ID, SKU, quantity, and unit price.
+7. Same product in two different sizes becomes two Clickom rows because each size has a different Clickom variation ID.
+8. Different products or different colors also become separate Clickom rows when their cart keys differ.
+9. Clickom sell notes are only sent for custom-size rows. Standard size/color/pre-order rows do not create sell notes.
+10. Sanity stores Clickom transaction/custom order IDs.
+11. Admin can reject order if it should not go to Clickom.
 
 ### Order Status Management
 
@@ -110,6 +115,7 @@
 - Color swatches are functional, but only products with `colorHex` render as true swatches. Variations without a hex value fall back to text labels.
 - Every purchasable size must already have a synced Clickom variation ID. If a size is missing its ID, the storefront blocks checkout for that item.
 - Custom size is functional, but it still depends on a valid base variation selection. It does not remove the need for a mapped Clickom variation.
+- Custom-size measurements are preserved in Sanity and sent to Clickom as sell notes only for the affected custom-size rows.
 - OMS approval now uses the live Clickom web order form. That works, but it is coupled to Clickom's current page structure and field names, so it is a maintenance dependency if they change the dashboard markup.
 - If Sanity content is incomplete, there is no image fallback or placeholder path on the homepage. Missing content will stay missing rather than degrading to a local asset.
 
