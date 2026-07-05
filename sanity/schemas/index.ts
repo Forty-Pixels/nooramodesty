@@ -9,7 +9,7 @@ import { returnExchangeRequest } from "./returnExchangeRequest";
 import { shippingReturnPolicy, shippingReturnPolicySection } from "./shippingReturnPolicy";
 import { siteSettings } from "./siteSettings";
 import { subCategory } from "./subCategory";
-import { subVariation, variation } from "./variation";
+import { subVariation } from "./variation";
 
 export const schemaTypes = [
   blockContent,
@@ -17,7 +17,6 @@ export const schemaTypes = [
   category,
   materialSpecs,
   subVariation,
-  variation,
   product,
   orderItem,
   order,

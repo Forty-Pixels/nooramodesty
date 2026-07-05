@@ -17,10 +17,11 @@ const productProjection = `
   "subCategory": subCategory->slug.current,
   "subCategoryRef": subCategory._ref,
   type,
-  color,
+  colorName,
+  colorHex,
   collection,
-  "colors": variations[].colorHex,
-  "sizes": array::unique(variations[].subVariations[].size),
+  styleGroup,
+  "sizes": array::unique(subVariations[size != "Custom"].size),
   enablePreOrders,
   enableCustomSizes,
   isNewArrival,
@@ -28,16 +29,10 @@ const productProjection = `
   manualStockCount,
   isVisible,
   clickomProductId,
-  variations[]{
-    name,
-    colorHex,
-    "image": coalesce(image.asset->url, imageUrl),
+  subVariations[]{
+    size,
     clickomVariationId,
-    subVariations[]{
-      size,
-      clickomVariationId,
-      sku
-    }
+    sku
   },
   materialSpecs{
     gsm,
@@ -72,6 +67,13 @@ export const HOMEPAGE_QUERY = defineQuery(`*[_type == "homepage"][0]{
   }
 }`);
 
+export const ALL_PRODUCTS_QUERY = defineQuery(`*[
+  _type == "product" &&
+  isVisible != false
+] | order(title asc) {
+  ${productProjection}
+}`);
+
 export const PRODUCTS_BY_CATEGORY_QUERY = defineQuery(`*[
   _type == "product" &&
   isVisible != false &&
@@ -99,6 +101,16 @@ export const PRODUCT_BY_SLUG_QUERY = defineQuery(`*[
   ${productProjection}
 }`);
 
+export const RELATED_PRODUCTS_BY_STYLE_QUERY = defineQuery(`*[
+  _type == "product" &&
+  isVisible != false &&
+  defined(styleGroup) &&
+  styleGroup == $styleGroup &&
+  slug.current != $slug
+] | order(title asc)[0...8] {
+  ${productProjection}
+}`);
+
 export const RELATED_PRODUCTS_QUERY = defineQuery(`*[
   _type == "product" &&
   isVisible != false &&
@@ -106,7 +118,7 @@ export const RELATED_PRODUCTS_QUERY = defineQuery(`*[
     category->slug.current == $category ||
     category._ref == $categoryRef
   ) &&
-  slug.current != $slug
-] | order(title asc)[0...4] {
+  !(slug.current in $excludeSlugs)
+] | order(title asc)[0...8] {
   ${productProjection}
 }`);

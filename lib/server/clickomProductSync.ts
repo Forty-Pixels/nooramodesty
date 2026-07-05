@@ -9,20 +9,13 @@ interface SanitySubVariation {
   clickomVariationId?: number;
 }
 
-interface SanityVariation {
-  _key: string;
-  name?: string;
-  colorHex?: string;
-  clickomVariationId?: number;
-  subVariations?: SanitySubVariation[];
-}
-
 interface SanityProductForSync {
   _id: string;
+  _originalId: string;
   title?: string;
   sku?: string;
   clickomProductId?: number;
-  variations?: SanityVariation[];
+  subVariations?: SanitySubVariation[];
 }
 
 interface ClickomVariationForSync {
@@ -201,24 +194,23 @@ async function fetchClickomProducts() {
 async function fetchSanityProducts() {
   const client = requireSanityWriteClient();
 
-  return client.fetch<SanityProductForSync[]>(`*[_type == "product"] | order(title asc){
-    _id,
-    title,
-    sku,
-    clickomProductId,
-    variations[]{
-      _key,
-      name,
-      colorHex,
-      clickomVariationId,
+  return client.fetch<SanityProductForSync[]>(
+    `*[_type == "product"] | order(title asc){
+      _id,
+      _originalId,
+      title,
+      sku,
+      clickomProductId,
       subVariations[]{
         _key,
         size,
         sku,
         clickomVariationId
       }
-    }
-  }`);
+    }`,
+    {},
+    { perspective: "drafts" },
+  );
 }
 
 function flattenClickomVariations(product: Record<string, unknown>) {
@@ -304,7 +296,7 @@ function findClickomProduct(sanityProduct: SanityProductForSync, indexes: Return
   };
 }
 
-function scoreVariation(sanityVariation: SanityVariation, sanitySubVariation: SanitySubVariation, clickomVariation: ClickomVariationForSync) {
+function scoreVariation(sanitySubVariation: SanitySubVariation, clickomVariation: ClickomVariationForSync) {
   let score = 0;
 
   if (normalizeSku(sanitySubVariation.sku) && normalizeSku(sanitySubVariation.sku) === normalizeSku(clickomVariation.subSku)) {
@@ -313,17 +305,15 @@ function scoreVariation(sanityVariation: SanityVariation, sanitySubVariation: Sa
 
   if (valueEquals(sanitySubVariation.size, clickomVariation.name)) score += 4;
   if (valueEquals(sanitySubVariation.size, clickomVariation.parentName)) score += 4;
-  if (valueEquals(sanityVariation.name, clickomVariation.name)) score += 3;
-  if (valueEquals(sanityVariation.name, clickomVariation.parentName)) score += 3;
 
   return score;
 }
 
-function matchSubVariation(sanityVariation: SanityVariation, sanitySubVariation: SanitySubVariation, clickomVariations: ClickomVariationForSync[]): VariationMatch {
+function matchSubVariation(sanitySubVariation: SanitySubVariation, clickomVariations: ClickomVariationForSync[]): VariationMatch {
   const scored = clickomVariations
     .map((clickomVariation) => ({
       clickomVariation,
-      score: scoreVariation(sanityVariation, sanitySubVariation, clickomVariation),
+      score: scoreVariation(sanitySubVariation, clickomVariation),
     }))
     .filter((item) => item.score > 0)
     .sort((left, right) => right.score - left.score);
@@ -340,46 +330,41 @@ function buildProductPatch(sanityProduct: SanityProductForSync, clickomMatch: Cl
   const set: Partial<SanityProductForSync> = {};
   const notes: ProductPatch["notes"] = [];
   let hasChanges = false;
-  const nextVariations = (sanityProduct.variations || []).map((variation) => ({
-    ...variation,
-    subVariations: (variation.subVariations || []).map((subVariation) => {
-      const variationMatch = matchSubVariation(variation, subVariation, clickomMatch.variations);
+  const nextSubVariations = (sanityProduct.subVariations || []).map((subVariation) => {
+    const variationMatch = matchSubVariation(subVariation, clickomMatch.variations);
 
-      if (!variationMatch.match) {
-        notes.push({
-          type: "variation-unmatched",
-          variation: variation.name,
-          size: subVariation.size,
-          reason: variationMatch.reason,
-          candidates: variationMatch.candidates || [],
-        });
-        return subVariation;
-      }
-
-      const nextSubVariation = { ...subVariation };
-
-      if (nextSubVariation.clickomVariationId !== variationMatch.match.variationId) {
-        nextSubVariation.clickomVariationId = variationMatch.match.variationId;
-        hasChanges = true;
-      }
-
-      if (!nextSubVariation.sku && variationMatch.match.subSku) {
-        nextSubVariation.sku = variationMatch.match.subSku;
-        hasChanges = true;
-      }
-
+    if (!variationMatch.match) {
       notes.push({
-        type: "variation-matched",
-        variation: variation.name,
+        type: "variation-unmatched",
         size: subVariation.size,
-        clickomVariationId: variationMatch.match.variationId,
-        subSku: variationMatch.match.subSku,
         reason: variationMatch.reason,
+        candidates: variationMatch.candidates || [],
       });
+      return subVariation;
+    }
 
-      return nextSubVariation;
-    }),
-  }));
+    const nextSubVariation = { ...subVariation };
+
+    if (nextSubVariation.clickomVariationId !== variationMatch.match.variationId) {
+      nextSubVariation.clickomVariationId = variationMatch.match.variationId;
+      hasChanges = true;
+    }
+
+    if (!nextSubVariation.sku && variationMatch.match.subSku) {
+      nextSubVariation.sku = variationMatch.match.subSku;
+      hasChanges = true;
+    }
+
+    notes.push({
+      type: "variation-matched",
+      size: subVariation.size,
+      clickomVariationId: variationMatch.match.variationId,
+      subSku: variationMatch.match.subSku,
+      reason: variationMatch.reason,
+    });
+
+    return nextSubVariation;
+  });
 
   if (sanityProduct.clickomProductId !== clickomMatch.productId) {
     set.clickomProductId = clickomMatch.productId;
@@ -392,7 +377,7 @@ function buildProductPatch(sanityProduct: SanityProductForSync, clickomMatch: Cl
   }
 
   if (hasChanges) {
-    set.variations = nextVariations;
+    set.subVariations = nextSubVariations;
   }
 
   return { set, hasChanges, notes };
@@ -459,14 +444,14 @@ export function renderClickomProductSyncReport(report: ClickomProductSyncReport)
   lines.push("", "## Variation Review", "");
   for (const item of report.variationNotes) {
     if (item.type === "variation-matched") {
-      lines.push(`- ${item.productTitle}: ${item.variation} / ${item.size} -> ${item.clickomVariationId}${item.subSku ? ` (${item.subSku})` : ""} via ${item.reason}`);
+      lines.push(`- ${item.productTitle}: ${item.size} -> ${item.clickomVariationId}${item.subSku ? ` (${item.subSku})` : ""} via ${item.reason}`);
       continue;
     }
 
     const candidates = Array.isArray(item.candidates) && item.candidates.length > 0
       ? ` Candidates: ${(item.candidates as Record<string, unknown>[]).map(formatVariationCandidate).join("; ")}`
       : "";
-    lines.push(`- NEEDS REVIEW: ${item.productTitle}: ${item.variation} / ${item.size} (${item.reason}).${candidates}`);
+    lines.push(`- NEEDS REVIEW: ${item.productTitle}: ${item.size} (${item.reason}).${candidates}`);
   }
   if (report.variationNotes.length === 0) lines.push("None.");
 
@@ -527,7 +512,7 @@ export async function runClickomProductSync(options: { apply: boolean }) {
     });
 
     if (options.apply) {
-      await client.patch(sanityProduct._id).set(patch.set).commit();
+      await client.patch(sanityProduct._originalId).set(patch.set).commit();
     }
   }
 

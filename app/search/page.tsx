@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import ListingGrid from "@/components/Category/ListingGrid";
 import { ListingControls } from "@/components/Category/ListingControls";
-import { products } from "@/data/products";
+import { getAllProducts } from "@/lib/sanity/products";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { filterAndSortProducts, getProductFacets, hasActiveProductFilters, ProductFilterParams } from "@/utils/productFilters";
@@ -15,6 +15,7 @@ const SearchResults = async ({ searchParams }: SearchPageProps) => {
     const searchTerm = filters.q?.toLowerCase().trim() || "";
     const hasActiveFilters = hasActiveProductFilters(filters);
 
+    const products = await getAllProducts();
     const facets = getProductFacets(products);
     const filteredProducts = hasActiveFilters ? filterAndSortProducts(products, filters) : [];
 

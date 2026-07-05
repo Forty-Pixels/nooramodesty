@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { products } from "@/data/products";
 import ProductListingCard from "@/components/Category/ProductListingCard";
 import { Product } from "@/types/product";
 import { FilterDrawer } from "@/components/Category/FilterDrawer";
@@ -31,11 +30,31 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [products, setProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [searchError, setSearchError] = useState("");
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const facets = getProductFacets(products);
+
+    useEffect(() => {
+        if (!isOpen || products.length > 0) return;
+
+        let isMounted = true;
+
+        fetch("/api/products")
+            .then((response) => response.json())
+            .then((data: { products?: Product[] }) => {
+                if (isMounted) setProducts(data.products || []);
+            })
+            .catch(() => {
+                if (isMounted) setProducts([]);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [isOpen, products.length]);
 
     useEffect(() => {
         const hasActiveFilters = Boolean(
@@ -64,7 +83,7 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
         } else {
             setFilteredProducts([]);
         }
-    }, [availability, category, color, maxPrice, minPrice, query, size, sort]);
+    }, [availability, category, color, maxPrice, minPrice, products, query, size, sort]);
 
     useEffect(() => {
         if (isOpen && inputRef.current) {

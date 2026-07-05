@@ -11,14 +11,6 @@ export interface ProductSubVariation {
     sku?: string;
 }
 
-export interface ProductVariation {
-    name: string;
-    colorHex?: string;
-    image?: string;
-    clickomVariationId?: number;
-    subVariations: ProductSubVariation[];
-}
-
 export interface Product {
     _id: string;
     title: string;
@@ -33,11 +25,12 @@ export interface Product {
     category: string;
     subCategory?: string;
     type?: string;
-    color?: string;
+    colorName?: string;
+    colorHex?: string;
+    styleGroup?: string;
     collection?: string;
-    colors?: string[];
     sizes?: string[];
-    variations?: ProductVariation[];
+    subVariations?: ProductSubVariation[];
     materialSpecs?: MaterialSpecs;
     enablePreOrders?: boolean;
     enableCustomSizes?: boolean;

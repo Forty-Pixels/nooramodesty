@@ -78,14 +78,10 @@ interface ProductForOrder {
   isVisible?: boolean;
   clickomProductId?: number;
   enablePreOrders?: boolean;
-  variations?: Array<{
-    name: string;
-    colorHex?: string;
-    subVariations?: Array<{
-      size: string;
-      sku?: string;
-      clickomVariationId?: number;
-    }>;
+  subVariations?: Array<{
+    size: string;
+    sku?: string;
+    clickomVariationId?: number;
   }>;
 }
 
@@ -109,14 +105,10 @@ async function fetchProducts(productIds: string[]): Promise<ProductForOrder[]> {
       isVisible,
       clickomProductId,
       enablePreOrders,
-      variations[]{
-        name,
-        colorHex,
-        subVariations[]{
-          size,
-          sku,
-          clickomVariationId
-        }
+      subVariations[]{
+        size,
+        sku,
+        clickomVariationId
       }
     }`,
     { ids: productIds },
@@ -148,11 +140,11 @@ function validateItem(
     throw new Error(`${product.title} is not available.`);
   }
 
-  const matchingSubVariation = product.variations
-    ?.flatMap((variation) => variation.subVariations || [])
-    .find((subVariation) => subVariation.clickomVariationId === input.clickomVariationId);
+  const matchingSubVariation = product.subVariations?.find(
+    (subVariation) => subVariation.clickomVariationId === input.clickomVariationId,
+  );
 
-  if (product.variations?.length && !matchingSubVariation) {
+  if (product.subVariations?.length && !matchingSubVariation) {
     throw new Error(`${product.title} has an invalid size selection.`);
   }
 

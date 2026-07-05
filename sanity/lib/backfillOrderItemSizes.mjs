@@ -40,12 +40,10 @@ const productIds = Array.from(new Set(
 const products = productIds.length
   ? await client.fetch(`*[_type == "product" && _id in $ids]{
       _id,
-      variations[]{
-        subVariations[]{
-          size,
-          sku,
-          clickomVariationId
-        }
+      subVariations[]{
+        size,
+        sku,
+        clickomVariationId
       }
     }`, { ids: productIds })
   : [];
@@ -53,14 +51,12 @@ const products = productIds.length
 const subVariationByProductAndClickomId = new Map();
 
 for (const product of products) {
-  for (const variation of product.variations || []) {
-    for (const subVariation of variation.subVariations || []) {
-      if (subVariation.clickomVariationId) {
-        subVariationByProductAndClickomId.set(
-          `${product._id}:${subVariation.clickomVariationId}`,
-          subVariation,
-        );
-      }
+  for (const subVariation of product.subVariations || []) {
+    if (subVariation.clickomVariationId) {
+      subVariationByProductAndClickomId.set(
+        `${product._id}:${subVariation.clickomVariationId}`,
+        subVariation,
+      );
     }
   }
 }

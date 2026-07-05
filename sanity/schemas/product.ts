@@ -5,44 +5,27 @@ interface ProductSubVariationValue {
   sku?: string;
 }
 
-interface ProductVariationValue {
-  name?: string;
-  colorHex?: string;
-  subVariations?: ProductSubVariationValue[];
-}
-
 function normalizeVariationValue(value: string | undefined) {
   return value?.trim().toLowerCase();
 }
 
-function validateVariationHierarchy(value: unknown) {
+function validateSubVariations(value: unknown) {
   if (!Array.isArray(value)) return true;
 
-  const colorNames = new Set<string>();
+  const sizes = new Set<string>();
   const skus = new Set<string>();
 
-  for (const variation of value as ProductVariationValue[]) {
-    const colorName = normalizeVariationValue(variation.name);
+  for (const subVariation of value as ProductSubVariationValue[]) {
+    const size = normalizeVariationValue(subVariation.size);
+    const sku = normalizeVariationValue(subVariation.sku);
 
-    if (!colorName) return "Each parent variation must be a color name.";
-    if (colorNames.has(colorName)) return `Color "${variation.name}" is duplicated.`;
-    colorNames.add(colorName);
+    if (!size) return "A size is missing.";
+    if (sizes.has(size)) return `Size "${subVariation.size}" is duplicated.`;
+    sizes.add(size);
 
-    if (!variation.colorHex?.trim()) return `Color "${variation.name}" needs a hex swatch value.`;
-
-    const sizesForColor = new Set<string>();
-    for (const subVariation of variation.subVariations || []) {
-      const size = normalizeVariationValue(subVariation.size);
-      const sku = normalizeVariationValue(subVariation.sku);
-
-      if (!size) return `A size is missing under color "${variation.name}".`;
-      if (sizesForColor.has(size)) return `Size "${subVariation.size}" is duplicated under color "${variation.name}".`;
-      sizesForColor.add(size);
-
-      if (!sku) return `Size "${subVariation.size}" under color "${variation.name}" needs a unique SKU.`;
-      if (skus.has(sku)) return `SKU "${subVariation.sku}" is used more than once.`;
-      skus.add(sku);
-    }
+    if (!sku) return `Size "${subVariation.size}" needs a unique SKU.`;
+    if (skus.has(sku)) return `SKU "${subVariation.sku}" is used more than once.`;
+    skus.add(sku);
   }
 
   return true;
@@ -160,11 +143,24 @@ export const product = defineType({
       type: "string",
     }),
     defineField({
-      name: "color",
-      title: "Legacy display color (deprecated)",
+      name: "colorName",
+      title: "Color name",
       type: "string",
-      description: "Deprecated. Use Storefront color variations below. Hidden to avoid conflicting color setup.",
-      hidden: true,
+      description: "This product's color, for example Black, Beige, or Navy. Each color is its own separate product — sizes below belong to this one color.",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "colorHex",
+      title: "Hex swatch color",
+      type: "string",
+      description: "Storefront swatch color shown next to the color name, for example #000000.",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "styleGroup",
+      title: "Style group",
+      type: "string",
+      description: "Shared value across the color variants of the same design, for example \"Vogue Abaya\". Used to surface other colors of this style in Related Products. Leave blank if this design has no other colors.",
     }),
     defineField({
       name: "collection",
@@ -172,12 +168,12 @@ export const product = defineType({
       type: "string",
     }),
     defineField({
-      name: "variations",
-      title: "Color variants and sizes",
+      name: "subVariations",
+      title: "Sizes",
       type: "array",
-      of: [{ type: "variation" }],
-      description: "One parent item per product color. Add sizes under each color. Each color + size row must map to one unique SKU.",
-      validation: (rule) => rule.required().min(1).custom(validateVariationHierarchy),
+      of: [{ type: "subVariation" }],
+      description: "Sizes available for this color. Every size must have one unique SKU.",
+      validation: (rule) => rule.required().min(1).custom(validateSubVariations),
     }),
     defineField({
       name: "materialSpecs",

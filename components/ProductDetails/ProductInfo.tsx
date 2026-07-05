@@ -18,13 +18,7 @@ interface ProductInfoProps {
 const isCustomSizeLabel = (size: string | undefined) => (size || "").trim().toLowerCase() === "custom";
 
 export const ProductInfo = ({ product }: ProductInfoProps) => {
-    const displayVariations = useMemo(
-        () => product.variations?.filter((variation) => variation.subVariations?.length) || [],
-        [product.variations],
-    );
-    const firstVariation = displayVariations[0];
-    const colorVariations = displayVariations;
-    const firstSize = firstVariation?.subVariations?.find((subVariation) => !isCustomSizeLabel(subVariation.size))?.size || "";
+    const firstSize = product.subVariations?.find((subVariation) => !isCustomSizeLabel(subVariation.size))?.size || "";
     const materialProperties = product.materialSpecs?.properties || [];
     const hasMaterialSpecs = Boolean(
         product.materialSpecs?.macroImage ||
@@ -32,7 +26,6 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         product.materialSpecs?.gsm ||
         materialProperties.length > 0
     );
-    const [selectedVariationName, setSelectedVariationName] = useState(firstVariation?.name || "");
     const [selectedSize, setSelectedSize] = useState(firstSize);
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [customMeasurements, setCustomMeasurements] = useState({ length: "", bust: "", hip: "", sleeve: "" });
@@ -43,7 +36,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
     const [showStoreLocatorModal, setShowStoreLocatorModal] = useState(false);
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
-    
+
     const { addItem, toggleWishlist, wishlistItems, setBuyNowItem } = useCartStore();
     const isWishlisted = wishlistItems.some(item => item._id === product._id);
     const router = useRouter();
@@ -52,43 +45,21 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         setOpenAccordion(openAccordion === id ? null : id);
     };
 
-    const selectedVariation = useMemo(() => {
-        return displayVariations.find((variation) => variation.name === selectedVariationName) || displayVariations[0];
-    }, [displayVariations, selectedVariationName]);
-
-    const selectedColorPreviewImage = selectedVariation?.image;
-    const selectedColorName = selectedVariation?.colorHex ? selectedVariation.name : undefined;
-    const displaySizes = selectedVariation?.subVariations
+    const displaySizes = product.subVariations
         ?.filter((subVariation) => !isCustomSizeLabel(subVariation.size))
         .map((subVariation) => subVariation.size)
         .filter(Boolean) || [];
     const customSubVariation = useMemo(() => {
-        return selectedVariation?.subVariations?.find((subVariation) => isCustomSizeLabel(subVariation.size));
-    }, [selectedVariation]);
+        return product.subVariations?.find((subVariation) => isCustomSizeLabel(subVariation.size));
+    }, [product.subVariations]);
 
     const selectedSubVariation = useMemo(() => {
-        return selectedVariation?.subVariations?.find((subVariation) => subVariation.size === selectedSize);
-    }, [selectedVariation, selectedSize]);
+        return product.subVariations?.find((subVariation) => subVariation.size === selectedSize);
+    }, [product.subVariations, selectedSize]);
     const isSelectedOutOfStock = selectedSubVariation?.clickomVariationId
         ? stockByVariationId[selectedSubVariation.clickomVariationId] === false
         : false;
     const canOrderSelectedVariation = Boolean(selectedSubVariation && (!isSelectedOutOfStock || product.enablePreOrders || isCustomSize));
-
-    useEffect(() => {
-        if (!selectedVariation) {
-            setSelectedVariationName("");
-            setSelectedSize("");
-            return;
-        }
-
-        if (selectedVariation.name !== selectedVariationName) {
-            setSelectedVariationName(selectedVariation.name);
-        }
-
-        if (!selectedVariation.subVariations?.some((subVariation) => subVariation.size === selectedSize)) {
-            setSelectedSize(selectedVariation.subVariations?.[0]?.size || "");
-        }
-    }, [selectedSize, selectedVariation, selectedVariationName]);
 
     useEffect(() => {
         let isMounted = true;
@@ -109,10 +80,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     }, []);
 
     useEffect(() => {
-        const subVariations = product.variations?.flatMap((variation) => variation.subVariations || []) || [];
         const variationIds = Array.from(
             new Set(
-                subVariations
+                (product.subVariations || [])
                     .map((subVariation) => subVariation.clickomVariationId)
                     .filter((variationId): variationId is number => Number.isFinite(variationId) && variationId > 0),
             ),
@@ -135,7 +105,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             .catch(() => {
                 setStockByVariationId(Object.fromEntries(variationIds.map((variationId) => [variationId, false])));
             });
-    }, [product.variations]);
+    }, [product.subVariations]);
 
     const getCustomNote = () => {
         if (!isCustomSize) return undefined;
@@ -153,7 +123,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + siteSettings.customSizeCharge : originalPrice;
         
         addItem({
-            _id: `${product._id}-${selectedVariation?.name || ""}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
+            _id: `${product._id}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
@@ -161,10 +131,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedVariation?.colorHex || undefined,
-            colorName: selectedColorName,
-            colorHex: selectedVariation?.colorHex || undefined,
-            colorPreviewImage: selectedColorPreviewImage,
+            color: product.colorHex || undefined,
+            colorName: product.colorName,
+            colorHex: product.colorHex || undefined,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
             sku: selectedSubVariation?.sku,
@@ -201,7 +170,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         const finalOriginalPrice = isCustomSize && originalPrice ? originalPrice + siteSettings.customSizeCharge : originalPrice;
 
         setBuyNowItem({
-            _id: `${product._id}-${selectedVariation?.name || ""}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
+            _id: `${product._id}-${size}-${customNote ? encodeURIComponent(customNote) : ""}`,
             productId: product._id,
             title: product.title,
             slug: product.slug,
@@ -209,10 +178,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
             quantity: 1,
-            color: selectedVariation?.colorHex || undefined,
-            colorName: selectedColorName,
-            colorHex: selectedVariation?.colorHex || undefined,
-            colorPreviewImage: selectedColorPreviewImage,
+            color: product.colorHex || undefined,
+            colorName: product.colorName,
+            colorHex: product.colorHex || undefined,
             size: size,
             clickomVariationId: selectedSubVariation?.clickomVariationId,
             sku: selectedSubVariation?.sku,
@@ -339,8 +307,20 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
             {/* Collection Info */}
             <div className="mt-1 space-y-2">
-                
-                
+                {(product.colorName || product.colorHex) && (
+                    <div className="flex items-center gap-2">
+                        {product.colorHex && (
+                            <span
+                                className="w-3.5 h-3.5 rounded-full border border-gray-200"
+                                style={{ backgroundColor: product.colorHex }}
+                                aria-hidden="true"
+                            />
+                        )}
+                        <p className="text-[10px] text-black tracking-wide font-bold">
+                            Color: <span className="text-gray-400 font-normal">{product.colorName}</span>
+                        </p>
+                    </div>
+                )}
                 <div className="space-y-0.5">
                     <p className="text-[10px] text-black tracking-wide font-bold">
                         Type: <span className="text-gray-400 font-normal">{product.type}</span>
@@ -358,54 +338,13 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 </p>
             </div>
 
-            {/* Selectors (Aligned with Buttons) */}
-            <div className="flex gap-4 mt-2">
-                {/* Color Selector */}
-                {colorVariations.length > 0 && (
-                    <div className="w-44 space-y-1.5">
-                        <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Color</label>
-                        <div className="flex gap-2 pt-3.5">
-                            {colorVariations.map((variation) => {
-                                const colorValue = variation.colorHex || variation.name;
-                                const isOutOfStock = product.stockStatus === "out-of-stock" || product.outOfStockColors?.includes(colorValue);
-                                const isSelected = selectedVariation?.name === variation.name;
-                                return (
-                                    <button
-                                        key={variation.name}
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedVariationName(variation.name);
-                                            setSelectedSize(variation.subVariations?.[0]?.size || "");
-                                            setIsCustomSize(false);
-                                        }}
-                                        disabled={isOutOfStock}
-                                        aria-label={`Select ${variation.name}`}
-                                        className={`w-7 h-7 rounded-full border border-gray-200 transition-all duration-300 relative overflow-hidden ${
-                                            isSelected && !isOutOfStock ? "ring-2 ring-[#8B8378] ring-offset-2" : "hover:scale-110"
-                                        } ${isOutOfStock ? "opacity-30 cursor-not-allowed grayscale" : "cursor-pointer"}`}
-                                        style={{ backgroundColor: variation.colorHex || "#fff" }}
-                                        title={isOutOfStock ? `${variation.name} - Out of Stock` : variation.name}
-                                    >
-                                        {isOutOfStock && (
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                <div className="absolute w-[120%] h-[1px] bg-white/80 rotate-45" />
-                                                <div className="absolute w-[120%] h-[1px] bg-white/80 -rotate-45" />
-                                            </div>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Size Selector */}
+            {/* Size Selector */}
+            <div className="mt-2">
                 <div className="w-44 space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Size</label>
                     <div className="flex gap-2 items-end">
                         {displaySizes.map((s) => {
-                            const subVariation = selectedVariation
-                                ?.subVariations?.find((item) => item.size === s);
+                            const subVariation = product.subVariations?.find((item) => item.size === s);
                             const isMissingClickomVariation = !subVariation?.clickomVariationId;
                             const isOutOfStock = subVariation?.clickomVariationId ? stockByVariationId[subVariation.clickomVariationId] === false : false;
                             const isBlockedByStock = isOutOfStock && !product.enablePreOrders;

@@ -87,11 +87,7 @@ function compactValues(values: Array<string | undefined | null>) {
 }
 
 function getProductColorValues(product: Product) {
-  return compactValues([
-    product.color,
-    ...(product.colors || []),
-    ...(product.variations?.flatMap((variation) => [variation.name, variation.colorHex]) || []),
-  ]);
+  return compactValues([product.colorName, product.colorHex]);
 }
 
 export function productMatchesColor(product: Product, color: string) {
@@ -126,7 +122,7 @@ function productMatchesText(product: Product, query: string) {
     product.description,
     product.collection,
     product.type,
-    product.color,
+    product.colorName,
   ]);
 
   return searchableValues.some((value) => value.includes(searchTerm));
@@ -147,7 +143,7 @@ function productMatchesSize(product: Product, size: string) {
 
   const productSizes = compactValues([
     ...(product.sizes || []),
-    ...(product.variations?.flatMap((variation) => variation.subVariations?.map((subVariation) => subVariation.size) || []) || []),
+    ...(product.subVariations?.filter((subVariation) => normalize(subVariation.size) !== "custom").map((subVariation) => subVariation.size) || []),
   ]);
   const outOfStockSizes = compactValues(product.outOfStockSizes || []);
 
@@ -267,11 +263,7 @@ function colorFacetValue(label: string) {
 
 function addProductColorFacets(product: Product, colorMap: Map<string, FacetOption>) {
   const seenColors = new Set<string>();
-  const values = [
-    product.color,
-    ...(product.colors || []),
-    ...(product.variations?.flatMap((variation) => [variation.name, variation.colorHex]) || []),
-  ].filter(Boolean) as string[];
+  const values = [product.colorName, product.colorHex].filter(Boolean) as string[];
 
   values.forEach((value) => {
     const isHex = value.trim().startsWith("#");
@@ -305,7 +297,7 @@ export function getProductFacets(products: Product[]): ProductFacets {
 
     const productSizes = Array.from(new Set([
       ...(product.sizes || []),
-      ...(product.variations?.flatMap((variation) => variation.subVariations?.map((subVariation) => subVariation.size) || []) || []),
+      ...(product.subVariations?.filter((subVariation) => normalize(subVariation.size) !== "custom").map((subVariation) => subVariation.size) || []),
     ])).filter((size) => !product.outOfStockSizes?.includes(size));
 
     productSizes.forEach((size) => addCount(sizeMap, size, size));

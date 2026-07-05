@@ -1,11 +1,15 @@
 import { Product } from "@/types/product";
 import { sanityClient } from "./client";
 import {
+  ALL_PRODUCTS_QUERY,
   PRODUCT_BY_SLUG_QUERY,
   PRODUCTS_BY_CATEGORY_QUERY,
+  RELATED_PRODUCTS_BY_STYLE_QUERY,
   RELATED_PRODUCTS_QUERY,
   SALE_PRODUCTS_QUERY,
 } from "./queries";
+
+const RELATED_PRODUCTS_LIMIT = 4;
 
 interface SanityProductResult extends Product {
   categoryRef?: string | null;
@@ -33,6 +37,20 @@ function normalizeProduct(product: SanityProductResult): Product {
 
 function normalizeProducts(products: SanityProductResult[]): Product[] {
   return products.map(normalizeProduct);
+}
+
+export async function getAllProducts(): Promise<Product[]> {
+  if (!sanityClient) {
+    return [];
+  }
+
+  const products = await sanityClient.fetch<SanityProductResult[]>(
+    ALL_PRODUCTS_QUERY,
+    {},
+    { next: { revalidate: 60, tags: ["product"] } },
+  );
+
+  return normalizeProducts(products);
 }
 
 export async function getProductsByCategory(category: string): Promise<Product[]> {
@@ -71,11 +89,24 @@ export async function getRelatedProducts(product: Product): Promise<Product[]> {
     return [];
   }
 
-  const products = await sanityClient.fetch<SanityProductResult[]>(
+  const styleMatches = product.styleGroup
+    ? await sanityClient.fetch<SanityProductResult[]>(
+        RELATED_PRODUCTS_BY_STYLE_QUERY,
+        { styleGroup: product.styleGroup, slug: product.slug },
+        { next: { revalidate: 60, tags: ["product"] } },
+      )
+    : [];
+
+  if (styleMatches.length >= RELATED_PRODUCTS_LIMIT) {
+    return normalizeProducts(styleMatches.slice(0, RELATED_PRODUCTS_LIMIT));
+  }
+
+  const excludeSlugs = [product.slug, ...styleMatches.map((item) => item.slug)];
+  const categoryMatches = await sanityClient.fetch<SanityProductResult[]>(
     RELATED_PRODUCTS_QUERY,
-    { category: product.category, categoryRef: `category.${product.category}`, slug: product.slug },
+    { category: product.category, categoryRef: `category.${product.category}`, excludeSlugs },
     { next: { revalidate: 60, tags: ["product"] } },
   );
 
-  return normalizeProducts(products);
+  return normalizeProducts([...styleMatches, ...categoryMatches].slice(0, RELATED_PRODUCTS_LIMIT));
 }
