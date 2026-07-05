@@ -41,6 +41,19 @@ export function validatePhone(value: string, label = "Phone number") {
   return [];
 }
 
+export const SRI_LANKA_PHONE_PREFIX = "+94";
+
+export function validateSriLankaLocalNumber(value: string, label = "Phone number") {
+  const digitsOnly = value.trim().replace(/\D/g, "");
+
+  if (!digitsOnly) return [`${label} is required.`];
+  if (digitsOnly.length < 9 || digitsOnly.length > 10) {
+    return [`${label} must have 9 to 10 digits after ${SRI_LANKA_PHONE_PREFIX}.`];
+  }
+
+  return [];
+}
+
 export function validatePassword(value: string, options: { minLength?: number } = {}) {
   const minLength = options.minLength ?? 8;
   const messages = validateRequiredText(value, "Password", { minLength });

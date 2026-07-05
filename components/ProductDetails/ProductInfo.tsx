@@ -616,7 +616,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         ADDED TO BAG
                     </span>
                     <span className={`${isAdded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
-                        {!canOrderSelectedVariation ? "Unavailable" : product.enablePreOrders || isCustomSize ? "Pre-Order" : "Add to Bag"}
+                        {!canOrderSelectedVariation ? "Unavailable" : "Add to Bag"}
                     </span>
                 </button>
                 <button className="w-11 h-11 border border-gray-300 hover:border-black transition-all flex items-center justify-center group cursor-pointer">
@@ -629,6 +629,12 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                     </svg>
                 </button>
             </div>
+
+            {(product.enablePreOrders || isCustomSize) && canOrderSelectedVariation && (
+                <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">
+                    This item is made to order and ships as a pre-order.
+                </p>
+            )}
 
             {/* Consolidated Material Quality Detail Section */}
             {product.materialSpecs && hasMaterialSpecs && (
@@ -681,28 +687,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
             {/* Accordion Sections */}
             <div className="mt-4 border-t border-gray-100">
-                {/* Shipping & Returns */}
-                <div className="border-b border-gray-100">
-                    <button 
-                        onClick={() => toggleAccordion('shipping')}
-                        className="w-full py-3.5 flex items-center justify-between group"
-                    >
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-black group-hover:text-[#8B8378] transition-colors">
-                            Shipping & Returns {openAccordion === 'shipping' ? '−' : '+'}
-                        </span>
-                    </button>
-                    <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'shipping' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
-                        <div className="overflow-hidden">
-                            <p className="text-[10px] text-gray-600 leading-relaxed">
-                                Standard shipping takes 3-5 business days. Returns accepted within 14 days of delivery. Items must have tags intact and be returned with original packaging, including the courier bag.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Size Guide */}
                 {product.sizeGuideImage && <div className="border-b border-gray-100">
-                    <button 
+                    <button
                         onClick={() => toggleAccordion('measurements')}
                         className="w-full py-3.5 flex items-center justify-between group"
                     >
@@ -724,6 +711,25 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         </div>
                     </div>
                 </div>}
+
+                {/* Shipping */}
+                <div className="border-b border-gray-100">
+                    <button
+                        onClick={() => toggleAccordion('shipping')}
+                        className="w-full py-3.5 flex items-center justify-between group"
+                    >
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-black group-hover:text-[#8B8378] transition-colors">
+                            Shipping {openAccordion === 'shipping' ? '−' : '+'}
+                        </span>
+                    </button>
+                    <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'shipping' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
+                        <div className="overflow-hidden">
+                            <p className="text-[10px] text-gray-600 leading-relaxed">
+                                Standard shipping takes 3-5 business days. Returns accepted within 14 days of delivery. Items must have tags intact and be returned with original packaging, including the courier bag.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

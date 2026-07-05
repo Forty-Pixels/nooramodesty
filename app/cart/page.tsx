@@ -237,10 +237,6 @@ export default function CartPage() {
                                     <span>Estimated Shipping</span>
                                     <span className="text-black">LKR {shipping.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between text-[9px] uppercase tracking-widest font-medium text-gray-400">
-                                    <span>Billable Weight</span>
-                                    <span>{shippingQuote.billableKg}KG</span>
-                                </div>
                                 {discount > 0 && (
                                     <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-[#B21E1E]">
                                         <span>Discount</span>

@@ -1,10 +1,12 @@
 import { PolicyContent } from "@/components/PolicyPage/PolicyContent";
-import { shippingAndReturnPolicy } from "@/data/policies";
+import { fetchShippingReturnPolicy } from "@/lib/server/shippingReturnPolicy";
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-export default function ShippingAndReturnPolicyPage() {
+export default async function ShippingAndReturnPolicyPage() {
+  const shippingAndReturnPolicy = await fetchShippingReturnPolicy();
+
   return (
     <div className="flex flex-col">
       <PolicyContent content={shippingAndReturnPolicy} />

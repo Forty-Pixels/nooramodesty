@@ -6,6 +6,7 @@ import { materialSpecs } from "./materialSpecs";
 import { order, orderItem } from "./order";
 import { product } from "./product";
 import { returnExchangeRequest } from "./returnExchangeRequest";
+import { shippingReturnPolicy, shippingReturnPolicySection } from "./shippingReturnPolicy";
 import { siteSettings } from "./siteSettings";
 import { subCategory } from "./subCategory";
 import { subVariation, variation } from "./variation";
@@ -26,4 +27,6 @@ export const schemaTypes = [
   inNooraImage,
   homepage,
   siteSettings,
+  shippingReturnPolicySection,
+  shippingReturnPolicy,
 ];

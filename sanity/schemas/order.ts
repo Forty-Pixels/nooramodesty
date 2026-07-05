@@ -46,7 +46,7 @@ export const order = defineType({
         defineField({ name: "addressLine1", title: "Address line 1", type: "string" }),
         defineField({ name: "addressLine2", title: "Address line 2", type: "string" }),
         defineField({ name: "city", title: "City", type: "string" }),
-        defineField({ name: "zipCode", title: "Zip code", type: "string" }),
+        defineField({ name: "district", title: "District", type: "string" }),
       ],
     }),
     defineField({ name: "items", title: "Items", type: "array", of: [{ type: "orderItem" }] }),

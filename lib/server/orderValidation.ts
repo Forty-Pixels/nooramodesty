@@ -51,7 +51,7 @@ export const checkoutOrderSchema = z.object({
     addressLine1: z.string({ error: "Address is required." }).trim().min(3, { error: "Address must be at least 3 characters." }),
     addressLine2: z.string().trim().optional(),
     city: z.string({ error: "City is required." }).trim().min(2, { error: "City must be at least 2 characters." }),
-    zipCode: z.string({ error: "Postal code is required." }).trim().min(2, { error: "Postal code must be at least 2 characters." }),
+    district: z.string({ error: "District is required." }).trim().min(2, { error: "District must be at least 2 characters." }),
   }),
   items: z.array(orderItemInputSchema).min(1, { error: "Your bag is empty." }),
   paymentMethod: z.enum(["cod", "bank_transfer"], { error: "Please choose a valid payment method." }),

@@ -322,7 +322,7 @@ async function findContactId(session: ClickomWebSession, mobile: string) {
 async function createContact(session: ClickomWebSession, order: SanityOrder, createPageHtml: string) {
   const mobile = normalizePhone(order.customer.mobile);
   const cityId = findCityId(createPageHtml, order.customer.city);
-  const address = [order.customer.addressLine1, order.customer.addressLine2, order.customer.city, order.customer.zipCode]
+  const address = [order.customer.addressLine1, order.customer.addressLine2, order.customer.city, order.customer.district]
     .filter(Boolean)
     .join(", ");
   const params = new URLSearchParams();
@@ -404,7 +404,7 @@ function buildOmsOrderParams(order: SanityOrder, contactId: string) {
     order.customer.addressLine1,
     order.customer.addressLine2,
     order.customer.city,
-    order.customer.zipCode,
+    order.customer.district,
   ].filter(Boolean).join(", "));
   params.set("shipping_status", "ordered");
   params.set("delivered_to", "");
@@ -458,6 +458,22 @@ function buildOmsOrderParams(order: SanityOrder, contactId: string) {
   params.set("is_save_and_print", "0");
 
   order.items.forEach((item, index) => appendProduct(params, index + 1, item));
+
+  console.log("[clickomOmsWeb] order payload", {
+    orderNumber: order.orderNumber,
+    finalTotal,
+    paidAmount,
+    items: order.items.map((item, index) => ({
+      row: index + 1,
+      title: item.title,
+      clickomProductId: item.clickomProductId,
+      clickomVariationId: item.clickomVariationId,
+      selectedColor: item.selectedColor,
+      selectedSize: item.selectedSize,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    })),
+  });
 
   return {
     params,

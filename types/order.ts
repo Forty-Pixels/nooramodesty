@@ -15,7 +15,7 @@ export interface OrderCustomer {
   addressLine1: string;
   addressLine2?: string;
   city: string;
-  zipCode: string;
+  district: string;
 }
 
 export interface OrderItemInput {

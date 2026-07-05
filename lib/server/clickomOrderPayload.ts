@@ -67,7 +67,7 @@ export function buildClickomSalePayload(
     customer_address_line_1: order.customer.addressLine1,
     customer_address_line_2: order.customer.addressLine2,
     customer_city: order.customer.city,
-    customer_zip_code: order.customer.zipCode,
+    customer_zip_code: order.customer.district,
     customer_country: "Sri Lanka",
     discount_type: "fixed",
     discount_amount: order.discountAmount || 0,

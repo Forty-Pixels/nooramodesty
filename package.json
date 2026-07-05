@@ -10,6 +10,8 @@
     "sanity:seed-categories": "node --env-file=.env.local sanity/lib/seedCategories.mjs",
     "sanity:sync-clickom": "node --env-file=.env.local sanity/lib/syncClickomProducts.mjs",
     "sanity:sync-clickom:apply": "node --env-file=.env.local sanity/lib/syncClickomProducts.mjs --apply",
+    "sanity:purge-placeholders": "node --env-file=.env.local sanity/lib/purgePlaceholderProducts.mjs",
+    "sanity:purge-placeholders:apply": "node --env-file=.env.local sanity/lib/purgePlaceholderProducts.mjs --apply",
     "sanity:backfill-order-sizes": "node --env-file=.env.local sanity/lib/backfillOrderItemSizes.mjs",
     "sanity:backfill-order-sizes:apply": "node --env-file=.env.local sanity/lib/backfillOrderItemSizes.mjs --apply"
   },
