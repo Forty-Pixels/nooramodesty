@@ -1,5 +1,6 @@
 import { validateAdminSecret } from "@/lib/server/adminAuth";
 import { createClickomOmsWebOrder } from "@/lib/server/clickomOmsWeb";
+import { sendOrderApprovedEmail } from "@/lib/server/email";
 import { requireSanityWriteClient } from "@/lib/server/sanity";
 import { SanityOrder } from "@/types/sanityOrder";
 import { PaymentStatus } from "@/types/order";
@@ -95,6 +96,20 @@ export async function POST(request: Request) {
         approvedAt,
       })
       .commit();
+
+    try {
+      await sendOrderApprovedEmail({
+        orderNumber: order.orderNumber,
+        customer: order.customer,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        paidAmount: resolvedPayment.paidAmount,
+        balanceAmount: resolvedPayment.balanceAmount,
+        paymentStatus: resolvedPayment.paymentStatus,
+      });
+    } catch (emailError) {
+      console.warn("Order approved, but approval email failed.", emailError);
+    }
 
     return Response.json({
       ok: true,

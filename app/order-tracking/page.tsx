@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { ArrowRight, MessageCircle, PackageSearch } from "lucide-react";
 import { uniqueMessages, validatePhone, validateRequiredText } from "@/utils/formValidation";
 
@@ -38,8 +39,9 @@ function statusLabel(order: TrackingOrder) {
   return order.orderStatus || order.clickomStatus || order.status || "pending";
 }
 
-export default function OrderTrackingPage() {
-  const [orderNumber, setOrderNumber] = useState("");
+function OrderTrackingContent() {
+  const searchParams = useSearchParams();
+  const [orderNumber, setOrderNumber] = useState(searchParams.get("orderNumber") || "");
   const [mobile, setMobile] = useState("");
   const [order, setOrder] = useState<TrackingOrder | null>(null);
   const [error, setError] = useState("");
@@ -184,5 +186,13 @@ export default function OrderTrackingPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function OrderTrackingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f6f5f3]" />}>
+      <OrderTrackingContent />
+    </Suspense>
   );
 }

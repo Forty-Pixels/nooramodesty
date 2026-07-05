@@ -1,4 +1,5 @@
 import { z, ZodError } from "zod";
+import { sendReturnExchangeRequestEmails } from "@/lib/server/email";
 import { requireSanityWriteClient } from "@/lib/server/sanity";
 
 export const runtime = "nodejs";
@@ -13,6 +14,7 @@ const returnExchangeRequestSchema = z.object({
     const digitCount = value.replace(/\D/g, "").length;
     return phonePattern.test(value) && digitCount >= 7 && digitCount <= 15;
   }, { error: "Phone number must contain 7 to 15 digits and no letters." }),
+  email: z.string({ error: "Email address is required." }).trim().email({ error: "Please enter a valid email address." }),
   reason: z.string({ error: "Reason is required." }).trim().min(1, { error: "Reason is required." }),
   details: z.string({ error: "Additional details are required." }).trim().min(1, { error: "Additional details are required." }),
 });
@@ -33,6 +35,20 @@ export async function POST(request: Request) {
       status: "pending",
       createdAt,
     });
+
+    try {
+      await sendReturnExchangeRequestEmails({
+        requestType: payload.requestType,
+        orderNumber: payload.orderNumber,
+        customerName: payload.customerName,
+        phone: payload.phone,
+        reason: payload.reason,
+        details: payload.details,
+        customerEmail: payload.email || undefined,
+      });
+    } catch (emailError) {
+      console.warn("Return/exchange request created, but notification email failed.", emailError);
+    }
 
     return Response.json({ ok: true, requestId: document._id });
   } catch (error) {

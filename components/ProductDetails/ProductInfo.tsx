@@ -15,6 +15,8 @@ interface ProductInfoProps {
     product: Product;
 }
 
+const isCustomSizeLabel = (size: string | undefined) => (size || "").trim().toLowerCase() === "custom";
+
 export const ProductInfo = ({ product }: ProductInfoProps) => {
     const displayVariations = useMemo(
         () => product.variations?.filter((variation) => variation.subVariations?.length) || [],
@@ -22,7 +24,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     );
     const firstVariation = displayVariations[0];
     const colorVariations = displayVariations;
-    const firstSize = firstVariation?.subVariations?.[0]?.size || "";
+    const firstSize = firstVariation?.subVariations?.find((subVariation) => !isCustomSizeLabel(subVariation.size))?.size || "";
     const materialProperties = product.materialSpecs?.properties || [];
     const hasMaterialSpecs = Boolean(
         product.materialSpecs?.macroImage ||
@@ -56,7 +58,13 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
     const selectedColorPreviewImage = selectedVariation?.image;
     const selectedColorName = selectedVariation?.colorHex ? selectedVariation.name : undefined;
-    const displaySizes = selectedVariation?.subVariations?.map((subVariation) => subVariation.size).filter(Boolean) || [];
+    const displaySizes = selectedVariation?.subVariations
+        ?.filter((subVariation) => !isCustomSizeLabel(subVariation.size))
+        .map((subVariation) => subVariation.size)
+        .filter(Boolean) || [];
+    const customSubVariation = useMemo(() => {
+        return selectedVariation?.subVariations?.find((subVariation) => isCustomSizeLabel(subVariation.size));
+    }, [selectedVariation]);
 
     const selectedSubVariation = useMemo(() => {
         return selectedVariation?.subVariations?.find((subVariation) => subVariation.size === selectedSize);
@@ -240,6 +248,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             hip: customMeasurements.hip.trim(),
             sleeve: customMeasurements.sleeve.trim(),
         });
+        if (customSubVariation) {
+            setSelectedSize(customSubVariation.size);
+        }
         setIsCustomSize(true);
         setShowCustomModal(false);
     };
@@ -427,7 +438,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 </button>
                             );
                         })}
-                        {product.enableCustomSizes && <div className="relative flex flex-col items-center">
+                        {product.enableCustomSizes && customSubVariation && <div className="relative flex flex-col items-center">
                             <span className="text-[6px] md:text-[7px] text-[#8B8378] font-bold uppercase tracking-wider mb-1.5 whitespace-nowrap animate-pulse">
                                 Pre-Order
                             </span>

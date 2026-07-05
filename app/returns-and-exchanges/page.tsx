@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ShieldCheck, ArrowRight, ChevronDown, Check } from "lucide-react";
 import Link from "next/link";
-import { uniqueMessages, validatePhone, validateRequiredText } from "@/utils/formValidation";
+import { uniqueMessages, validateEmail, validatePhone, validateRequiredText } from "@/utils/formValidation";
 
 type RequestType = "return" | "exchange";
 
@@ -11,6 +11,7 @@ interface RequestFormState {
   customerName: string;
   orderNumber: string;
   phone: string;
+  email: string;
   details: string;
 }
 
@@ -43,6 +44,7 @@ const initialFormState: RequestFormState = {
   customerName: "",
   orderNumber: "",
   phone: "",
+  email: "",
   details: "",
 };
 
@@ -64,6 +66,7 @@ export default function ReturnsAndExchangesPage() {
       ...validateRequiredText(formState.customerName, "Full name", { minLength: 2, maxLength: 80 }),
       ...validateRequiredText(formState.orderNumber, "Order number", { minLength: 3, maxLength: 40 }),
       ...validatePhone(formState.phone),
+      ...validateEmail(formState.email),
       ...validateRequiredText(reason, "Reason"),
       ...validateRequiredText(formState.details, "Additional details", { minLength: 10, maxLength: 1000 }),
     ]);
@@ -90,6 +93,7 @@ export default function ReturnsAndExchangesPage() {
         customerName: formState.customerName,
         orderNumber: formState.orderNumber,
         phone: formState.phone,
+        email: formState.email,
         reason,
         details: formState.details,
       }),
@@ -204,15 +208,28 @@ export default function ReturnsAndExchangesPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Phone Number</label>
-            <input
-              type="tel"
-              value={formState.phone}
-              onChange={(event) => updateField("phone", event.target.value)}
-              placeholder="e.g. +94 77 123 4567"
-              className="w-full bg-transparent border-b border-black/20 focus:border-black outline-none py-2 text-sm transition-colors text-black placeholder:text-gray-400"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Phone Number</label>
+              <input
+                type="tel"
+                value={formState.phone}
+                onChange={(event) => updateField("phone", event.target.value)}
+                placeholder="e.g. +94 77 123 4567"
+                className="w-full bg-transparent border-b border-black/20 focus:border-black outline-none py-2 text-sm transition-colors text-black placeholder:text-gray-400"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Email Address</label>
+              <input
+                type="email"
+                value={formState.email}
+                onChange={(event) => updateField("email", event.target.value)}
+                placeholder="you@example.com"
+                className="w-full bg-transparent border-b border-black/20 focus:border-black outline-none py-2 text-sm transition-colors text-black placeholder:text-gray-400"
+              />
+            </div>
           </div>
 
           <div className="space-y-2 relative">

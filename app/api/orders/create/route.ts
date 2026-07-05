@@ -113,8 +113,12 @@ export async function POST(request: Request) {
         orderNumber,
         customer: payload.customer,
         items,
+        subtotal: totals.subtotal,
+        shipping: totals.shipping,
+        discountAmount: totals.discountAmount,
         totalAmount: totals.totalAmount,
         paymentMethod: payload.paymentMethod,
+        siteSettings,
       });
     } catch (emailError) {
       console.warn("Order created, but confirmation email failed.", emailError);

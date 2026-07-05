@@ -9,7 +9,7 @@ export const subVariation = defineType({
       name: "size",
       title: "Size",
       type: "string",
-      description: "Size shown after a shopper selects this color, for example XS, S, M, 54, 56, or 58.",
+      description: "Size shown after a shopper selects this color, for example XS, S, M, 54, 56, or 58. Use exactly \"Custom\" to map this entry to Clickom's custom-size sub-SKU for this color — it powers the storefront's custom size (+) button instead of appearing as a regular size option.",
       validation: (rule) => rule.required(),
     }),
     defineField({

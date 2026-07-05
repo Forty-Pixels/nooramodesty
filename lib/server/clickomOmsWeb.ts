@@ -198,27 +198,22 @@ function calculateShipping(order: SanityOrder) {
 function buildCustomSizeNote(item: SanityOrder["items"][number]) {
   if (!item.customSize) return "";
 
+  const quantity = Math.max(1, item.quantity || 1);
   const measurements = [
-    item.customLength ? `Length ${item.customLength}` : "",
-    item.customBust ? `Bust ${item.customBust}` : "",
-    item.customHip ? `Hip ${item.customHip}` : "",
-    item.customSleeve ? `Sleeve ${item.customSleeve}` : "",
-  ].filter(Boolean);
-  const lines = [
-    "Custom size",
-    item.selectedColor ? `Colour: ${item.selectedColor}` : "",
-    measurements.length > 0 ? `Measurements: ${measurements.join(", ")}` : "",
-  ];
+    item.customLength ? `length: ${item.customLength}` : "",
+    item.customBust ? `bust: ${item.customBust}` : "",
+    item.customHip ? `hip: ${item.customHip}` : "",
+    item.customSleeve ? `sleeve: ${item.customSleeve}` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
 
-  return lines.filter(Boolean).join(" | ");
+  return `${item.title} - custom size x${quantity} pcs${measurements ? ` (${measurements})` : ""}`;
 }
 
 function buildOrderNote(order: SanityOrder) {
   return order.items
-    .map((item) => {
-      const note = buildCustomSizeNote(item);
-      return note ? `${item.title} - ${note}` : "";
-    })
+    .map((item) => buildCustomSizeNote(item))
     .filter(Boolean)
     .join("\n");
 }
