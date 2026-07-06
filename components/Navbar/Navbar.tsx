@@ -6,7 +6,6 @@ import Image from "next/image";
 import CartClientIcon from "@/components/Navbar/CartClientIcon";
 import MegaMenu from "@/components/Navbar/MegaMenu";
 import { X, Menu, Search } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { SearchOverlay } from "@/components/Navbar/SearchOverlay";
 
 const Navbar = () => {
@@ -15,25 +14,19 @@ const Navbar = () => {
 
     return (
         <header className={`sticky top-0 z-50 w-full transition-colors duration-500 ${isMenuOpen ? "bg-white text-black" : "bg-black text-white"}`}>
-
-            {/* Black background block for Logo when menu is open */}
-            <AnimatePresence>
-                {isMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                        className="absolute inset-y-0 left-0 bg-black z-0 w-[60%] md:w-[35%] lg:w-[25%]"
-                    />
-                )}
-            </AnimatePresence>
+            <div
+                className={`absolute inset-y-0 left-0 z-0 w-[max(475px,calc((100vw-1280px)/2+280px))] max-w-[72%] bg-black transition-all duration-500 sm:max-w-none ${isMenuOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-5 opacity-0"}`}
+            />
 
             <div className="flex items-center justify-between w-full mx-auto max-w-7xl relative z-10 py-2.5 px-6 md:px-10">
 
                 {/* Logo and Left Section */}
                 <div className="flex items-center gap-10 w-1/3">
-                    <Link href="/" className="flex-shrink-0" onClick={() => setIsMenuOpen(false)}>
+                    <Link
+                        href="/"
+                        className="flex-shrink-0"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
                         <Image
                             src="/noora-modesty-logo.png"
                             alt="Noora Modesty Logo"
