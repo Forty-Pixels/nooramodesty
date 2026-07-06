@@ -31,7 +31,7 @@ export function AnnouncementBar({ text, href }: AnnouncementBarProps) {
 
   if (!text) return null;
 
-  const duration = Math.max(90, text.length * 2.5);
+  const duration = Math.max(7, text.length * 0.18);
 
   return (
     <AnimatePresence>
@@ -48,9 +48,10 @@ export function AnnouncementBar({ text, href }: AnnouncementBarProps) {
             <div className="min-w-0 grow overflow-hidden">
               <motion.div
                 className="flex w-max items-center whitespace-nowrap"
-                animate={{ x: ["0%", "-50%"] }}
+                animate={{ x: ["0%", "-33.333333%"] }}
                 transition={{ duration, ease: "linear", repeat: Infinity }}
               >
+                <MarqueeSegment text={text} href={href} />
                 <MarqueeSegment text={text} href={href} />
                 <MarqueeSegment text={text} href={href} />
               </motion.div>
