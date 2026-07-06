@@ -1,6 +1,7 @@
 import { Product } from "@/types/product";
 
 export interface HeroContent {
+  layout: "split" | "splitFlipped" | "fullSingleImage" | "fullTwoImage";
   imageOneSrc: string;
   imageTwoSrc: string;
   centerLogoSrc: string;

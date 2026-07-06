@@ -4,6 +4,7 @@ import { HOMEPAGE_QUERY } from "./queries";
 
 const emptyHomepageContent: HomepageContent = {
   hero: {
+    layout: "split",
     imageOneSrc: "",
     imageTwoSrc: "",
     centerLogoSrc: "",
@@ -16,6 +17,18 @@ const emptyHomepageContent: HomepageContent = {
 
 function firstNonEmpty(...values: Array<string | null | undefined>) {
   return values.find((value) => typeof value === "string" && value.trim().length > 0) || "";
+}
+
+function normalizeHeroLayout(layout: string | undefined): HomepageContent["hero"]["layout"] {
+  if (layout === "splitFlipped" || layout === "fullSingleImage" || layout === "fullTwoImage") {
+    return layout;
+  }
+
+  if (layout === "fullLeftImage" || layout === "fullRightImage") {
+    return "fullSingleImage";
+  }
+
+  return "split";
 }
 
 export async function getHomepageContent(): Promise<HomepageContent> {
@@ -44,6 +57,7 @@ export async function getHomepageContent(): Promise<HomepageContent> {
 
   return {
     hero: {
+      layout: normalizeHeroLayout(data.hero?.layout),
       imageOneSrc: firstNonEmpty(data.hero?.imageOneSrc),
       imageTwoSrc: firstNonEmpty(data.hero?.imageTwoSrc),
       centerLogoSrc: firstNonEmpty(data.hero?.centerLogoSrc),

@@ -31,7 +31,8 @@ Required in `.env.local`:
 | `CLICKOM_BASE_URL` | Clickom ERP base URL |
 | `CLICKOM_USERNAME` / `CLICKOM_PASSWORD` | Clickom auth credentials |
 | `CLICKOM_CLIENT_ID` / `CLICKOM_CLIENT_SECRET` | Clickom OAuth client |
-| `RESEND_API_KEY` | Order confirmation emails via Resend |
+| `RESEND_API_KEY` | Transactional emails via Resend (order confirmation/approval/rejection, return-exchange requests) |
+| `NEXT_PUBLIC_SITE_URL` | Absolute site URL used in email templates for logo/CTA links (default: `https://nooramodesty.com`) |
 | `ORDER_NUMBER_PREFIX` | Prefix for generated order numbers |
 
 ## Architecture

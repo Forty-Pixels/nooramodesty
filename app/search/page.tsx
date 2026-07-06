@@ -2,9 +2,9 @@ import React, { Suspense } from "react";
 import ListingGrid from "@/components/Category/ListingGrid";
 import { ListingControls } from "@/components/Category/ListingControls";
 import { getAllProducts } from "@/lib/sanity/products";
-import Link from "next/link";
 import { Search } from "lucide-react";
 import { filterAndSortProducts, getProductFacets, hasActiveProductFilters, ProductFilterParams } from "@/utils/productFilters";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface SearchPageProps {
     searchParams: Promise<ProductFilterParams>;
@@ -46,21 +46,13 @@ const SearchResults = async ({ searchParams }: SearchPageProps) => {
                 {filteredProducts.length > 0 ? (
                     <ListingGrid products={filteredProducts} />
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                            <Search size={32} className="text-gray-300" />
-                        </div>
-                        <h3 className="text-lg font-bold uppercase tracking-widest mb-2">No Results Found</h3>
-                        <p className="text-sm text-gray-500 max-w-md mb-8">
-                            We couldn't find any products matching your search. Try checking your spelling or using more general terms.
-                        </p>
-                        <Link 
-                            href="/category/abayas" 
-                            className="bg-black text-white px-8 py-3 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-all"
-                        >
-                            Browse All Products
-                        </Link>
-                    </div>
+                    <EmptyState
+                        eyebrow="No results"
+                        title="No Match Found"
+                        message="Try a broader search term or reset your filters to browse more pieces."
+                        actionLabel="Browse Abayas"
+                        actionHref="/category/abayas"
+                    />
                 )}
             </div>
         </div>

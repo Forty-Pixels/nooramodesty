@@ -9,6 +9,7 @@ export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <Hero
+        layout={homepage.hero.layout}
         imageOneSrc={homepage.hero.imageOneSrc}
         imageTwoSrc={homepage.hero.imageTwoSrc}
         centerLogoSrc={homepage.hero.centerLogoSrc}

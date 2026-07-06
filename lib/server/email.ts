@@ -7,13 +7,18 @@ import { renderOrderApprovedEmail } from "./emailTemplates/orderApproved";
 import { renderOrderConfirmationEmail } from "./emailTemplates/orderConfirmation";
 import { renderOrderRejectedEmail } from "./emailTemplates/orderRejected";
 import {
+  LeadSubmissionEmailParams,
+  renderLeadSubmissionAdminEmail,
+  renderLeadSubmissionCustomerEmail,
+} from "./emailTemplates/leadSubmission";
+import {
   ReturnExchangeRequestEmailParams,
   renderReturnExchangeAdminEmail,
   renderReturnExchangeCustomerEmail,
 } from "./emailTemplates/returnExchangeRequest";
 
-const FROM_ADDRESS = "Noora Modesty <orders@nooramodesty.com>";
-const ADMIN_EMAIL = "hello@nooramodesty.com";
+const FROM_ADDRESS = process.env.EMAIL_FROM || "Noora Modesty <orders@nooramodesty.com>";
+const ADMIN_EMAIL = process.env.EMAIL_ADMIN_TO || "hello@nooramodesty.com";
 
 async function sendEmail(params: { to: string; subject: string; html: string }): Promise<void> {
   if (!process.env.RESEND_API_KEY) {
@@ -82,4 +87,12 @@ export async function sendReturnExchangeRequestEmails(
     const customer = renderReturnExchangeCustomerEmail(params);
     await sendEmail({ to: params.customerEmail, subject: customer.subject, html: customer.html });
   }
+}
+
+export async function sendLeadSubmissionEmails(params: LeadSubmissionEmailParams): Promise<void> {
+  const admin = renderLeadSubmissionAdminEmail(params);
+  await sendEmail({ to: ADMIN_EMAIL, subject: admin.subject, html: admin.html });
+
+  const customer = renderLeadSubmissionCustomerEmail(params);
+  await sendEmail({ to: params.email, subject: customer.subject, html: customer.html });
 }

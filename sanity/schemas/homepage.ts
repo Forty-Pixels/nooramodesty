@@ -105,6 +105,23 @@ export const homepage = defineType({
       type: "object",
       fields: [
         defineField({
+          name: "layout",
+          title: "Hero layout",
+          type: "string",
+          initialValue: "split",
+          options: {
+            list: [
+              { title: "Current split layout", value: "split" },
+              { title: "Current split layout, flipped", value: "splitFlipped" },
+              { title: "Full single image", value: "fullSingleImage" },
+              { title: "Full two images, split center", value: "fullTwoImage" },
+            ],
+            layout: "dropdown",
+          },
+          validation: (rule) => rule.required(),
+          description: "Controls the homepage hero image composition.",
+        }),
+        defineField({
           name: "leftImage",
           title: "Left image",
           type: "image",

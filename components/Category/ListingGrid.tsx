@@ -4,12 +4,27 @@ import React from "react";
 import ProductListingCard from "./ProductListingCard";
 import { Product } from "@/types/product";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface ListingGridProps {
   products: Product[];
 }
 
 const ListingGrid: React.FC<ListingGridProps> = ({ products }) => {
+  if (products.length === 0) {
+    return (
+      <div className="w-full bg-white">
+        <EmptyState
+          eyebrow="No products"
+          title="Nothing Here Yet"
+          message="This collection is currently empty. Explore our available pieces while we update this section."
+          actionLabel="Browse Abayas"
+          actionHref="/category/abayas"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-white pb-20">
       <div className="w-full">

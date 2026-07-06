@@ -88,7 +88,7 @@ export default function SuggestionsPage() {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const validationErrors = uniqueMessages([
             ...validateRequiredText(name, "Full name", { minLength: 2, maxLength: 80 }),
@@ -110,10 +110,32 @@ export default function SuggestionsPage() {
 
         setErrors([]);
         setIsProcessing(true);
-        setTimeout(() => {
+
+        const formData = new FormData();
+        formData.set("source", "suggestion");
+        formData.set("name", name);
+        formData.set("email", email);
+        formData.set("subject", title);
+        formData.set("message", description);
+        formData.set("suggestionType", suggestionType);
+        suggestionFiles.forEach((item) => {
+            formData.append("attachments", item.file);
+        });
+
+        const response = await fetch("/api/leads/create", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const result = await response.json().catch(() => null) as { error?: string; errors?: string[] } | null;
             setIsProcessing(false);
-            setIsSubmitted(true);
-        }, 2000);
+            setErrors(result?.errors || [result?.error || "Unable to submit suggestion."]);
+            return;
+        }
+
+        setIsProcessing(false);
+        setIsSubmitted(true);
     };
 
     if (isSubmitted) {

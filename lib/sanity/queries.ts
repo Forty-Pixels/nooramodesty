@@ -44,6 +44,7 @@ const productProjection = `
 
 export const HOMEPAGE_QUERY = defineQuery(`*[_type == "homepage"][0]{
   hero{
+    layout,
     "imageOneSrc": leftImage.asset->url,
     "imageTwoSrc": rightImage.asset->url,
     "centerLogoSrc": centerLogo.asset->url,

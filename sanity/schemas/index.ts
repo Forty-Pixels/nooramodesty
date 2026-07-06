@@ -2,6 +2,7 @@ import { blockContent } from "./blockContent";
 import { category } from "./category";
 import { coupon } from "./coupon";
 import { homepage, homepageProductSection, inNooraImage } from "./homepage";
+import { leadSubmission, leadSubmissionAttachment } from "./leadSubmission";
 import { materialSpecs } from "./materialSpecs";
 import { order, orderItem } from "./order";
 import { product } from "./product";
@@ -21,6 +22,8 @@ export const schemaTypes = [
   orderItem,
   order,
   returnExchangeRequest,
+  leadSubmissionAttachment,
+  leadSubmission,
   coupon,
   homepageProductSection,
   inNooraImage,

@@ -11,6 +11,31 @@ export interface FooterProps {
 }
 
 export const Footer = ({ links }: FooterProps) => {
+  const [email, setEmail] = React.useState("");
+  const [status, setStatus] = React.useState<"idle" | "submitting" | "success" | "error">("idle");
+
+  const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus("submitting");
+
+    const formData = new FormData();
+    formData.set("source", "newsletter");
+    formData.set("email", email);
+
+    const response = await fetch("/api/leads/create", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (response.ok) {
+      setEmail("");
+      setStatus("success");
+      return;
+    }
+
+    setStatus("error");
+  };
+
   return (
     <footer className="bg-[#141414] text-white pt-16 pb-8 px-6 md:px-10 lg:px-20">
       <div className="max-w-[1440px] mx-auto">
@@ -45,16 +70,24 @@ export const Footer = ({ links }: FooterProps) => {
 
             <div className="flex flex-col gap-4 mt-4">
               <p className="text-sm tracking-widest font-medium">Drop your email to get updates:</p>
-              <div className="flex flex-col gap-4 max-w-[300px]">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col gap-4 max-w-[300px]">
                 <input 
                   type="email" 
                   placeholder="" 
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setStatus("idle");
+                  }}
+                  required
                   className="bg-transparent border-b border-white outline-none py-2 text-sm w-full focus:border-gray-400 transition-colors"
                 />
-                <button className="bg-white text-black text-[10px] md:text-xs font-bold uppercase py-4 px-4 tracking-[0.2em] transition-all hover:bg-gray-200 active:scale-95 text-left">
-                  SIGN UP
+                <button disabled={status === "submitting"} className="bg-white text-black text-[10px] md:text-xs font-bold uppercase py-4 px-4 tracking-[0.2em] transition-all hover:bg-gray-200 active:scale-95 text-left disabled:opacity-60">
+                  {status === "submitting" ? "SENDING..." : "SIGN UP"}
                 </button>
-              </div>
+                {status === "success" && <p className="text-[10px] uppercase tracking-[0.16em] text-[#BEBEBE]">You're on the list.</p>}
+                {status === "error" && <p className="text-[10px] uppercase tracking-[0.16em] text-[#BEBEBE]">Could not sign up. Try again.</p>}
+              </form>
             </div>
           </div>
 
