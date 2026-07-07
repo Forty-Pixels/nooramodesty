@@ -48,6 +48,11 @@ interface SendOrderConfirmationParams {
 }
 
 export async function sendOrderConfirmationEmail(params: SendOrderConfirmationParams): Promise<void> {
+  if (!params.customer.email) {
+    console.warn(`Customer email is missing. Skipping confirmation email for ${params.orderNumber}.`);
+    return;
+  }
+
   const { subject, html } = renderOrderConfirmationEmail(params);
   await sendEmail({ to: params.customer.email, subject, html });
 }
@@ -63,6 +68,11 @@ interface SendOrderApprovedParams {
 }
 
 export async function sendOrderApprovedEmail(params: SendOrderApprovedParams): Promise<void> {
+  if (!params.customer.email) {
+    console.warn(`Customer email is missing. Skipping approval email for ${params.orderNumber}.`);
+    return;
+  }
+
   const { subject, html } = renderOrderApprovedEmail(params);
   await sendEmail({ to: params.customer.email, subject, html });
 }
@@ -73,6 +83,11 @@ interface SendOrderRejectedParams {
 }
 
 export async function sendOrderRejectedEmail(params: SendOrderRejectedParams): Promise<void> {
+  if (!params.customer.email) {
+    console.warn(`Customer email is missing. Skipping rejection email for ${params.orderNumber}.`);
+    return;
+  }
+
   const { subject, html } = renderOrderRejectedEmail(params);
   await sendEmail({ to: params.customer.email, subject, html });
 }

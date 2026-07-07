@@ -17,6 +17,10 @@ const optionalString = z.preprocess(
   (value) => (value === null ? undefined : value),
   z.string().trim().optional(),
 );
+const optionalEmail = z.preprocess(
+  (value) => (typeof value === "string" && value.trim().length === 0 ? undefined : value),
+  z.string().trim().email({ error: "Please enter a valid email address." }).optional(),
+);
 
 function isValidPhoneNumber(value: string): boolean {
   const digitCount = value.replace(/\D/g, "").length;
@@ -47,7 +51,7 @@ export const checkoutOrderSchema = z.object({
     mobile: z.string({ error: "Phone number is required." }).trim().refine(isValidPhoneNumber, {
       error: "Phone number must contain 7 to 15 digits and no letters.",
     }),
-    email: z.string({ error: "Email address is required." }).trim().email({ error: "Please enter a valid email address." }),
+    email: optionalEmail,
     addressLine1: z.string({ error: "Address is required." }).trim().min(3, { error: "Address must be at least 3 characters." }),
     addressLine2: z.string().trim().optional(),
     city: z.string({ error: "City is required." }).trim().min(2, { error: "City must be at least 2 characters." }),

@@ -103,7 +103,7 @@ function CheckoutContent() {
     customer: {
       fullName: formState.fullName,
       mobile: `${SRI_LANKA_PHONE_PREFIX}${formState.mobileLocal.replace(/\D/g, "")}`,
-      email: formState.email,
+      email: formState.email.trim() || undefined,
       addressLine1: formState.addressLine1,
       addressLine2: formState.addressLine2,
       city: formState.city,
@@ -169,7 +169,7 @@ function CheckoutContent() {
     const fieldValidators: Array<[keyof CheckoutFormState, string[]]> = [
       ["fullName", validateRequiredText(formState.fullName, FIELD_LABELS.fullName, { minLength: 2, maxLength: 80 })],
       ["mobileLocal", validateSriLankaLocalNumber(formState.mobileLocal, FIELD_LABELS.mobileLocal)],
-      ["email", validateEmail(formState.email)],
+      ["email", formState.email.trim() ? validateEmail(formState.email) : []],
       ["addressLine1", validateRequiredText(formState.addressLine1, FIELD_LABELS.addressLine1, { minLength: 3, maxLength: 160 })],
       ["city", validateRequiredText(formState.city, FIELD_LABELS.city, { minLength: 2, maxLength: 80 })],
       ["district", validateRequiredText(formState.district, FIELD_LABELS.district, { minLength: 2, maxLength: 40 })],
@@ -348,7 +348,7 @@ function CheckoutContent() {
             <h2 className="text-lg font-bold uppercase tracking-widest">Contact & Delivery</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input value={formState.fullName} onChange={(e) => updateField("fullName", e.target.value)} placeholder="Full Name" className={fieldClassName("fullName", "md:col-span-2")} />
-              <input value={formState.email} onChange={(e) => updateField("email", e.target.value)} type="email" placeholder="Email Address" className={fieldClassName("email")} />
+              <input value={formState.email} onChange={(e) => updateField("email", e.target.value)} type="email" placeholder="Email Address (optional)" className={fieldClassName("email")} />
               <div className={`flex w-full bg-white border ${invalidFields.has("mobileLocal") ? "border-[#B21E1E]" : "border-black/5 focus-within:border-black/20"}`}>
                 <span className="flex items-center pl-5 pr-2 text-xs font-medium text-gray-400">{SRI_LANKA_PHONE_PREFIX}</span>
                 <input

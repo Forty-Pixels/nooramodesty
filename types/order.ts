@@ -11,7 +11,7 @@ export type CouponDiscountType = "fixed" | "percentage";
 export interface OrderCustomer {
   fullName: string;
   mobile: string;
-  email: string;
+  email?: string;
   addressLine1: string;
   addressLine2?: string;
   city: string;
