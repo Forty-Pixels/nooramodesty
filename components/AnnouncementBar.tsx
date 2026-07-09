@@ -37,6 +37,7 @@ export function AnnouncementBar({ text, href }: AnnouncementBarProps) {
     <AnimatePresence>
       {isVisible && (
         <motion.div
+          id="announcement-bar"
           key="announcement-bar"
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 24, opacity: 1 }}
