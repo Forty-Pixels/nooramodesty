@@ -340,9 +340,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
             {/* Size Selector */}
             <div className="mt-2">
-                <div className="w-44 space-y-1.5">
+                <div className="w-full max-w-sm space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Size</label>
-                    <div className="flex gap-2 items-end">
+                    <div className="flex flex-wrap gap-2 items-end">
                         {displaySizes.map((s) => {
                             const subVariation = product.subVariations?.find((item) => item.size === s);
                             const isMissingClickomVariation = !subVariation?.clickomVariationId;
@@ -360,7 +360,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                             setIsCustomSize(false);
                                         }
                                     }}
-                                    className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold border transition-all duration-300 relative overflow-hidden ${
+                                    className={`min-w-7 h-7 px-2 flex items-center justify-center text-center text-[10px] leading-none font-bold border transition-all duration-300 relative overflow-hidden whitespace-nowrap ${
                                         selectedSize === s && !isCustomSize && (!isOutOfStock || product.enablePreOrders) && !isMissingClickomVariation
                                         ? "bg-[#8B8378] text-white border-[#8B8378]" 
                                         : "bg-white text-black border-gray-200 hover:border-[#8B8378]"
@@ -387,7 +387,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                     setCustomMeasurementErrors([]);
                                     setShowCustomModal(true);
                                 }}
-                                className={`w-7 h-7 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
+                                className={`min-w-7 h-7 px-2 flex items-center justify-center text-sm font-bold border transition-all duration-300 ${
                                     isCustomSize
                                     ? "bg-black text-white border-black" 
                                     : "bg-white text-black border-gray-200 hover:border-black"
