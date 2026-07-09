@@ -308,7 +308,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             {/* Collection Info */}
             <div className="mt-1 space-y-2">
                 {(product.colorName || product.colorHex) && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-[10px] text-black tracking-wide font-bold">
+                            Color: <span className="text-gray-400 font-normal">{product.colorName}</span>
+                        </p>
                         {product.colorHex && (
                             <span
                                 className="w-3.5 h-3.5 rounded-full border border-gray-200"
@@ -316,9 +319,6 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 aria-hidden="true"
                             />
                         )}
-                        <p className="text-[10px] text-black tracking-wide font-bold">
-                            Color: <span className="text-gray-400 font-normal">{product.colorName}</span>
-                        </p>
                     </div>
                 )}
                 <div className="space-y-0.5">
