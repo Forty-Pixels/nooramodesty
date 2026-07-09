@@ -55,11 +55,11 @@ export const HOMEPAGE_QUERY = defineQuery(`*[_type == "homepage"][0]{
     _key,
     title,
     "categorySlug": category->slug.current,
-    products[]->{
+    products[0...8]->{
       ${productProjection}
-    }[isVisible != false][0...8]
+    }
   },
-  inNooraImages[!defined(linkedProduct) || linkedProduct->isVisible != false]{
+  inNooraImages[]{
     "_id": coalesce(_key, image.asset->_id),
     "url": image.asset->url,
     alt,

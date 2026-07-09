@@ -49,7 +49,7 @@ export async function getHomepageContent(): Promise<HomepageContent> {
   const productSections = data.productSections
     ?.map((section) => ({
       ...section,
-      products: section.products.filter((product) => product.mainImage && product.slug),
+      products: section.products.filter((product) => product?.mainImage && product?.slug && product?.isVisible !== false),
     }))
     .filter((section) => section.products.length > 0);
 
