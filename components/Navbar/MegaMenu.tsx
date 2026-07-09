@@ -5,13 +5,31 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, ShoppingBag } from "lucide-react";
 import useCartStore from "@/store";
+import { CategoryNavigationItem } from "@/types/categoryNavigation";
 
 interface MegaMenuProps {
     isOpen: boolean;
     onClose: () => void;
+    categories: CategoryNavigationItem[];
 }
 
-const HoverLink = ({ href, children, className = "", onClick }: { href: string, children: React.ReactNode, className?: string, onClick?: () => void }) => (
+interface HoverLinkProps {
+    href: string;
+    children: React.ReactNode;
+    className?: string;
+    onClick?: () => void;
+}
+
+interface AccordionItemProps {
+    title: string;
+    href: string;
+    children?: React.ReactNode;
+    isOpen: boolean;
+    onClick: () => void;
+    onClose: () => void;
+}
+
+const HoverLink = ({ href, children, className = "", onClick }: HoverLinkProps) => (
     <Link
         href={href}
         onClick={onClick}
@@ -22,18 +40,18 @@ const HoverLink = ({ href, children, className = "", onClick }: { href: string, 
     </Link>
 );
 
-const AccordionItem = ({ title, children, isOpen, onClick, onClose }: { title: string, children?: React.ReactNode, isOpen: boolean, onClick: () => void, onClose: () => void }) => (
+const AccordionItem = ({ title, href, children, isOpen, onClick, onClose }: AccordionItemProps) => (
     <div className="border-b border-gray-100 last:border-0 grow">
         <div className="flex items-center justify-between w-full py-4 text-left">
-            <HoverLink 
-                href={`/category/${title.toLowerCase().replace(/\s+/g, '-')}`} 
+            <HoverLink
+                href={href}
                 onClick={onClose}
                 className="font-medium text-[1.1rem] uppercase tracking-wider z-10 !-ml-3"
             >
                 {title}
             </HoverLink>
             {children && (
-                <button 
+                <button
                     onClick={onClick}
                     className="grow flex justify-end items-center"
                     aria-label={isOpen ? "Collapse" : "Expand"}
@@ -60,8 +78,8 @@ const AccordionItem = ({ title, children, isOpen, onClick, onClose }: { title: s
     </div>
 );
 
-const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
-    const [activeAccordion, setActiveAccordion] = useState<string | null>("Abayas");
+const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, categories }) => {
+    const [activeAccordion, setActiveAccordion] = useState<string | null>(categories[0]?.title || "Abayas");
     const [isMobile, setIsMobile] = useState(false);
     const { items, wishlistItems } = useCartStore();
     const cartCount = items?.length || 0;
@@ -86,39 +104,23 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
             >
                 <div className="mx-auto max-w-7xl px-6 md:px-10 py-12 md:py-16 overflow-y-auto max-h-[80vh] md:max-h-none">
                     <div className="grid grid-cols-2 gap-y-12 sm:grid-cols-3 md:flex md:flex-wrap md:gap-16 lg:gap-32 w-full">
-                        <div className="flex flex-col gap-3">
-                            <HoverLink href="/category/abayas" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Abayas</HoverLink>
-                            <HoverLink href="/category/abayas/embroidered" className="text-sm text-gray-700" onClick={onClose}>Embroidered</HoverLink>
-                            <HoverLink href="/category/abayas/coat" className="text-sm text-gray-700" onClick={onClose}>Coat</HoverLink>
-                            <HoverLink href="/category/abayas/wedding" className="text-sm text-gray-700" onClick={onClose}>Wedding</HoverLink>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <HoverLink href="/category/cord-sets" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Cord sets</HoverLink>
-                            <HoverLink href="/category/cord-sets/embroidered" className="text-sm text-gray-700" onClick={onClose}>Embroidered</HoverLink>
-                            <HoverLink href="/category/cord-sets/long" className="text-sm text-gray-700" onClick={onClose}>Long</HoverLink>
-                            <HoverLink href="/category/cord-sets/one-piece" className="text-sm text-gray-700" onClick={onClose}>One piece</HoverLink>
-                            <HoverLink href="/category/cord-sets/printed" className="text-sm text-gray-700" onClick={onClose}>Printed</HoverLink>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <HoverLink href="/category/tops" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Tops</HoverLink>
-                            <HoverLink href="/category/tops/embroidered" className="text-sm text-gray-700" onClick={onClose}>Embroidered</HoverLink>
-                            <HoverLink href="/category/tops/plain" className="text-sm text-gray-700" onClick={onClose}>Plain</HoverLink>
-                            <HoverLink href="/category/tops/printed" className="text-sm text-gray-700" onClick={onClose}>Printed</HoverLink>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <HoverLink href="/category/dresses" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Dresses</HoverLink>
-                            <HoverLink href="/category/dresses/maxi" className="text-sm text-gray-700" onClick={onClose}>Maxi</HoverLink>
-                            <HoverLink href="/category/dresses/satin" className="text-sm text-gray-700" onClick={onClose}>Satin</HoverLink>
-                            <HoverLink href="/category/dresses/printed" className="text-sm text-gray-700" onClick={onClose}>Printed</HoverLink>
-                            <HoverLink href="/category/dresses/wrap" className="text-sm text-gray-700" onClick={onClose}>Wrap</HoverLink>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <HoverLink href="/category/occasion-wear" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">Occasion Wear</HoverLink>
-                            <HoverLink href="/category/occasion-wear/abayas" className="text-sm text-gray-700" onClick={onClose}>Abayas</HoverLink>
-                            <HoverLink href="/category/occasion-wear/overcoats" className="text-sm text-gray-700" onClick={onClose}>Overcoats</HoverLink>
-                            <HoverLink href="/category/occasion-wear/tops" className="text-sm text-gray-700" onClick={onClose}>Tops</HoverLink>
-                            <HoverLink href="/category/occasion-wear/sets" className="text-sm text-gray-700" onClick={onClose}>Sets</HoverLink>
-                        </div>
+                        {categories.map((category) => (
+                            <div key={category._id} className="flex flex-col gap-3">
+                                <HoverLink href={`/category/${category.slug}`} onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1">
+                                    {category.title}
+                                </HoverLink>
+                                {category.subCategories.map((subCategory) => (
+                                    <HoverLink
+                                        key={subCategory._id}
+                                        href={`/category/${category.slug}/${subCategory.slug}`}
+                                        className="text-sm text-gray-700"
+                                        onClick={onClose}
+                                    >
+                                        {subCategory.title}
+                                    </HoverLink>
+                                ))}
+                            </div>
+                        ))}
                         <div className="flex flex-col gap-3">
                             <HoverLink href="/category/clearance" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1 text-red-600">CLEARANCE</HoverLink>
                         </div>
@@ -147,46 +149,39 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                 >
                     <div className="mx-auto max-w-7xl px-8 py-8 overflow-y-auto max-h-[85vh]">
                         <div className="flex flex-col w-full h-full">
-                            <AccordionItem title="Abayas" isOpen={activeAccordion === "Abayas"} onClick={() => toggleAccordion("Abayas")} onClose={onClose}>
-                                <Link href="/category/abayas/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
-                                <Link href="/category/abayas/coat" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Coat</Link>
-                                <Link href="/category/abayas/wedding" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Wedding</Link>
-                            </AccordionItem>
-                            <AccordionItem title="Cord sets" isOpen={activeAccordion === "Cord sets"} onClick={() => toggleAccordion("Cord sets")} onClose={onClose}>
-                                <Link href="/category/cord-sets/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
-                                <Link href="/category/cord-sets/long" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Long</Link>
-                                <Link href="/category/cord-sets/one-piece" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>One piece</Link>
-                                <Link href="/category/cord-sets/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
-                            </AccordionItem>
-                            <AccordionItem title="Tops" isOpen={activeAccordion === "Tops"} onClick={() => toggleAccordion("Tops")} onClose={onClose}>
-                                <Link href="/category/tops/embroidered" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Embroidered</Link>
-                                <Link href="/category/tops/plain" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Plain</Link>
-                                <Link href="/category/tops/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
-                            </AccordionItem>
-                            <AccordionItem title="Dresses" isOpen={activeAccordion === "Dresses"} onClick={() => toggleAccordion("Dresses")} onClose={onClose}>
-                                <Link href="/category/dresses/maxi" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Maxi</Link>
-                                <Link href="/category/dresses/satin" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Satin</Link>
-                                <Link href="/category/dresses/printed" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Printed</Link>
-                                <Link href="/category/dresses/wrap" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Wrap</Link>
-                            </AccordionItem>
-                            <AccordionItem title="Occasion Wear" isOpen={activeAccordion === "Occasion Wear"} onClick={() => toggleAccordion("Occasion Wear")} onClose={onClose}>
-                                <Link href="/category/occasion-wear/abayas" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Abayas</Link>
-                                <Link href="/category/occasion-wear/overcoats" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Overcoats</Link>
-                                <Link href="/category/occasion-wear/tops" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Tops</Link>
-                                <Link href="/category/occasion-wear/sets" className="text-sm text-gray-700 px-2 py-1" onClick={onClose}>Sets</Link>
-                            </AccordionItem>
+                            {categories.map((category) => (
+                                <AccordionItem
+                                    key={category._id}
+                                    title={category.title}
+                                    href={`/category/${category.slug}`}
+                                    isOpen={activeAccordion === category.title}
+                                    onClick={() => toggleAccordion(category.title)}
+                                    onClose={onClose}
+                                >
+                                    {category.subCategories.map((subCategory) => (
+                                        <Link
+                                            key={subCategory._id}
+                                            href={`/category/${category.slug}/${subCategory.slug}`}
+                                            className="text-sm text-gray-700 px-2 py-1"
+                                            onClick={onClose}
+                                        >
+                                            {subCategory.title}
+                                        </Link>
+                                    ))}
+                                </AccordionItem>
+                            ))}
                             <div className="py-4 border-b border-gray-100">
                                 <HoverLink href="/category/clearance" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3 text-red-600">Clearance</HoverLink>
                             </div>
-                            
+
                             <div className="py-4 border-b border-gray-100">
                                 <HoverLink href="/login" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3">Account</HoverLink>
                             </div>
-                            
+
                             <div className="py-4 border-b border-gray-100">
-                                <Link 
-                                    href="/wishlist" 
-                                    onClick={onClose} 
+                                <Link
+                                    href="/wishlist"
+                                    onClick={onClose}
                                     className="flex items-center justify-between group px-1"
                                 >
                                     <span className="font-medium text-[1.1rem] uppercase tracking-wider">Wish-list</span>
@@ -195,7 +190,7 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose }) => {
                             </div>
 
                             <div className="py-6">
-                                <Link 
+                                <Link
                                     href="/cart"
                                     onClick={onClose}
                                     className="flex items-center justify-between group"

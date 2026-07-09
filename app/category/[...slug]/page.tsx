@@ -2,6 +2,7 @@ import React from "react";
 import CategoryHeader from "@/components/Category/CategoryHeader";
 import ListingGrid from "@/components/Category/ListingGrid";
 import { ListingControls } from "@/components/Category/ListingControls";
+import { getCategoryNavigation } from "@/lib/sanity/categoryNavigation";
 import { getProductsByCategory } from "@/lib/sanity/products";
 import { filterAndSortProducts, getProductFacets, ProductFilterParams } from "@/utils/productFilters";
 import { redirect } from "next/navigation";
@@ -16,7 +17,8 @@ export default async function CategoryPage({
     const { slug } = await params;
     const searchParamsValue = await searchParams;
     const { style: styleQuery } = searchParamsValue;
-    
+    const categories = await getCategoryNavigation();
+
     const categoryPath = slug[0];
     const subCategoryPath = slug[1];
     const activeStyle = subCategoryPath || styleQuery;
@@ -44,7 +46,7 @@ export default async function CategoryPage({
 
     return (
         <main className="flex flex-col min-h-screen bg-white">
-            <CategoryHeader />
+            <CategoryHeader categories={categories} />
             <ListingControls facets={facets} resultCount={products.length} />
             <div className="w-full">
                 <ListingGrid products={products} />

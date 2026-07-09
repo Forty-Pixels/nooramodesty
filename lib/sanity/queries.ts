@@ -12,10 +12,12 @@ const productProjection = `
   salePrice,
   plainDescription,
   "description": plainDescription,
-  "category": category->slug.current,
+  "category": coalesce(category->slug.current, category.slug.current, category.slug),
   "categoryRef": category._ref,
-  "subCategory": subCategory->slug.current,
+  "subCategory": coalesce(subCategory->slug.current, subCategory.slug.current, subCategory.slug),
   "subCategoryRef": subCategory._ref,
+  "subCategoryParent": coalesce(subCategory->category->slug.current, subCategory.category->slug.current, subCategory.category.slug.current, subCategory.category.slug),
+  "subCategoryParentRef": coalesce(subCategory->category._ref, subCategory.category._ref),
   type,
   colorName,
   colorHex,
@@ -79,8 +81,10 @@ export const PRODUCTS_BY_CATEGORY_QUERY = defineQuery(`*[
   _type == "product" &&
   isVisible != false &&
   (
-    category->slug.current == $category ||
-    category._ref == $categoryRef
+    coalesce(category->slug.current, category.slug.current, category.slug) == $category ||
+    category._ref == $categoryRef ||
+    subCategory->category->slug.current == $category ||
+    subCategory->category._ref == $categoryRef
   )
 ] | order(title asc) {
   ${productProjection}
@@ -116,8 +120,10 @@ export const RELATED_PRODUCTS_QUERY = defineQuery(`*[
   _type == "product" &&
   isVisible != false &&
   (
-    category->slug.current == $category ||
-    category._ref == $categoryRef
+    coalesce(category->slug.current, category.slug.current, category.slug) == $category ||
+    category._ref == $categoryRef ||
+    subCategory->category->slug.current == $category ||
+    subCategory->category._ref == $categoryRef
   ) &&
   !(slug.current in $excludeSlugs)
 ] | order(title asc)[0...8] {

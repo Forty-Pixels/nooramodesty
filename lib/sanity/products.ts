@@ -14,6 +14,8 @@ const RELATED_PRODUCTS_LIMIT = 4;
 interface SanityProductResult extends Product {
   categoryRef?: string | null;
   subCategoryRef?: string | null;
+  subCategoryParent?: string | null;
+  subCategoryParentRef?: string | null;
 }
 
 function slugFromReference(reference: string | null | undefined, prefix: string): string | undefined {
@@ -26,11 +28,22 @@ function slugFromReference(reference: string | null | undefined, prefix: string)
 }
 
 function normalizeProduct(product: SanityProductResult): Product {
-  const { categoryRef, subCategoryRef, ...normalizedProduct } = product;
+  const {
+    categoryRef,
+    subCategoryRef,
+    subCategoryParent,
+    subCategoryParentRef,
+    ...normalizedProduct
+  } = product;
 
   return {
     ...normalizedProduct,
-    category: normalizedProduct.category || slugFromReference(categoryRef, "category.") || "",
+    category:
+      normalizedProduct.category ||
+      slugFromReference(categoryRef, "category.") ||
+      subCategoryParent ||
+      slugFromReference(subCategoryParentRef, "category.") ||
+      "",
     subCategory: normalizedProduct.subCategory || slugFromReference(subCategoryRef, "subcategory."),
   };
 }

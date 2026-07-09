@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar/Navbar";
 import { Footer } from "@/components/LandingPage/Footer";
 import { siteLinks } from "@/data/siteLinks";
 import { fetchPublicSiteSettings } from "@/lib/server/siteSettings";
+import { getCategoryNavigation } from "@/lib/sanity/categoryNavigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,7 +43,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const siteSettings = await fetchPublicSiteSettings();
+  const [siteSettings, categories] = await Promise.all([
+    fetchPublicSiteSettings(),
+    getCategoryNavigation(),
+  ]);
 
   return (
     <html
@@ -54,7 +58,7 @@ export default async function RootLayout({
         {siteSettings.announcementEnabled && (
           <AnnouncementBar text={siteSettings.announcementText} href={siteSettings.announcementHref} />
         )}
-        <Navbar />
+        <Navbar categories={categories} />
         <main className="flex-grow overflow-x-clip">
           <PageTransitionProvider>
             {children}

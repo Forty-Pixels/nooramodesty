@@ -24,13 +24,6 @@ export const category = defineType({
       type: "text",
     }),
     defineField({
-      name: "subCategories",
-      title: "Sub categories",
-      type: "array",
-      of: [{ type: "reference", to: [{ type: "subCategory" }] }],
-      description: "Use only the subcategories defined for this category in the project spec.",
-    }),
-    defineField({
       name: "isActive",
       title: "Active",
       type: "boolean",

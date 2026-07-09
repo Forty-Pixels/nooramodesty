@@ -3,24 +3,18 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { CategoryNavigationItem, CategoryNavigationSubCategory } from "@/types/categoryNavigation";
 
-const categories = [
-  { name: "ABAYAS", slug: "abayas" },
-  { name: "CORD SETS", slug: "cord-sets" },
-  { name: "TOPS", slug: "tops" },
-  { name: "OCCASION WEAR", slug: "occasion-wear" },
-  { name: "DRESSES", slug: "dresses" },
-  { name: "CLEARANCE", slug: "clearance" },
-];
+interface CategoryHeaderProps {
+  categories: CategoryNavigationItem[];
+}
 
-const subCategoriesMap: Record<string, string[]> = {
-  abayas: ["embroidered", "coat", "wedding"],
-  "cord-sets": ["embroidered", "long", "one-piece", "printed"],
-  tops: ["embroidered", "plain", "printed"],
-  dresses: ["maxi", "satin", "printed", "wrap"],
-  "occasion-wear": ["abayas", "overcoats", "tops", "sets"],
-  clearance: ["abayas", "cord-sets", "tops", "dresses"],
-};
+interface HeaderCategory {
+  _id: string;
+  title: string;
+  slug: string;
+  subCategories: CategoryNavigationSubCategory[];
+}
 
 const HoverLink = ({ href, children, className = "", onClick, isActive }: { href: string, children: React.ReactNode, className?: string, onClick?: () => void, isActive?: boolean }) => (
   <Link
@@ -35,62 +29,78 @@ const HoverLink = ({ href, children, className = "", onClick, isActive }: { href
   </Link>
 );
 
-const CategoryHeader = () => {
+function clearanceSubCategories(categories: CategoryNavigationItem[]): CategoryNavigationSubCategory[] {
+  return categories.map((category, index) => ({
+    _id: `clearance-${category.slug}`,
+    title: category.title,
+    slug: category.slug,
+    sortOrder: index,
+  }));
+}
+
+function getHeaderCategories(categories: CategoryNavigationItem[]): HeaderCategory[] {
+  return [
+    ...categories,
+    {
+      _id: "clearance",
+      title: "Clearance",
+      slug: "clearance",
+      subCategories: clearanceSubCategories(categories),
+    },
+  ];
+}
+
+const CategoryHeader = ({ categories }: CategoryHeaderProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
-  // Detect current sub-category from path (/category/abayas/coat) or query (?style=coat)
+  const headerCategories = getHeaderCategories(categories);
+
   const pathnameParts = pathname.split("/");
-  const mainFromPath = pathnameParts[2]; // The segment after /category/
-  const subFromPath = pathnameParts[3]; // The segment after main category slug
+  const mainFromPath = pathnameParts[2];
+  const subFromPath = pathnameParts[3];
   const subFromQuery = searchParams.get("style");
   const currentSub = subFromPath || subFromQuery;
-  
-  // Find which main category is active by exact match with the path segment
-  const activeMain = categories.find(cat => cat.slug === mainFromPath)?.slug;
-  const currentSubCats = activeMain ? (subCategoriesMap[activeMain] || []) : [];
 
-  // Base path for sub-categories should be /category/[activeMain]
-  const basePath = `/category/${activeMain}`;
+  const activeCategory = headerCategories.find((category) => category.slug === mainFromPath);
+  const currentSubCats = activeCategory?.subCategories || [];
+  const basePath = `/category/${activeCategory?.slug || mainFromPath || ""}`;
 
   return (
     <div className="w-full bg-white pt-6 pb-8 md:pt-8 md:pb-12 border-b border-gray-50">
       <div className="mx-auto max-w-7xl px-6 md:px-10">
-        {/* Main Categories Row - Multi-row on mobile */}
         <div className="flex justify-center items-center flex-wrap gap-x-4 gap-y-3 md:gap-x-10 mb-6 md:mb-10 px-4 md:px-0">
-          {categories.map((cat) => {
-            const isActive = cat.slug === activeMain;
+          {headerCategories.map((category) => {
+            const isActive = category.slug === activeCategory?.slug;
             return (
               <HoverLink
-                key={cat.slug}
-                href={`/category/${cat.slug}`}
+                key={category._id}
+                href={`/category/${category.slug}`}
                 isActive={isActive}
                 className="text-[0.6rem] md:text-xs font-bold tracking-[0.2em] md:tracking-[0.4em] px-3 md:px-4"
               >
-                {cat.name}
+                {category.title.toUpperCase()}
               </HoverLink>
             );
           })}
         </div>
 
-        {/* Sub-Categories Row (Refine) - Multi-row on mobile */}
         {currentSubCats.length > 0 && (
           <div className="flex justify-center items-center flex-wrap gap-x-6 gap-y-2 md:gap-x-12 transition-all duration-500">
-            <Link 
+            <Link
               href={basePath}
               className={`text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 py-1 ${!currentSub ? "text-black border-b border-black" : "text-gray-400 hover:text-black"}`}
             >
               ALL
             </Link>
-            {currentSubCats.map((sub) => {
-              const isActive = currentSub === sub;
+            {currentSubCats.map((subCategory) => {
+              const isActive = currentSub === subCategory.slug;
               return (
                 <Link
-                  key={sub}
-                  href={`${basePath}/${sub}`}
+                  key={subCategory._id}
+                  href={`${basePath}/${subCategory.slug}`}
                   className={`text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 py-1 ${isActive ? "text-black border-b border-black" : "text-gray-400 hover:text-black"}`}
                 >
-                  {sub.replace("-", " ")}
+                  {subCategory.title}
                 </Link>
               );
             })}

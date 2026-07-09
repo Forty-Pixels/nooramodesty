@@ -7,8 +7,13 @@ import CartClientIcon from "@/components/Navbar/CartClientIcon";
 import MegaMenu from "@/components/Navbar/MegaMenu";
 import { X, Menu, Search } from "lucide-react";
 import { SearchOverlay } from "@/components/Navbar/SearchOverlay";
+import { CategoryNavigationItem } from "@/types/categoryNavigation";
 
-const Navbar = () => {
+interface NavbarProps {
+    categories: CategoryNavigationItem[];
+}
+
+const Navbar = ({ categories }: NavbarProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -97,7 +102,7 @@ const Navbar = () => {
                 </div>
             </div>
 
-            <MegaMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+            <MegaMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} categories={categories} />
             <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         </header>
     );
