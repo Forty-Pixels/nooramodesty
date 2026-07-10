@@ -203,6 +203,12 @@ function OrdersTool() {
                   <strong>{order.customer?.fullName}</strong>
                   <br />
                   {order.customer?.mobile}
+                  {order.customer?.whatsapp && order.customer.whatsapp !== order.customer.mobile && (
+                    <>
+                      <br />
+                      <small>WhatsApp: {order.customer.whatsapp}</small>
+                    </>
+                  )}
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {order.paymentMethod}

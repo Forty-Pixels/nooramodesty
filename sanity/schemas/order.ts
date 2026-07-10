@@ -42,6 +42,7 @@ export const order = defineType({
       fields: [
         defineField({ name: "fullName", title: "Full name", type: "string" }),
         defineField({ name: "mobile", title: "Mobile", type: "string" }),
+        defineField({ name: "whatsapp", title: "WhatsApp", type: "string" }),
         defineField({ name: "email", title: "Email", type: "string" }),
         defineField({ name: "addressLine1", title: "Address line 1", type: "string" }),
         defineField({ name: "addressLine2", title: "Address line 2", type: "string" }),

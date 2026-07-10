@@ -28,16 +28,18 @@ function normalizeCategoryTitle(title: string) {
   return title.trim().toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9-]+/g, " ");
 }
 
-function createCategorySlug(title: string) {
-  return title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-function resolveCategoryHref(title: string, categorySlug: string | undefined, products: Product[]) {
-  const firstProductCategory = products.find((product) => product.category)?.category;
+function resolveCategoryHref(
+  title: string,
+  categorySlug: string | undefined,
+  products: Product[],
+): string | undefined {
   const titleHref = homepageCategoryHrefs[normalizeCategoryTitle(title)];
-  const slugHref = categorySlug ? homepageCategoryHrefs[normalizeCategoryTitle(categorySlug)] : undefined;
+  if (titleHref) return titleHref;
 
-  return titleHref || slugHref || `/category/${categorySlug || firstProductCategory || createCategorySlug(title)}`;
+  if (categorySlug) return `/category/${categorySlug}`;
+
+  const firstProductCategory = products.find((product) => product.category)?.category;
+  return firstProductCategory ? `/category/${firstProductCategory}` : undefined;
 }
 
 export const HomepageProductSection: React.FC<HomepageProductSectionProps> = ({

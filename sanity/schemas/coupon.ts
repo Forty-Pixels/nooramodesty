@@ -29,6 +29,13 @@ export const coupon = defineType({
       type: "number",
       validation: (rule) => rule.required().min(0),
     }),
+    defineField({
+      name: "appliesToProducts",
+      title: "Restrict to specific products",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "product" }] }],
+      description: "Leave empty to make this coupon valid site-wide. Add one or more products to restrict the coupon (and its discount) to only those products.",
+    }),
     defineField({ name: "isActive", title: "Active", type: "boolean", initialValue: true }),
     defineField({ name: "startsAt", title: "Starts at", type: "datetime" }),
     defineField({ name: "expiresAt", title: "Expires at", type: "datetime" }),

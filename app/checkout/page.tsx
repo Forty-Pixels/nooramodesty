@@ -21,6 +21,7 @@ import {
 interface CheckoutFormState {
   fullName: string;
   mobileLocal: string;
+  whatsappLocal: string;
   email: string;
   addressLine1: string;
   addressLine2: string;
@@ -31,6 +32,7 @@ interface CheckoutFormState {
 const initialFormState: CheckoutFormState = {
   fullName: "",
   mobileLocal: "",
+  whatsappLocal: "",
   email: "",
   addressLine1: "",
   addressLine2: "",
@@ -41,6 +43,7 @@ const initialFormState: CheckoutFormState = {
 const FIELD_LABELS: Record<keyof CheckoutFormState, string> = {
   fullName: "Full name",
   mobileLocal: "Phone",
+  whatsappLocal: "WhatsApp number",
   email: "Email address",
   addressLine1: "Address",
   addressLine2: "Address",
@@ -103,6 +106,9 @@ function CheckoutContent() {
     customer: {
       fullName: formState.fullName,
       mobile: `${SRI_LANKA_PHONE_PREFIX}${formState.mobileLocal.replace(/\D/g, "")}`,
+      whatsapp: formState.whatsappLocal.trim()
+        ? `${SRI_LANKA_PHONE_PREFIX}${formState.whatsappLocal.replace(/\D/g, "")}`
+        : undefined,
       email: formState.email.trim() || undefined,
       addressLine1: formState.addressLine1,
       addressLine2: formState.addressLine2,
@@ -169,6 +175,7 @@ function CheckoutContent() {
     const fieldValidators: Array<[keyof CheckoutFormState, string[]]> = [
       ["fullName", validateRequiredText(formState.fullName, FIELD_LABELS.fullName, { minLength: 2, maxLength: 80 })],
       ["mobileLocal", validateSriLankaLocalNumber(formState.mobileLocal, FIELD_LABELS.mobileLocal)],
+      ["whatsappLocal", formState.whatsappLocal.trim() ? validateSriLankaLocalNumber(formState.whatsappLocal, FIELD_LABELS.whatsappLocal) : []],
       ["email", formState.email.trim() ? validateEmail(formState.email) : []],
       ["addressLine1", validateRequiredText(formState.addressLine1, FIELD_LABELS.addressLine1, { minLength: 3, maxLength: 160 })],
       ["city", validateRequiredText(formState.city, FIELD_LABELS.city, { minLength: 2, maxLength: 80 })],
@@ -355,6 +362,16 @@ function CheckoutContent() {
                   value={formState.mobileLocal}
                   onChange={(e) => updateField("mobileLocal", e.target.value.replace(/\D/g, "").slice(0, 10))}
                   placeholder="Phone"
+                  inputMode="numeric"
+                  className="w-full bg-transparent pr-5 py-4 text-xs font-medium focus:outline-none placeholder:text-gray-300"
+                />
+              </div>
+              <div className={`flex w-full bg-white border ${invalidFields.has("whatsappLocal") ? "border-[#B21E1E]" : "border-black/5 focus-within:border-black/20"}`}>
+                <span className="flex items-center pl-5 pr-2 text-xs font-medium text-gray-400">{SRI_LANKA_PHONE_PREFIX}</span>
+                <input
+                  value={formState.whatsappLocal}
+                  onChange={(e) => updateField("whatsappLocal", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  placeholder="WhatsApp Number (optional)"
                   inputMode="numeric"
                   className="w-full bg-transparent pr-5 py-4 text-xs font-medium focus:outline-none placeholder:text-gray-300"
                 />

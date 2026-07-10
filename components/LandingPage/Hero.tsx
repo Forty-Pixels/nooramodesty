@@ -27,7 +27,11 @@ const Hero: React.FC<HeroProps> = ({
 
     if (isSingleFull || isTwoImageFull) {
         return (
-            <section className="relative w-full h-[calc(100vh-44px)] md:h-[calc(100vh-52px)] bg-[#f6f5f3] overflow-hidden">
+            <section
+                className={`relative w-full bg-[#f6f5f3] overflow-hidden ${
+                    isSingleFull ? "h-[70vh] md:h-[calc(100vh-52px)]" : "h-[calc(100vh-44px)] md:h-[calc(100vh-52px)]"
+                }`}
+            >
                 {isTwoImageFull ? (
                     <div className="flex h-full w-full flex-col md:flex-row">
                         <div className="relative h-1/2 w-full md:h-full md:w-1/2">
@@ -61,7 +65,8 @@ const Hero: React.FC<HeroProps> = ({
                             src={imageOneSrc}
                             alt="Noora Modesty Collection"
                             fill
-                            sizes="100vw"
+                            sizes="(max-width: 768px) 100vw, 100vw"
+                            quality={90}
                             className="object-cover object-center"
                             priority
                         />

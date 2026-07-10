@@ -10,7 +10,7 @@ import useCartStore from "@/store";
 
 interface ProductCarouselProps {
   title: string;
-  viewAllHref: string;
+  viewAllHref?: string;
   products: Product[];
 }
 
@@ -18,7 +18,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(3);
   const visibleProducts = products.filter((product) => product.mainImage && product.slug);
-  const totalItems = visibleProducts.length + 1;
+  const totalItems = visibleProducts.length + (viewAllHref ? 1 : 0);
   const { toggleWishlist, wishlistItems } = useCartStore();
 
   useEffect(() => {
@@ -122,20 +122,22 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
                   </div>
                 );
               })}
-              <div className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group">
-                <Link href={viewAllHref} className="block h-full">
-                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#e9e5df] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#ddd7cf]">
-                    <div className="flex flex-col items-center gap-4 text-black px-4 text-center">
-                      <span className="text-[0.7rem] md:text-[0.8rem] font-bold tracking-[0.35em] uppercase">
-                        View All
-                      </span>
-                      <span className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/40 flex items-center justify-center transition-colors duration-300 group-hover:bg-black group-hover:text-white">
-                        <ArrowRight size={18} strokeWidth={1.5} />
-                      </span>
+              {viewAllHref && (
+                <div className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group">
+                  <Link href={viewAllHref} className="block h-full">
+                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#e9e5df] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#ddd7cf]">
+                      <div className="flex flex-col items-center gap-4 text-black px-4 text-center">
+                        <span className="text-[0.7rem] md:text-[0.8rem] font-bold tracking-[0.35em] uppercase">
+                          View All
+                        </span>
+                        <span className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/40 flex items-center justify-center transition-colors duration-300 group-hover:bg-black group-hover:text-white">
+                          <ArrowRight size={18} strokeWidth={1.5} />
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </div>
+                  </Link>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>

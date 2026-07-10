@@ -51,6 +51,12 @@ export const checkoutOrderSchema = z.object({
     mobile: z.string({ error: "Phone number is required." }).trim().refine(isValidPhoneNumber, {
       error: "Phone number must contain 7 to 15 digits and no letters.",
     }),
+    whatsapp: z.preprocess(
+      (value) => (value === null || value === "" ? undefined : value),
+      z.string().trim().refine(isValidPhoneNumber, {
+        error: "WhatsApp number must contain 7 to 15 digits and no letters.",
+      }).optional(),
+    ),
     email: optionalEmail,
     addressLine1: z.string({ error: "Address is required." }).trim().min(3, { error: "Address must be at least 3 characters." }),
     addressLine2: z.string().trim().optional(),
@@ -225,14 +231,19 @@ export async function findCoupon(code: string | undefined): Promise<Coupon | nul
       expiresAt,
       usesCount,
       maxUses,
-      minimumSubtotal
+      minimumSubtotal,
+      "appliesToProductIds": appliesToProducts[]._ref
     }`,
     { code: normalizedCode },
     { next: { revalidate: 0 } },
   );
 }
 
-export function calculateCouponDiscount(coupon: Coupon | null, subtotal: number): number {
+export function calculateCouponDiscount(
+  coupon: Coupon | null,
+  items: OrderItemSnapshot[],
+  subtotal: number,
+): number {
   if (!coupon) {
     return 0;
   }
@@ -245,13 +256,27 @@ export function calculateCouponDiscount(coupon: Coupon | null, subtotal: number)
   if (startsAt && startsAt > now) throw new Error("Coupon is not active yet.");
   if (expiresAt && expiresAt < now) throw new Error("Coupon has expired.");
   if (coupon.maxUses && (coupon.usesCount || 0) >= coupon.maxUses) throw new Error("Coupon has reached its usage limit.");
-  if (coupon.minimumSubtotal && subtotal < coupon.minimumSubtotal) throw new Error("Order subtotal is too low for this coupon.");
 
-  if (coupon.discountType === "percentage") {
-    return Math.min(subtotal, Math.round(subtotal * (coupon.discountValue / 100)));
+  let eligibleAmount = subtotal;
+
+  if (coupon.appliesToProductIds && coupon.appliesToProductIds.length > 0) {
+    const allowedProductIds = new Set(coupon.appliesToProductIds);
+    const matchingItems = items.filter((item) => allowedProductIds.has(item.productId));
+
+    if (matchingItems.length === 0) {
+      throw new Error("This coupon only applies to specific products that aren't in your bag.");
+    }
+
+    eligibleAmount = matchingItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }
 
-  return Math.min(subtotal, coupon.discountValue);
+  if (coupon.minimumSubtotal && eligibleAmount < coupon.minimumSubtotal) throw new Error("Order subtotal is too low for this coupon.");
+
+  if (coupon.discountType === "percentage") {
+    return Math.min(eligibleAmount, Math.round(eligibleAmount * (coupon.discountValue / 100)));
+  }
+
+  return Math.min(eligibleAmount, coupon.discountValue);
 }
 
 export function calculateTotals(
@@ -260,7 +285,7 @@ export function calculateTotals(
   siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
 ): OrderTotals {
   const { subtotal, shipping } = calculateBaseTotals(items, siteSettings);
-  const discountAmount = calculateCouponDiscount(coupon, subtotal);
+  const discountAmount = calculateCouponDiscount(coupon, items, subtotal);
 
   return {
     subtotal,
