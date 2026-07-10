@@ -287,10 +287,16 @@ export async function getClickomStock(variationId: string): Promise<ClickomStock
     throw new Error(data?.message || "Clickom stock lookup failed.");
   }
 
-  const stockValue =
-    data && typeof data === "object"
-      ? Number((data as Record<string, unknown>).qty_available ?? 0)
-      : 0;
+  const stockEntries =
+    data && typeof data === "object" && Array.isArray((data as Record<string, unknown>).data)
+      ? ((data as Record<string, unknown>).data as Array<Record<string, unknown>>)
+      : data && typeof data === "object"
+        ? [data as Record<string, unknown>]
+        : [];
+  const stockValue = stockEntries.reduce((sum, entry) => {
+    const qty = Number(entry.qty_available ?? 0);
+    return sum + (Number.isFinite(qty) ? qty : 0);
+  }, 0);
   const stock = Number.isFinite(stockValue) ? stockValue : 0;
 
   return {
