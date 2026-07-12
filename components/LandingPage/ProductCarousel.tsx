@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useSyncExternalStore } from "react";
+import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, animate as animateMotionValue } from "framer-motion";
 import { Product } from "@/types/product";
 import { ArrowRight, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import useCartStore from "@/store";
@@ -19,8 +19,8 @@ const MOBILE_PEEK_FRACTION = 0.25;
 const MOBILE_TILE_WIDTH_PERCENT = 100 / (MOBILE_ITEMS_PER_VIEW + MOBILE_PEEK_FRACTION);
 const DESKTOP_ITEMS_PER_VIEW = 4;
 const DESKTOP_TILE_WIDTH_PERCENT = 100 / DESKTOP_ITEMS_PER_VIEW;
-const DRAG_SWIPE_THRESHOLD = 60;
 const MOBILE_MEDIA_QUERY = "(max-width: 767px)";
+const VELOCITY_PROJECTION_FACTOR = 0.15;
 
 function subscribeToMobileBreakpoint(callback: () => void) {
   const mediaQueryList = window.matchMedia(MOBILE_MEDIA_QUERY);
@@ -47,11 +47,35 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
   const totalItems = visibleProducts.length + (viewAllHref ? 1 : 0);
   const { toggleWishlist, wishlistItems } = useCartStore();
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const x = useMotionValue(0);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   const itemsPerPage = isMobile ? MOBILE_ITEMS_PER_VIEW : DESKTOP_ITEMS_PER_VIEW;
   const tileWidthPercent = isMobile ? MOBILE_TILE_WIDTH_PERCENT : DESKTOP_TILE_WIDTH_PERCENT;
+  const tileWidthPx = containerWidth * (tileWidthPercent / 100);
   const maxIndex = Math.max(0, totalItems - itemsPerPage);
-  const isAtStart = currentIndex <= 0;
-  const isAtEnd = currentIndex >= maxIndex;
+  const safeCurrentIndex = Math.min(currentIndex, maxIndex);
+  const isAtStart = safeCurrentIndex <= 0;
+  const isAtEnd = safeCurrentIndex >= maxIndex;
+
+  useEffect(() => {
+    if (isDraggingRef.current || tileWidthPx === 0) return;
+    const controls = animateMotionValue(x, -safeCurrentIndex * tileWidthPx, { type: "spring", stiffness: 380, damping: 38 });
+    return () => controls.stop();
+  }, [safeCurrentIndex, tileWidthPx, x]);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => Math.min(maxIndex, prev + 1));
@@ -73,15 +97,23 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
         <div className="relative w-full overflow-hidden mb-4 md:mb-6 flex justify-center">
           <div className="w-full">
             <motion.div
+              ref={containerRef}
               className="flex -mx-1 md:-mx-2 cursor-grab active:cursor-grabbing"
-              animate={{ x: `-${currentIndex * tileWidthPercent}%` }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
+              style={{ x }}
+              drag={tileWidthPx > 0 ? "x" : false}
+              dragConstraints={{ left: -maxIndex * tileWidthPx, right: 0 }}
+              dragElastic={0.08}
+              dragMomentum={false}
+              onDragStart={() => {
+                isDraggingRef.current = true;
+              }}
               onDragEnd={(_, info) => {
-                if (info.offset.x < -DRAG_SWIPE_THRESHOLD) nextSlide();
-                else if (info.offset.x > DRAG_SWIPE_THRESHOLD) prevSlide();
+                isDraggingRef.current = false;
+                if (tileWidthPx === 0) return;
+
+                const projectedX = x.get() + info.velocity.x * VELOCITY_PROJECTION_FACTOR;
+                const targetIndex = Math.round(-projectedX / tileWidthPx);
+                setCurrentIndex(Math.max(0, Math.min(maxIndex, targetIndex)));
               }}
             >
               {visibleProducts.map((product, index) => {
