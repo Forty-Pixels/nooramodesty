@@ -117,22 +117,6 @@ export const order = defineType({
     defineField({ name: "waybillNumber", title: "Waybill number", type: "string" }),
     defineField({ name: "courierStatus", title: "Courier status", type: "string" }),
     defineField({ name: "clickomRawStatus", title: "Clickom raw status", type: "text", readOnly: true }),
-    defineField({
-      name: "paymentStatus",
-      title: "Payment status",
-      type: "string",
-      initialValue: "due",
-      options: {
-        list: [
-          { title: "Due", value: "due" },
-          { title: "Partial", value: "partial" },
-          { title: "Paid", value: "paid" },
-        ],
-      },
-    }),
-    defineField({ name: "paidAmount", title: "Paid amount", type: "number", initialValue: 0, validation: (rule) => rule.min(0) }),
-    defineField({ name: "balanceAmount", title: "Balance amount", type: "number", initialValue: 0, validation: (rule) => rule.min(0) }),
-    defineField({ name: "paymentVerifiedAt", title: "Payment verified at", type: "datetime", readOnly: true }),
     defineField({ name: "placedAt", title: "Placed at", type: "datetime" }),
     defineField({ name: "approvedAt", title: "Approved at", type: "datetime" }),
     defineField({ name: "couponCode", title: "Coupon code", type: "string" }),

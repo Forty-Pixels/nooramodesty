@@ -15,12 +15,9 @@ interface TrackingOrder {
   callStatus?: string;
   orderStatus?: string;
   courierStatus?: string;
-  paymentStatus?: string;
   waybillNumber?: string;
   cityPakTrackingUrl?: string;
   totalAmount: number;
-  paidAmount: number;
-  balanceAmount: number;
   items: Array<{
     title: string;
     quantity: number;
@@ -136,11 +133,9 @@ function OrderTrackingContent() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {[
                   ["Order Status", statusLabel(order)],
-                  ["Payment Status", order.paymentStatus || "due"],
                   ["Courier Status", order.courierStatus || "Pending"],
                   ["Waybill", order.waybillNumber || "Not issued yet"],
                   ["Total", `LKR ${order.totalAmount.toLocaleString()}`],
-                  ["Balance", `LKR ${order.balanceAmount.toLocaleString()}`],
                 ].map(([label, value]) => (
                   <div key={label} className="border border-black/5 p-4">
                     <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-gray-400">{label}</p>

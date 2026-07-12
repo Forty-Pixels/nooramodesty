@@ -33,9 +33,11 @@ export function renderParagraph(text: string): string {
   return `<p style="margin:0 0 16px;font-size:13px;line-height:1.7;color:#4a4a4a;">${text}</p>`;
 }
 
-export function renderButton(label: string, href: string): string {
-  return `<a href="${href}" style="display:inline-block;background-color:${EMAIL_COLORS.ink};color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:14px 28px;">${escapeHtml(label)}</a>`;
+export function renderButton(label: string, href: string, backgroundColor: string = EMAIL_COLORS.ink): string {
+  return `<a href="${href}" style="display:inline-block;background-color:${backgroundColor};color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:14px 28px;">${escapeHtml(label)}</a>`;
 }
+
+export const WHATSAPP_GREEN = "#25D366";
 
 export function renderSummaryRow(label: string, value: string, options: { bold?: boolean; accent?: string } = {}): string {
   const color = options.accent || (options.bold ? EMAIL_COLORS.ink : "#6b6b6b");
@@ -86,6 +88,8 @@ export function renderEmailLayout({ previewText, bodyHtml }: EmailLayoutOptions)
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
     <title>Noora Modesty</title>
   </head>
   <body style="margin:0;padding:0;background-color:${EMAIL_COLORS.background};font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
@@ -95,7 +99,7 @@ export function renderEmailLayout({ previewText, bodyHtml }: EmailLayoutOptions)
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:${EMAIL_COLORS.surface};">
             <tr>
-              <td align="center" style="background-color:${EMAIL_COLORS.ink};padding:28px 24px;">
+              <td align="center" bgcolor="${EMAIL_COLORS.ink}" style="background-color:${EMAIL_COLORS.ink};padding:28px 24px;">
                 <img src="${SITE_URL}/noora-modesty-footer-logo.png" alt="Noora Modesty" width="150" style="display:block;max-width:150px;" />
               </td>
             </tr>
@@ -105,10 +109,10 @@ export function renderEmailLayout({ previewText, bodyHtml }: EmailLayoutOptions)
               </td>
             </tr>
             <tr>
-              <td style="background-color:${EMAIL_COLORS.ink};padding:24px 32px;" align="center">
+              <td bgcolor="${EMAIL_COLORS.ink}" style="background-color:${EMAIL_COLORS.ink};padding:24px 32px;" align="center">
                 <p style="margin:0 0 8px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#ffffff;font-weight:700;">Noora Modesty</p>
                 <p style="margin:0;font-size:11px;color:#c9c5bf;">
-                  Need help? Email <a href="mailto:hello@nooramodesty.com" style="color:#ffffff;">hello@nooramodesty.com</a>
+                  Need help? Email <a href="mailto:info@nooramodesty.com" style="color:#ffffff;">info@nooramodesty.com</a>
                 </p>
               </td>
             </tr>

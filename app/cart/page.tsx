@@ -249,21 +249,11 @@ export default function CartPage() {
                                 </div>
                             </div>
 
-                            {/* Promo Code Section */}
-                            <div className="pt-2 space-y-4">
-                                <label className="text-[9px] uppercase tracking-[0.2em] font-bold text-gray-400">
-                                    Promotional Code / Gift Card
-                                </label>
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="text" 
-                                        placeholder="ENTER CODE"
-                                        className="flex-1 bg-[#fcfcfc] border border-black/5 px-4 py-3 text-[10px] font-bold tracking-[0.1em] text-black focus:outline-none focus:border-black/20 transition-all placeholder:text-gray-300"
-                                    />
-                                    <button className="bg-black text-white px-6 py-3 text-[9px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors whitespace-nowrap">
-                                        Apply
-                                    </button>
-                                </div>
+                            {/* Promo Code Note */}
+                            <div className="pt-2">
+                                <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-gray-400 text-center">
+                                    Have a coupon or gift card? Apply it at checkout.
+                                </p>
                             </div>
 
                         <Link 

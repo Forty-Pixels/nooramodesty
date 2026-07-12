@@ -6,6 +6,7 @@ import {
   EMAIL_COLORS,
   EmailLineItem,
   SITE_URL,
+  WHATSAPP_GREEN,
   renderButton,
   renderEmailLayout,
   renderEyebrow,
@@ -53,20 +54,20 @@ export function renderOrderConfirmationEmail(params: OrderConfirmationEmailParam
       ${params.siteSettings.bankAccountNumber ? `<p style="margin:0 0 4px;font-size:12px;color:#4a4a4a;">Account: ${params.siteSettings.bankAccountNumber}</p>` : ""}
       ${params.siteSettings.bankBranch ? `<p style="margin:0 0 4px;font-size:12px;color:#4a4a4a;">Branch: ${params.siteSettings.bankBranch}</p>` : ""}
       <p style="margin:10px 0 0;font-size:11px;color:${EMAIL_COLORS.muted};">
-        Please send your payment slip within ${params.siteSettings.bankTransferDeadlineDays} day${params.siteSettings.bankTransferDeadlineDays === 1 ? "" : "s"}. Orders without a slip by then are converted to Cash on Delivery automatically.
+        You may place this order as a bank transfer. If a payment slip is not uploaded, the order will be dispatched as Cash on Delivery.
       </p>
     </div>`
       : "";
 
   const ctaButtons = [
     renderButton("Track Your Order", trackingUrl),
-    whatsappUrl ? renderButton("Message Us On WhatsApp", whatsappUrl) : "",
+    whatsappUrl ? renderButton("Message Us On WhatsApp", whatsappUrl, WHATSAPP_GREEN) : "",
   ]
     .filter(Boolean)
     .join(`<span style="display:inline-block;width:12px;"></span>`);
 
   const bodyHtml = `
-    ${renderEyebrow("Order Confirmed")}
+    ${renderEyebrow("Order Received")}
     ${renderHeading(`Thank You, ${params.customer.fullName.split(" ")[0] || "there"}`)}
     ${renderParagraph(`Your order <strong>${params.orderNumber}</strong> has been received and is being prepared. Please keep this order number for your records.`)}
 

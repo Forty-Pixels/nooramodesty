@@ -7,9 +7,10 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProductGalleryProps {
     images: string[];
+    isSoldOut?: boolean;
 }
 
-export const ProductGallery = ({ images }: ProductGalleryProps) => {
+export const ProductGallery = ({ images, isSoldOut = false }: ProductGalleryProps) => {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
     // Show only first 6 images in a grid as per screenshot
@@ -52,10 +53,10 @@ export const ProductGallery = ({ images }: ProductGalleryProps) => {
         <>
             <div className="grid grid-cols-3 gap-2 md:gap-3">
                 {displayImages.map((img, idx) => (
-                    <div 
-                        key={idx} 
+                    <div
+                        key={idx}
                         onClick={() => setSelectedIndex(idx)}
-                        className="relative aspect-[3/4] overflow-hidden bg-white group border border-transparent hover:border-gray-100 transition-colors cursor-zoom-in"
+                        className={`relative aspect-[3/4] overflow-hidden bg-white group border border-transparent hover:border-gray-100 transition-colors cursor-zoom-in ${isSoldOut ? "grayscale opacity-60" : ""}`}
                     >
                         <Image
                             src={img}
@@ -68,6 +69,11 @@ export const ProductGallery = ({ images }: ProductGalleryProps) => {
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 pointer-events-none" />
                     </div>
                 ))}
+                {isSoldOut && (
+                    <div className="col-span-3 flex items-center justify-center py-2">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">Sold Out</span>
+                    </div>
+                )}
             </div>
 
             <AnimatePresence>

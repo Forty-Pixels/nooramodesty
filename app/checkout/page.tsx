@@ -410,7 +410,7 @@ function CheckoutContent() {
                   ) : (
                     <p>Bank details are not configured yet.</p>
                   )}
-                  <p className="text-gray-400">Payment slips not received within {siteSettings.bankTransferDeadlineDays} days will automatically convert this order to Cash on Delivery.</p>
+                  <p className="text-gray-400">You may place this order as a bank transfer. If a payment slip is not uploaded, the order will be dispatched as Cash on Delivery.</p>
                 </div>
                 <div className="relative border-2 border-dashed border-black/5 p-8 text-center">
                   <input type="file" onChange={(e) => setPaymentSlip(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*,application/pdf" />

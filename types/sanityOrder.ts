@@ -1,4 +1,4 @@
-import { AdminStatus, OrderCustomer, OrderItemSnapshot, OrderStatus, PaymentMethod, PaymentStatus } from "./order";
+import { AdminStatus, OrderCustomer, OrderItemSnapshot, OrderStatus, PaymentMethod } from "./order";
 
 export interface SanityOrder {
   _id: string;
@@ -8,10 +8,6 @@ export interface SanityOrder {
   paymentMethod: PaymentMethod;
   adminStatus: AdminStatus;
   status: OrderStatus;
-  paymentStatus?: PaymentStatus;
-  paidAmount?: number;
-  balanceAmount?: number;
-  paymentVerifiedAt?: string;
   clickomSaleId?: string;
   clickomTransactionId?: string;
   clickomCustomOrderId?: number;

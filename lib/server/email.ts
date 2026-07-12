@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Resend } from "resend";
-import { OrderCustomer, OrderItemSnapshot, PaymentMethod, PaymentStatus } from "@/types/order";
+import { OrderCustomer, OrderItemSnapshot, PaymentMethod } from "@/types/order";
 import { PublicSiteSettings } from "@/types/siteSettings";
 import { renderOrderApprovedEmail } from "./emailTemplates/orderApproved";
 import { renderOrderConfirmationEmail } from "./emailTemplates/orderConfirmation";
@@ -18,7 +18,7 @@ import {
 } from "./emailTemplates/returnExchangeRequest";
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || "Noora Modesty <orders@nooramodesty.com>";
-const ADMIN_EMAIL = process.env.EMAIL_ADMIN_TO || "hello@nooramodesty.com";
+const ADMIN_EMAIL = process.env.EMAIL_ADMIN_TO || "info@nooramodesty.com";
 
 async function sendEmail(params: { to: string; subject: string; html: string }): Promise<void> {
   if (!process.env.RESEND_API_KEY) {
@@ -62,9 +62,6 @@ interface SendOrderApprovedParams {
   customer: OrderCustomer;
   items: OrderItemSnapshot[];
   totalAmount: number;
-  paidAmount: number;
-  balanceAmount: number;
-  paymentStatus: PaymentStatus;
 }
 
 export async function sendOrderApprovedEmail(params: SendOrderApprovedParams): Promise<void> {

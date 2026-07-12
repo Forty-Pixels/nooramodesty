@@ -48,7 +48,6 @@ export async function POST(request: Request) {
           status: normalizeClickomStatus(clickomStatus.orderStatus || clickomStatus.status),
           clickomRawStatus: JSON.stringify(clickomStatus.raw),
         };
-        if (clickomStatus.paymentStatus) patch.paymentStatus = clickomStatus.paymentStatus;
         if (clickomStatus.waybillNumber) patch.waybillNumber = clickomStatus.waybillNumber;
         if (clickomStatus.shippingStatus) patch.courierStatus = clickomStatus.shippingStatus;
         await client.patch(order._id).set(patch).commit();

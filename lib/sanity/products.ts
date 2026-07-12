@@ -1,6 +1,7 @@
 import { Product } from "@/types/product";
 import { sanityClient } from "./client";
 import {
+  ACCESSORIES_FOR_CATEGORY_QUERY,
   ALL_PRODUCTS_QUERY,
   PRODUCT_BY_SLUG_QUERY,
   PRODUCTS_BY_CATEGORY_QUERY,
@@ -122,4 +123,18 @@ export async function getRelatedProducts(product: Product): Promise<Product[]> {
   );
 
   return normalizeProducts([...styleMatches, ...categoryMatches].slice(0, RELATED_PRODUCTS_LIMIT));
+}
+
+export async function getCompleteTheLookProducts(product: Product): Promise<Product[]> {
+  if (!sanityClient) {
+    return [];
+  }
+
+  const accessories = await sanityClient.fetch<SanityProductResult[]>(
+    ACCESSORIES_FOR_CATEGORY_QUERY,
+    { category: product.category, categoryRef: `category.${product.category}`, excludeSlugs: [product.slug] },
+    { next: { revalidate: 60, tags: ["product"] } },
+  );
+
+  return normalizeProducts(accessories);
 }

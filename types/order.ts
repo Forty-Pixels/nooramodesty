@@ -4,8 +4,6 @@ export type AdminStatus = "pending_approval" | "approved" | "rejected";
 
 export type OrderStatus = "pending" | "confirmed" | "processing" | "dispatched" | "shipped" | "completed" | "cancelled";
 
-export type PaymentStatus = "due" | "partial" | "paid";
-
 export type CouponDiscountType = "fixed" | "percentage";
 
 export interface OrderCustomer {

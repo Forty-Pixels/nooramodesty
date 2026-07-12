@@ -227,7 +227,7 @@ function appendProduct(params: URLSearchParams, row: number, item: SanityOrder["
   params.set(`${prefix}[product_type]`, "variable");
   params.set(`${prefix}[product_id]`, String(item.clickomProductId));
   params.set(`${prefix}[variation_id]`, String(item.clickomVariationId));
-  params.set(`${prefix}[enable_stock]`, "0");
+  params.set(`${prefix}[enable_stock]`, "1");
   params.set(`${prefix}[quantity]`, formatQuantity(quantity));
   params.set(`${prefix}[product_unit_id]`, DEFAULT_UNIT_ID);
   params.set(`${prefix}[sub_unit_id]`, DEFAULT_UNIT_ID);
@@ -371,8 +371,8 @@ function buildOmsOrderParams(order: SanityOrder, contactId: string) {
   const discount = Math.max(0, order.discountAmount || 0);
   const shipping = calculateShipping(order);
   const finalTotal = Math.max(0, order.totalAmount || productSubtotal + shipping - discount);
-  const paidAmount = Math.max(0, order.paidAmount || 0);
-  const paymentMethod = paidAmount > 0 ? "bank_transfer" : "cod";
+  const paidAmount = 0;
+  const paymentMethod = order.paymentMethod === "bank_transfer" ? "bank_transfer" : "cod";
   const params = new URLSearchParams();
 
   params.set("_token", "");
@@ -504,11 +504,27 @@ export async function createClickomOmsWebOrder(order: SanityOrder): Promise<Clic
   });
   const responseText = await response.text().catch(() => "");
 
-  if (![200, 302, 303].includes(response.status) && !/ordermanagement\/order/i.test(responseText)) {
+  if (![200, 302, 303].includes(response.status)) {
     throw new Error(`Clickom OMS order creation failed with status ${response.status}.`);
   }
 
+  let responseJson: { success?: boolean; msg?: string; error?: string } | null = null;
+  try {
+    responseJson = JSON.parse(responseText);
+  } catch {
+    responseJson = null;
+  }
+
+  if (responseJson && responseJson.success === false) {
+    throw new Error(`Clickom OMS order creation failed: ${responseJson.msg || responseJson.error || "Unknown error."}`);
+  }
+
   const orderId = await findOmsOrderId(session, order.orderNumber);
+
+  if (!orderId) {
+    throw new Error("Clickom OMS order creation could not be confirmed — the order was not found in the OMS order list afterward.");
+  }
+
   const customOrderId = order.clickomCustomOrderId || buildClickomCustomOrderId(order.orderNumber);
 
   return {

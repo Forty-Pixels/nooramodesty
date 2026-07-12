@@ -103,7 +103,7 @@ export const privacyPolicy: PolicyPageContent = {
       _id: "contact",
       title: "Contact Us",
       body:
-        "For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at hello@nooramodesty.com.",
+        "For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at info@nooramodesty.com.",
     },
   ],
 };

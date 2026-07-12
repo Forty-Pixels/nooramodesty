@@ -25,7 +25,7 @@ export function renderOrderRejectedEmail(params: OrderRejectedEmailParams): { su
     </div>
 
     ${renderParagraph(`Hi ${params.customer.fullName.split(" ")[0] || "there"}, unfortunately we're unable to fulfil order <strong>${params.orderNumber}</strong>. No charges have been made against this order.`)}
-    ${renderParagraph(`If you've already sent a bank transfer for this order, our team will reach out to arrange a refund. For any questions, please contact us at <a href="mailto:hello@nooramodesty.com" style="color:${EMAIL_COLORS.ink};">hello@nooramodesty.com</a>.`)}
+    ${renderParagraph(`If you've already sent a bank transfer for this order, our team will reach out to arrange a refund. For any questions, please contact us at <a href="mailto:info@nooramodesty.com" style="color:${EMAIL_COLORS.ink};">info@nooramodesty.com</a>.`)}
   `;
 
   return {

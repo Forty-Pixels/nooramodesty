@@ -115,11 +115,28 @@ export const homepage = defineType({
               { title: "Current split layout, flipped", value: "splitFlipped" },
               { title: "Full single image", value: "fullSingleImage" },
               { title: "Full two images, split center", value: "fullTwoImage" },
+              { title: "Carousel", value: "carousel" },
             ],
             layout: "dropdown",
           },
           validation: (rule) => rule.required(),
           description: "Controls the homepage hero image composition.",
+        }),
+        defineField({
+          name: "slides",
+          title: "Carousel slides",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              fields: [
+                defineField({ name: "image", title: "Image", type: "image", options: { hotspot: true }, validation: (rule) => rule.required() }),
+                defineField({ name: "alt", title: "Alt text", type: "string" }),
+              ],
+            },
+          ],
+          description: "Used only when Hero layout is set to Carousel.",
+          hidden: ({ parent }) => parent?.layout !== "carousel",
         }),
         defineField({
           name: "leftImage",

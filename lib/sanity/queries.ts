@@ -51,7 +51,11 @@ export const HOMEPAGE_QUERY = defineQuery(`*[_type == "homepage"][0]{
     "imageTwoSrc": rightImage.asset->url,
     "centerLogoSrc": centerLogo.asset->url,
     ctaLabel,
-    ctaHref
+    ctaHref,
+    slides[]{
+      "imageSrc": image.asset->url,
+      alt
+    }
   },
   productSections[isVisible != false][0...4]{
     _key,
@@ -127,5 +131,20 @@ export const RELATED_PRODUCTS_QUERY = defineQuery(`*[
   ) &&
   !(slug.current in $excludeSlugs)
 ] | order(title asc)[0...8] {
+  ${productProjection}
+}`);
+
+export const ACCESSORIES_FOR_CATEGORY_QUERY = defineQuery(`*[
+  _type == "product" &&
+  isVisible != false &&
+  lower(coalesce(subCategory->slug.current, subCategory.slug.current, subCategory.slug, "")) == "accessories" &&
+  (
+    coalesce(category->slug.current, category.slug.current, category.slug) == $category ||
+    category._ref == $categoryRef ||
+    subCategory->category->slug.current == $category ||
+    subCategory->category._ref == $categoryRef
+  ) &&
+  !(slug.current in $excludeSlugs)
+] | order(title asc)[0...6] {
   ${productProjection}
 }`);

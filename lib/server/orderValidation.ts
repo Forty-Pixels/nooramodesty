@@ -2,6 +2,7 @@ import "server-only";
 
 import { z, ZodError } from "zod";
 import { sanityClient } from "@/lib/sanity/client";
+import { getClickomStock } from "@/lib/server/clickom";
 import { calculateShippingQuote, DEFAULT_SITE_SETTINGS } from "@/lib/shipping";
 import {
   CheckoutOrderPayload,
@@ -141,11 +142,11 @@ function formatCustomSizeLabel(input: OrderItemInput): string {
   return measurements.length > 0 ? `Custom (${measurements.join(", ")})` : "Custom";
 }
 
-function validateItem(
+async function validateItem(
   input: OrderItemInput,
   product: ProductForOrder,
   siteSettings: PublicSiteSettings = DEFAULT_SITE_SETTINGS,
-): OrderItemSnapshot {
+): Promise<OrderItemSnapshot> {
   if (product.isVisible === false) {
     throw new Error(`${product.title} is not available.`);
   }
@@ -160,6 +161,16 @@ function validateItem(
 
   if (!product.clickomProductId) {
     throw new Error(`${product.title} is missing a Clickom product ID.`);
+  }
+
+  const isPreOrderEligible = input.preOrder || product.enablePreOrders || input.customSize;
+
+  if (!isPreOrderEligible && input.clickomVariationId) {
+    const stock = await getClickomStock(String(input.clickomVariationId));
+
+    if (stock.stock < input.quantity) {
+      throw new Error(`${product.title} does not have enough stock for the requested quantity.`);
+    }
   }
 
   const unitPrice = product.salePrice || product.price;
@@ -191,15 +202,17 @@ export async function buildOrderItems(
   const products = await fetchProducts(productIds);
   const productById = new Map(products.map((product) => [product._id, product]));
 
-  return items.map((item) => {
-    const product = productById.get(item.productId);
+  return Promise.all(
+    items.map((item) => {
+      const product = productById.get(item.productId);
 
-    if (!product) {
-      throw new Error("One or more products are no longer available.");
-    }
+      if (!product) {
+        throw new Error("One or more products are no longer available.");
+      }
 
-    return validateItem(item, product, siteSettings);
-  });
+      return validateItem(item, product, siteSettings);
+    }),
+  );
 }
 
 export function calculateBaseTotals(

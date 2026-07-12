@@ -50,10 +50,7 @@ export async function POST(request: Request) {
         clickomTransactionId,
         clickomCustomOrderId,
         totalAmount,
-        discountAmount,
-        paymentStatus,
-        paidAmount,
-        balanceAmount
+        discountAmount
       }`,
       { orderId },
     );

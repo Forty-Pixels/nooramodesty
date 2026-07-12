@@ -7,7 +7,6 @@ const TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 export type ClickomStatusCode = "pd" | "pc" | "oh" | "cp" | "cn" | "rf" | "fl" | "sp";
-export type ClickomPaymentStatus = "paid" | "partial" | "due";
 
 export interface ClickomSalePayload {
   invoice_no: string;
@@ -24,7 +23,6 @@ export interface ClickomSalePayload {
   discount_amount?: number;
   additional_notes?: string;
   status?: ClickomStatusCode;
-  payment_status?: ClickomPaymentStatus;
   products: Array<{
     product_id: number;
     variation_id: number;
@@ -60,7 +58,6 @@ export interface ClickomSaleStatusDetails {
   callStatus?: string;
   orderStatus?: string;
   shippingStatus?: string;
-  paymentStatus?: string;
   waybillNumber?: string;
   raw: unknown;
 }
@@ -347,7 +344,6 @@ export async function getClickomSaleStatusDetails(orderId: string): Promise<Clic
     callStatus: readNestedString(details, ["call_status", "callStatus"]),
     orderStatus: readNestedString(details, ["order_status", "orderStatus"]),
     shippingStatus: readNestedString(details, ["shipping_status", "shippingStatus", "delivery_status"]),
-    paymentStatus: readNestedString(details, ["payment_status", "paymentStatus"]),
     waybillNumber: readNestedString(details, ["waybill_no", "waybill", "waybill_number", "waybillNumber"]),
     raw: data,
   };

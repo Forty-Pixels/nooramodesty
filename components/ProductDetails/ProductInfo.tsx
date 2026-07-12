@@ -13,11 +13,12 @@ import { uniqueMessages, validateMeasurement } from "@/utils/formValidation";
 
 interface ProductInfoProps {
     product: Product;
+    onSoldOutChange?: (isSoldOut: boolean) => void;
 }
 
 const isCustomSizeLabel = (size: string | undefined) => (size || "").trim().toLowerCase() === "custom";
 
-export const ProductInfo = ({ product }: ProductInfoProps) => {
+export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
     const firstSize = product.subVariations?.find((subVariation) => !isCustomSizeLabel(subVariation.size))?.size || "";
     const materialProperties = product.materialSpecs?.properties || [];
     const hasMaterialSpecs = Boolean(
@@ -33,6 +34,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     const [isCustomSize, setIsCustomSize] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
+    const [quantity, setQuantity] = useState(1);
     const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
     const [showStoreLocatorModal, setShowStoreLocatorModal] = useState(false);
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
@@ -60,6 +62,27 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         ? stockByVariationId[selectedSubVariation.clickomVariationId] === false
         : false;
     const canOrderSelectedVariation = Boolean(selectedSubVariation && (!isSelectedOutOfStock || product.enablePreOrders || isCustomSize));
+    const isProductSoldOut = Boolean(
+        !product.enablePreOrders &&
+        displaySizes.length > 0 &&
+        displaySizes.every((size) => {
+            const subVariation = product.subVariations?.find((item) => item.size === size);
+            return subVariation?.clickomVariationId
+                ? stockByVariationId[subVariation.clickomVariationId] === false
+                : false;
+        }),
+    );
+    useEffect(() => {
+        onSoldOutChange?.(isProductSoldOut);
+    }, [isProductSoldOut, onSoldOutChange]);
+
+    const whatsappHref = (() => {
+        const digits = siteSettings.whatsappNumber?.replace(/\D/g, "");
+        if (!digits) return undefined;
+        const productUrl = typeof window !== "undefined" ? window.location.href : "";
+        const message = `Hi Noora Modesty, I'm interested in ${product.title}${productUrl ? ` (${productUrl})` : ""}.`;
+        return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+    })();
 
     useEffect(() => {
         let isMounted = true;
@@ -130,7 +153,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             price: finalPrice,
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
-            quantity: 1,
+            quantity: quantity,
             color: product.colorHex || undefined,
             colorName: product.colorName,
             colorHex: product.colorHex || undefined,
@@ -177,7 +200,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             price: finalPrice,
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
-            quantity: 1,
+            quantity: quantity,
             color: product.colorHex || undefined,
             colorName: product.colorName,
             colorHex: product.colorHex || undefined,
@@ -379,7 +402,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         })}
                         {product.enableCustomSizes && customSubVariation && <div className="relative flex flex-col items-center">
                             <span className="text-[6px] md:text-[7px] text-[#8B8378] font-bold uppercase tracking-wider mb-1.5 whitespace-nowrap animate-pulse">
-                                Pre-Order
+                                Customize Size
                             </span>
                             <button
                                 type="button"
@@ -396,6 +419,36 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                                 +
                             </button>
                         </div>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Quantity Selector */}
+            <div className="mt-2">
+                <div className="w-full max-w-sm space-y-1.5">
+                    <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Quantity</label>
+                    <div className="flex items-center border border-gray-200 w-fit">
+                        <button
+                            type="button"
+                            onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                            disabled={quantity <= 1}
+                            className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+                            aria-label="Decrease quantity"
+                        >
+                            −
+                        </button>
+                        <span className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-black">
+                            {quantity}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setQuantity((current) => Math.min(20, current + 1))}
+                            disabled={quantity >= 20}
+                            className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+                            aria-label="Increase quantity"
+                        >
+                            +
+                        </button>
                     </div>
                 </div>
             </div>
@@ -540,6 +593,34 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 </div>
             )}
 
+            {/* Size Guide */}
+            {product.sizeGuideImage && <div className="mt-4 border-t border-b border-gray-100">
+                <button
+                    onClick={() => toggleAccordion('measurements')}
+                    className="w-full py-3.5 flex items-center justify-between group"
+                >
+                    <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-black group-hover:text-[#8B8378] transition-colors">
+                        Size Guide {openAccordion === 'measurements' ? '−' : '+'}
+                    </span>
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'measurements' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
+                    <div className="overflow-hidden space-y-2">
+                        <div className="relative w-full aspect-[4/3] bg-gray-50 border border-gray-100">
+                            <Image
+                                src={product.sizeGuideImage}
+                                alt={`Size guide for ${product.title}`}
+                                fill
+                                className="object-contain"
+                                sizes="(max-width: 768px) 100vw, 420px"
+                            />
+                        </div>
+                        <p className="text-[9px] text-gray-400 leading-relaxed">
+                            For products, an error margin of +/-1 is to be expected on finishing.
+                        </p>
+                    </div>
+                </div>
+            </div>}
+
             {/* Actions */}
             <div className="mt-5 flex items-center gap-4">
                 <button 
@@ -566,25 +647,38 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                         ADDED TO BAG
                     </span>
                     <span className={`${isAdded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
-                        {!canOrderSelectedVariation ? "Unavailable" : "Add to Bag"}
+                        {!canOrderSelectedVariation ? (isProductSoldOut ? "Sold Out" : "Unavailable") : "Add to Bag"}
                     </span>
                 </button>
-                <button className="w-11 h-11 border border-gray-300 hover:border-black transition-all flex items-center justify-center group cursor-pointer">
-                    <svg 
-                        viewBox="0 0 24 24" 
-                        className="w-7 h-7 fill-[#25D366] transition-colors"
-                        xmlns="http://www.w3.org/2000/svg"
+                {whatsappHref ? (
+                    <a
+                        href={whatsappHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-11 h-11 border border-gray-300 hover:border-black transition-all flex items-center justify-center group cursor-pointer"
+                        aria-label="Ask about this product on WhatsApp"
                     >
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.067 2.877 1.215 3.076.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.032c0 2.12.549 4.188 1.59 6.007L0 24l6.135-1.61c1.747.953 3.71 1.456 5.71 1.458h.005c6.635 0 12.031-5.396 12.033-12.033.001-3.216-1.251-6.241-3.526-8.517z"/>
-                    </svg>
-                </button>
+                        <svg
+                            viewBox="0 0 24 24"
+                            className="w-7 h-7 fill-[#25D366] transition-colors"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.067 2.877 1.215 3.076.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.032c0 2.12.549 4.188 1.59 6.007L0 24l6.135-1.61c1.747.953 3.71 1.456 5.71 1.458h.005c6.635 0 12.031-5.396 12.033-12.033.001-3.216-1.251-6.241-3.526-8.517z"/>
+                        </svg>
+                    </a>
+                ) : null}
             </div>
 
-            {(product.enablePreOrders || isCustomSize) && canOrderSelectedVariation && (
-                <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">
-                    This item is made to order and ships as a pre-order.
-                </p>
-            )}
+            <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">
+                Need support?{" "}
+                {whatsappHref ? (
+                    <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="underline hover:text-black transition-colors">
+                        Contact us
+                    </a>
+                ) : (
+                    "Contact us"
+                )}
+            </p>
 
             {/* Consolidated Material Quality Detail Section */}
             {product.materialSpecs && hasMaterialSpecs && (
@@ -637,31 +731,6 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
 
             {/* Accordion Sections */}
             <div className="mt-4 border-t border-gray-100">
-                {/* Size Guide */}
-                {product.sizeGuideImage && <div className="border-b border-gray-100">
-                    <button
-                        onClick={() => toggleAccordion('measurements')}
-                        className="w-full py-3.5 flex items-center justify-between group"
-                    >
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-black group-hover:text-[#8B8378] transition-colors">
-                            Size Guide {openAccordion === 'measurements' ? '−' : '+'}
-                        </span>
-                    </button>
-                    <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'measurements' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
-                        <div className="overflow-hidden">
-                            <div className="relative w-full aspect-[4/3] bg-gray-50 border border-gray-100">
-                                <Image
-                                    src={product.sizeGuideImage}
-                                    alt={`Size guide for ${product.title}`}
-                                    fill
-                                    className="object-contain"
-                                    sizes="(max-width: 768px) 100vw, 420px"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>}
-
                 {/* Shipping */}
                 <div className="border-b border-gray-100">
                     <button

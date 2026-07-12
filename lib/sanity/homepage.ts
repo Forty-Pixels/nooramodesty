@@ -10,6 +10,7 @@ const emptyHomepageContent: HomepageContent = {
     centerLogoSrc: "",
     ctaLabel: "",
     ctaHref: "",
+    slides: [],
   },
   productSections: [],
   inNooraImages: [],
@@ -20,7 +21,7 @@ function firstNonEmpty(...values: Array<string | null | undefined>) {
 }
 
 function normalizeHeroLayout(layout: string | undefined): HomepageContent["hero"]["layout"] {
-  if (layout === "splitFlipped" || layout === "fullSingleImage" || layout === "fullTwoImage") {
+  if (layout === "splitFlipped" || layout === "fullSingleImage" || layout === "fullTwoImage" || layout === "carousel") {
     return layout;
   }
 
@@ -63,6 +64,7 @@ export async function getHomepageContent(): Promise<HomepageContent> {
       centerLogoSrc: firstNonEmpty(data.hero?.centerLogoSrc),
       ctaLabel: firstNonEmpty(data.hero?.ctaLabel),
       ctaHref: firstNonEmpty(data.hero?.ctaHref),
+      slides: data.hero?.slides?.filter((slide) => slide?.imageSrc) || [],
     },
     productSections: productSections || [],
     inNooraImages: inNooraImages || [],

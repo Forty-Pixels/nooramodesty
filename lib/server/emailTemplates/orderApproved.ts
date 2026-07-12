@@ -1,6 +1,6 @@
 import "server-only";
 
-import { OrderCustomer, OrderItemSnapshot, PaymentStatus } from "@/types/order";
+import { OrderCustomer, OrderItemSnapshot } from "@/types/order";
 import {
   EMAIL_COLORS,
   EmailLineItem,
@@ -20,9 +20,6 @@ export interface OrderApprovedEmailParams {
   customer: OrderCustomer;
   items: OrderItemSnapshot[];
   totalAmount: number;
-  paidAmount: number;
-  balanceAmount: number;
-  paymentStatus: PaymentStatus;
 }
 
 function toLineItems(items: OrderItemSnapshot[]): EmailLineItem[] {
@@ -33,12 +30,6 @@ function toLineItems(items: OrderItemSnapshot[]): EmailLineItem[] {
     lineTotal: item.unitPrice * item.quantity,
   }));
 }
-
-const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
-  due: "Payment Due",
-  partial: "Partially Paid",
-  paid: "Paid In Full",
-};
 
 export function renderOrderApprovedEmail(params: OrderApprovedEmailParams): { subject: string; html: string } {
   const trackingUrl = `${SITE_URL}/order-tracking?orderNumber=${encodeURIComponent(params.orderNumber)}`;
@@ -58,9 +49,6 @@ export function renderOrderApprovedEmail(params: OrderApprovedEmailParams): { su
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;padding-top:16px;border-top:1px solid ${EMAIL_COLORS.border};">
       ${renderSummaryRow("Total", `LKR ${params.totalAmount.toLocaleString()}`, { bold: true })}
-      ${renderSummaryRow("Paid", `LKR ${params.paidAmount.toLocaleString()}`)}
-      ${params.balanceAmount > 0 ? renderSummaryRow("Balance Due", `LKR ${params.balanceAmount.toLocaleString()}`, { accent: EMAIL_COLORS.danger }) : ""}
-      ${renderSummaryRow("Payment Status", PAYMENT_STATUS_LABEL[params.paymentStatus])}
     </table>
 
     <div style="margin-top:32px;">

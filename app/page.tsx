@@ -15,6 +15,7 @@ export default async function Home() {
         centerLogoSrc={homepage.hero.centerLogoSrc}
         ctaLabel={homepage.hero.ctaLabel}
         ctaHref={homepage.hero.ctaHref}
+        slides={homepage.hero.slides}
       />
       {homepage.productSections.map((section) => (
         <HomepageProductSection

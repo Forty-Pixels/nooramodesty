@@ -46,11 +46,8 @@ export function buildClickomSalePayload(
   options: BuildClickomSalePayloadOptions = {},
 ): ClickomSalePayload {
   const clickomCustomOrderId = order.clickomCustomOrderId || buildClickomCustomOrderId(order.orderNumber);
-  const paymentStatus = order.paymentStatus || "due";
-  const paidAmount = Math.max(0, order.paidAmount || 0);
-  const seedPaymentAmount = options.seedTotalPayment ? Math.max(0, order.totalAmount || 0) : 0;
-  const clickomPaymentAmount = Math.max(paidAmount, seedPaymentAmount);
-  const paymentMethod = paidAmount > 0 ? "bank_transfer" : "cash";
+  const clickomPaymentAmount = options.seedTotalPayment ? Math.max(0, order.totalAmount || 0) : 0;
+  const paymentMethod = order.paymentMethod === "bank_transfer" ? "bank_transfer" : "cash";
   const itemNotes = order.items
     .map((item) => {
       const itemNote = buildOrderItemNote(item);
@@ -73,7 +70,6 @@ export function buildClickomSalePayload(
     discount_amount: order.discountAmount || 0,
     additional_notes: itemNotes.join("\n"),
     status,
-    payment_status: paymentStatus,
     products: order.items.map((item) => {
       const itemNote = buildOrderItemNote(item);
 

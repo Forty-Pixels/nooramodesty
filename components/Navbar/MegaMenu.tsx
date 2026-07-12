@@ -125,7 +125,6 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, categories }) => {
                             <HoverLink href="/category/clearance" onClick={onClose} className="font-medium text-lg mb-1 !px-3 !py-1 text-red-600">CLEARANCE</HoverLink>
                         </div>
                         <div className="flex flex-col gap-4">
-                            <HoverLink href="/login" className="text-[1.05rem] uppercase font-medium !px-3 !py-1" onClick={onClose}>ACCOUNT</HoverLink>
                             <HoverLink href="/wishlist" onClick={onClose} className="text-[1.05rem] uppercase font-medium whitespace-nowrap !px-3 !py-1">
                                 WISH-LIST
                                 {wishlistCount > 0 && <span className="text-xs text-gray-400 group-hover:text-gray-300 font-bold ml-2 transition-colors duration-300">({wishlistCount})</span>}
@@ -172,10 +171,6 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ isOpen, onClose, categories }) => {
                             ))}
                             <div className="py-4 border-b border-gray-100">
                                 <HoverLink href="/category/clearance" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3 text-red-600">Clearance</HoverLink>
-                            </div>
-
-                            <div className="py-4 border-b border-gray-100">
-                                <HoverLink href="/login" onClick={onClose} className="font-medium text-[1.1rem] uppercase tracking-wider !-ml-3">Account</HoverLink>
                             </div>
 
                             <div className="py-4 border-b border-gray-100">

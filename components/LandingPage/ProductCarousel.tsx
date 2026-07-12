@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -14,30 +14,51 @@ interface ProductCarouselProps {
   products: Product[];
 }
 
+const MOBILE_ITEMS_PER_VIEW = 2;
+const MOBILE_PEEK_FRACTION = 0.25;
+const MOBILE_TILE_WIDTH_PERCENT = 100 / (MOBILE_ITEMS_PER_VIEW + MOBILE_PEEK_FRACTION);
+const DESKTOP_ITEMS_PER_VIEW = 4;
+const DESKTOP_TILE_WIDTH_PERCENT = 100 / DESKTOP_ITEMS_PER_VIEW;
+const DRAG_SWIPE_THRESHOLD = 60;
+const MOBILE_MEDIA_QUERY = "(max-width: 767px)";
+
+function subscribeToMobileBreakpoint(callback: () => void) {
+  const mediaQueryList = window.matchMedia(MOBILE_MEDIA_QUERY);
+  mediaQueryList.addEventListener("change", callback);
+  return () => mediaQueryList.removeEventListener("change", callback);
+}
+
+function getIsMobileSnapshot() {
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+}
+
+function getIsMobileServerSnapshot() {
+  return false;
+}
+
+function useIsMobile() {
+  return useSyncExternalStore(subscribeToMobileBreakpoint, getIsMobileSnapshot, getIsMobileServerSnapshot);
+}
+
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, products }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(3);
+  const isMobile = useIsMobile();
   const visibleProducts = products.filter((product) => product.mainImage && product.slug);
   const totalItems = visibleProducts.length + (viewAllHref ? 1 : 0);
   const { toggleWishlist, wishlistItems } = useCartStore();
 
-  useEffect(() => {
-    const handleResize = () => {
-      setItemsPerPage(window.innerWidth < 768 ? 2 : 4);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  const itemsPerPage = isMobile ? MOBILE_ITEMS_PER_VIEW : DESKTOP_ITEMS_PER_VIEW;
+  const tileWidthPercent = isMobile ? MOBILE_TILE_WIDTH_PERCENT : DESKTOP_TILE_WIDTH_PERCENT;
   const maxIndex = Math.max(0, totalItems - itemsPerPage);
+  const isAtStart = currentIndex <= 0;
+  const isAtEnd = currentIndex >= maxIndex;
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+    setCurrentIndex((prev) => Math.min(maxIndex, prev + 1));
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
   };
 
   return (
@@ -52,16 +73,24 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
         <div className="relative w-full overflow-hidden mb-4 md:mb-6 flex justify-center">
           <div className="w-full">
             <motion.div
-              className="flex -mx-1 md:-mx-2"
-              animate={{ x: `-${currentIndex * (100 / itemsPerPage)}%` }}
+              className="flex -mx-1 md:-mx-2 cursor-grab active:cursor-grabbing"
+              animate={{ x: `-${currentIndex * tileWidthPercent}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -DRAG_SWIPE_THRESHOLD) nextSlide();
+                else if (info.offset.x > DRAG_SWIPE_THRESHOLD) prevSlide();
+              }}
             >
               {visibleProducts.map((product, index) => {
                 const isWishlisted = wishlistItems.some(item => item._id === product._id);
                 return (
-                  <div 
+                  <div
                     key={`${product._id}-${index}`}
-                    className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group relative"
+                    style={{ width: `${tileWidthPercent}%` }}
+                    className="flex-shrink-0 px-1 md:px-2 block group relative"
                   >
                     <Link href={`/product/${product.slug}`} className="block">
                       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
@@ -69,6 +98,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
                           src={product.mainImage}
                           alt={product.title}
                           fill
+                          draggable={false}
                           className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                           sizes="(max-width: 768px) 50vw, 25vw"
                         />
@@ -123,7 +153,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
                 );
               })}
               {viewAllHref && (
-                <div className="flex-shrink-0 w-1/2 md:w-1/4 px-1 md:px-2 block group">
+                <div style={{ width: `${tileWidthPercent}%` }} className="flex-shrink-0 px-1 md:px-2 block group">
                   <Link href={viewAllHref} className="block h-full">
                     <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#e9e5df] flex items-center justify-center transition-colors duration-300 group-hover:bg-[#ddd7cf]">
                       <div className="flex flex-col items-center gap-4 text-black px-4 text-center">
@@ -146,14 +176,16 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
         <div className="w-full flex justify-end gap-2 pl-4 md:pl-6 pr-6 md:pr-10 mt-2 md:mt-4 relative z-10 transition-all duration-300">
           <button
             onClick={prevSlide}
-            className="w-10 h-10 md:w-12 md:h-12 bg-[#8D8377] text-white flex items-center justify-center hover:bg-[#7a7166] transition-colors cursor-pointer shadow-sm"
+            disabled={isAtStart}
+            className="w-10 h-10 md:w-12 md:h-12 bg-[#8D8377] text-white flex items-center justify-center hover:bg-[#7a7166] transition-colors cursor-pointer shadow-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
             aria-label="Previous product"
           >
             <ChevronLeft size={20} strokeWidth={1.5} />
           </button>
           <button
             onClick={nextSlide}
-            className="w-10 h-10 md:w-12 md:h-12 bg-[#8D8377] text-white flex items-center justify-center hover:bg-[#7a7166] transition-colors cursor-pointer shadow-sm"
+            disabled={isAtEnd}
+            className="w-10 h-10 md:w-12 md:h-12 bg-[#8D8377] text-white flex items-center justify-center hover:bg-[#7a7166] transition-colors cursor-pointer shadow-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
             aria-label="Next product"
           >
             <ChevronRight size={20} strokeWidth={1.5} />

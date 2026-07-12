@@ -62,17 +62,18 @@ const useCartStore = create<AppState>()(
         })),
       addItem: (product) =>
         set((state) => {
+          const incomingQuantity = Math.max(1, product.quantity || 1);
           const existingItem = state.items.find((item) => item._id === product._id);
           if (existingItem) {
             return {
               items: state.items.map((item) =>
                 item._id === product._id
-                  ? { ...item, quantity: item.quantity + 1 }
+                  ? { ...item, quantity: item.quantity + incomingQuantity }
                   : item
               ),
             };
           }
-          return { items: [...state.items, { ...product, quantity: 1 }] };
+          return { items: [...state.items, { ...product, quantity: incomingQuantity }] };
         }),
       removeItem: (productId) =>
         set((state) => ({
