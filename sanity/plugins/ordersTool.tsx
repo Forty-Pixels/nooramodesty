@@ -57,6 +57,15 @@ function formatCustomMeasurements(item: SanityOrder["items"][number]) {
   ].filter(Boolean).join(", ");
 }
 
+const actionButtonStyle: React.CSSProperties = {
+  padding: "8px 12px",
+  border: "1px solid #ddd",
+  background: "#fff",
+  color: "#111",
+  cursor: "pointer",
+  fontWeight: 700,
+};
+
 function OrdersTool() {
   const client = useClient({ apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-03-01" });
   const [orders, setOrders] = useState<SanityOrder[]>([]);
@@ -106,30 +115,28 @@ function OrdersTool() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 24, background: "#fff", color: "#111", minHeight: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, margin: 0 }}>Orders</h1>
+        <h1 style={{ fontSize: 24, margin: 0, color: "#111" }}>Orders</h1>
         <div style={{ display: "flex", gap: 8 }}>
           {(["pending_approval", "approved", "rejected"] as const).map((view) => (
             <button
               key={view}
               onClick={() => setActiveView(view)}
               style={{
-                padding: "8px 12px",
-                border: "1px solid #ddd",
+                ...actionButtonStyle,
                 background: activeView === view ? "#111" : "#fff",
                 color: activeView === view ? "#fff" : "#111",
-                cursor: "pointer",
               }}
             >
               {view.replace("_", " ")}
             </button>
           ))}
-          <button onClick={loadOrders} style={{ padding: "8px 12px", border: "1px solid #ddd", background: "#fff" }}>
+          <button onClick={loadOrders} style={actionButtonStyle}>
             Refresh
           </button>
           {activeView === "approved" && (
-            <button onClick={() => callAdminRoute("/api/orders/status-sync", {})} style={{ padding: "8px 12px", border: "1px solid #ddd", background: "#fff" }}>
+            <button onClick={() => callAdminRoute("/api/orders/status-sync", {})} style={actionButtonStyle}>
               Sync Status
             </button>
           )}
@@ -137,14 +144,14 @@ function OrdersTool() {
       </div>
 
       {error && <p style={{ color: "#b00020", fontWeight: 700 }}>{error}</p>}
-      {isLoading && <p>Loading orders...</p>}
+      {isLoading && <p style={{ color: "#111" }}>Loading orders...</p>}
 
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", color: "#111" }}>
           <thead>
             <tr>
               {["Order", "Customer", "Payment", "Summary", "Age", "Status", "Slip", "Actions"].map((heading) => (
-                <th key={heading} style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 12 }}>
+                <th key={heading} style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 12, color: "#111" }}>
                   {heading}
                 </th>
               ))}
@@ -217,7 +224,7 @@ function OrdersTool() {
                       <Image src={order.paymentSlipUrl} alt={`Payment slip for ${order.orderNumber}`} fill style={{ objectFit: "cover" }} sizes="72px" />
                     </a>
                   ) : order.paymentSlipUrl ? (
-                    <a href={order.paymentSlipUrl} target="_blank" rel="noreferrer">Open PDF</a>
+                    <a href={order.paymentSlipUrl} target="_blank" rel="noreferrer" style={{ color: "#1a56db" }}>Open PDF</a>
                   ) : (
                     "None"
                   )}
@@ -225,13 +232,13 @@ function OrdersTool() {
                 <td style={{ borderBottom: "1px solid #eee", padding: 12 }}>
                   {order.adminStatus === "pending_approval" && (
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <button onClick={() => approveOrder(order)}>Approve</button>
-                      <button onClick={() => callAdminRoute("/api/orders/reject", { orderId: order._id })}>Reject</button>
+                      <button onClick={() => approveOrder(order)} style={{ ...actionButtonStyle, background: "#111", color: "#fff" }}>Approve</button>
+                      <button onClick={() => callAdminRoute("/api/orders/reject", { orderId: order._id })} style={{ ...actionButtonStyle, color: "#b00020" }}>Reject</button>
                     </div>
                   )}
                   {order.adminStatus === "approved" && (
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <small>{order.clickomSaleId ? "Synced to OMS Orders" : "Approved locally"}</small>
+                      <small style={{ color: "#111" }}>{order.clickomSaleId ? "Synced to OMS Orders" : "Approved locally"}</small>
                     </div>
                   )}
                 </td>

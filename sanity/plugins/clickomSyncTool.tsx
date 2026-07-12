@@ -24,6 +24,7 @@ const buttonStyle: React.CSSProperties = {
   padding: "10px 14px",
   border: "1px solid #ddd",
   background: "#fff",
+  color: "#111",
   cursor: "pointer",
   fontWeight: 700,
 };
@@ -59,10 +60,10 @@ function ClickomSyncTool() {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100 }}>
+    <div style={{ padding: 24, maxWidth: 1100, background: "#fff", color: "#111", minHeight: "100%" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 24, margin: 0 }}>Clickom Product Sync</h1>
+          <h1 style={{ fontSize: 24, margin: 0, color: "#111" }}>Clickom Product Sync</h1>
           <p style={{ color: "#666", marginBottom: 0 }}>
             Match Sanity products to Clickom by SKU first, then exact product name. Dry run before applying.
           </p>
@@ -77,7 +78,7 @@ function ClickomSyncTool() {
         </div>
       </div>
 
-      {isRunning && <p>Running sync...</p>}
+      {isRunning && <p style={{ color: "#111" }}>Running sync...</p>}
       {error && <p style={{ color: "#b00020", fontWeight: 700 }}>{error}</p>}
 
       {summary && (
@@ -91,16 +92,16 @@ function ClickomSyncTool() {
             ["Ambiguous", summary.productAmbiguous],
             ["Changed", summary.changed],
           ].map(([label, value]) => (
-            <div key={label} style={{ border: "1px solid #eee", padding: 12 }}>
+            <div key={label} style={{ border: "1px solid #eee", padding: 12, background: "#fff", color: "#111" }}>
               <p style={{ margin: "0 0 6px", color: "#777", fontSize: 12 }}>{label}</p>
-              <strong>{value}</strong>
+              <strong style={{ color: "#111" }}>{value}</strong>
             </div>
           ))}
         </div>
       )}
 
       {report && (
-        <pre style={{ whiteSpace: "pre-wrap", background: "#f7f7f7", border: "1px solid #e5e5e5", padding: 16, overflowX: "auto" }}>
+        <pre style={{ whiteSpace: "pre-wrap", background: "#f7f7f7", color: "#111", border: "1px solid #e5e5e5", padding: 16, overflowX: "auto" }}>
           {report}
         </pre>
       )}
