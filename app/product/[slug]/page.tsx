@@ -22,6 +22,13 @@ export default async function ProductPage({ params }: PageProps) {
         getCompleteTheLookProducts(product),
     ]);
 
+    // Link to the accessories listing using the sub-category the accessories are
+    // actually filed under — its slug varies per category (e.g. "coat-abaya-accessories").
+    const accessory = completeTheLookProducts[0];
+    const accessoriesHref = accessory?.category && accessory.subCategory
+        ? `/category/${accessory.category}/${accessory.subCategory}`
+        : undefined;
+
     return (
         <div className="bg-white min-h-screen font-sans">
             <div className="max-w-[1440px] mx-auto px-6 md:px-12 py-6 md:py-10">
@@ -30,7 +37,7 @@ export default async function ProductPage({ params }: PageProps) {
                 <CompleteTheLook
                     products={completeTheLookProducts}
                     parentProductTitle={product.title}
-                    viewMoreHref={product.category ? `/category/${product.category}/accessories` : undefined}
+                    viewMoreHref={accessoriesHref}
                 />
 
                 {/* Related Products Row (Bottom) */}
