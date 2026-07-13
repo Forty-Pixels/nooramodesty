@@ -35,7 +35,7 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
     const [quantity, setQuantity] = useState(1);
-    const [stockByVariationId, setStockByVariationId] = useState<Record<number, boolean>>({});
+    const [stockByVariationId, setStockByVariationId] = useState<Record<number, number>>({});
     const [showStoreLocatorModal, setShowStoreLocatorModal] = useState(false);
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
 
@@ -59,7 +59,7 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
         return product.subVariations?.find((subVariation) => subVariation.size === selectedSize);
     }, [product.subVariations, selectedSize]);
     const isSelectedOutOfStock = selectedSubVariation?.clickomVariationId
-        ? stockByVariationId[selectedSubVariation.clickomVariationId] === false
+        ? (stockByVariationId[selectedSubVariation.clickomVariationId] ?? Infinity) <= 0
         : false;
     const canOrderSelectedVariation = Boolean(selectedSubVariation && (!isSelectedOutOfStock || product.enablePreOrders || isCustomSize));
     const isProductSoldOut = Boolean(
@@ -68,10 +68,16 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
         displaySizes.every((size) => {
             const subVariation = product.subVariations?.find((item) => item.size === size);
             return subVariation?.clickomVariationId
-                ? stockByVariationId[subVariation.clickomVariationId] === false
+                ? (stockByVariationId[subVariation.clickomVariationId] ?? Infinity) <= 0
                 : false;
         }),
     );
+    const selectedAvailableStock = selectedSubVariation?.clickomVariationId
+        ? stockByVariationId[selectedSubVariation.clickomVariationId]
+        : undefined;
+    const hasKnownStockLimit = !product.enablePreOrders && !isCustomSize && typeof selectedAvailableStock === "number";
+    const maxOrderableQuantity = hasKnownStockLimit ? Math.max(1, Math.min(20, selectedAvailableStock as number)) : 20;
+    const safeQuantity = Math.min(quantity, maxOrderableQuantity);
     useEffect(() => {
         onSoldOutChange?.(isProductSoldOut);
     }, [isProductSoldOut, onSoldOutChange]);
@@ -119,15 +125,15 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
             body: JSON.stringify({ variationIds }),
         })
             .then((response) => response.json())
-            .then((data: { stocks?: Array<{ variationId: string | number; inStock?: boolean }> }) => {
+            .then((data: { stocks?: Array<{ variationId: string | number; stock?: number; error?: string }> }) => {
                 const nextStockByVariationId = Object.fromEntries(
-                    (data.stocks || []).map((stock) => [Number(stock.variationId), stock.inStock === true]),
+                    (data.stocks || [])
+                        .filter((stock) => !stock.error && typeof stock.stock === "number")
+                        .map((stock) => [Number(stock.variationId), stock.stock as number]),
                 );
                 setStockByVariationId(nextStockByVariationId);
             })
-            .catch(() => {
-                setStockByVariationId(Object.fromEntries(variationIds.map((variationId) => [variationId, false])));
-            });
+            .catch(() => {});
     }, [product.subVariations]);
 
     const getCustomNote = () => {
@@ -153,7 +159,7 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
             price: finalPrice,
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
-            quantity: quantity,
+            quantity: safeQuantity,
             color: product.colorHex || undefined,
             colorName: product.colorName,
             colorHex: product.colorHex || undefined,
@@ -200,7 +206,7 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
             price: finalPrice,
             originalPrice: finalOriginalPrice,
             image: product.mainImage,
-            quantity: quantity,
+            quantity: safeQuantity,
             color: product.colorHex || undefined,
             colorName: product.colorName,
             colorHex: product.colorHex || undefined,
@@ -369,7 +375,7 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
                         {displaySizes.map((s) => {
                             const subVariation = product.subVariations?.find((item) => item.size === s);
                             const isMissingClickomVariation = !subVariation?.clickomVariationId;
-                            const isOutOfStock = subVariation?.clickomVariationId ? stockByVariationId[subVariation.clickomVariationId] === false : false;
+                            const isOutOfStock = subVariation?.clickomVariationId ? (stockByVariationId[subVariation.clickomVariationId] ?? Infinity) <= 0 : false;
                             const isBlockedByStock = isOutOfStock && !product.enablePreOrders;
                             return (
                                 <button
@@ -431,25 +437,30 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
                         <button
                             type="button"
                             onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                            disabled={quantity <= 1}
+                            disabled={safeQuantity <= 1}
                             className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
                             aria-label="Decrease quantity"
                         >
                             −
                         </button>
                         <span className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-black">
-                            {quantity}
+                            {safeQuantity}
                         </span>
                         <button
                             type="button"
-                            onClick={() => setQuantity((current) => Math.min(20, current + 1))}
-                            disabled={quantity >= 20}
+                            onClick={() => setQuantity((current) => Math.min(maxOrderableQuantity, current + 1))}
+                            disabled={safeQuantity >= maxOrderableQuantity}
                             className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
                             aria-label="Increase quantity"
                         >
                             +
                         </button>
                     </div>
+                    {hasKnownStockLimit && (selectedAvailableStock as number) < 20 && (
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
+                            Only {Math.max(0, selectedAvailableStock as number)} in stock
+                        </p>
+                    )}
                 </div>
             </div>
 

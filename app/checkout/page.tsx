@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { CheckoutAssistance } from "@/components/CheckoutPage/CheckoutAssistance
 import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import useCartStore from "@/store";
 import { CheckoutOrderPayload, PaymentMethod } from "@/types/order";
+import { useVariationStockMap } from "@/lib/client/productStock";
 import { PublicSiteSettings } from "@/types/siteSettings";
 import {
   SRI_LANKA_PHONE_PREFIX,
@@ -80,7 +81,15 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const isBuyNow = searchParams.get("buyNow") === "true";
 
-  const checkoutItems = isBuyNow && buyNowItem ? [buyNowItem] : items;
+  const checkoutItems = useMemo(
+    () => (isBuyNow && buyNowItem ? [buyNowItem] : items),
+    [isBuyNow, buyNowItem, items],
+  );
+  const stockByVariationId = useVariationStockMap(
+    checkoutItems
+      .map((item) => item.clickomVariationId)
+      .filter((id): id is number => Number.isFinite(id) && Number(id) > 0),
+  );
 
   const [formState, setFormState] = useState(initialFormState);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
@@ -94,6 +103,22 @@ function CheckoutContent() {
   const [invalidFields, setInvalidFields] = useState<Set<keyof CheckoutFormState>>(new Set());
   const [orderNumber, setOrderNumber] = useState("");
   const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
+
+  useEffect(() => {
+    checkoutItems.forEach((item) => {
+      if (!item.clickomVariationId || item.preOrder || item.customSize) return;
+      const stock = stockByVariationId[item.clickomVariationId];
+      if (typeof stock !== "number") return;
+      const maxOrderableQuantity = Math.max(1, Math.min(20, stock));
+      if (item.quantity > maxOrderableQuantity) {
+        if (isBuyNow) {
+          updateBuyNowQuantity(maxOrderableQuantity);
+        } else {
+          updateQuantity(item._id, maxOrderableQuantity);
+        }
+      }
+    });
+  }, [checkoutItems, stockByVariationId, isBuyNow, updateQuantity, updateBuyNowQuantity]);
   const [previewImage, setPreviewImage] = useState<ColorPreviewModalState | null>(null);
 
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -453,7 +478,11 @@ function CheckoutContent() {
         <div className="lg:col-span-5 bg-white px-6 md:px-12 py-12 h-fit lg:sticky lg:top-[88px] order-1 lg:order-2 border-b lg:border-b-0 border-black/5">
           <h2 className="text-lg font-bold uppercase tracking-widest mb-10">Order Review</h2>
           <div className="space-y-8 mb-10">
-            {checkoutItems.map((item) => (
+            {checkoutItems.map((item) => {
+              const availableStock = item.clickomVariationId ? stockByVariationId[item.clickomVariationId] : undefined;
+              const hasKnownStockLimit = !item.preOrder && !item.customSize && typeof availableStock === "number";
+              const maxOrderableQuantity = hasKnownStockLimit ? Math.max(1, Math.min(20, availableStock as number)) : 20;
+              return (
               <div key={item._id} className="flex gap-5">
                 <div className="relative w-20 aspect-[3/4] bg-[#f6f5f3]">
                   <Image src={item.image} alt={item.title} fill className="object-cover" />
@@ -489,18 +518,30 @@ function CheckoutContent() {
                       }
                     }} className="w-5 h-5 border border-black/10 rounded-full text-[10px]">-</button>
                     <span className="text-[10px] font-bold">{item.quantity}</span>
-                    <button type="button" onClick={() => {
-                      if (isBuyNow) {
-                        updateBuyNowQuantity(item.quantity + 1);
-                      } else {
-                        updateQuantity(item._id, item.quantity + 1);
-                      }
-                    }} className="w-5 h-5 border border-black/10 rounded-full text-[10px]">+</button>
+                    <button
+                      type="button"
+                      disabled={item.quantity >= maxOrderableQuantity}
+                      onClick={() => {
+                        const nextQuantity = Math.min(maxOrderableQuantity, item.quantity + 1);
+                        if (isBuyNow) {
+                          updateBuyNowQuantity(nextQuantity);
+                        } else {
+                          updateQuantity(item._id, nextQuantity);
+                        }
+                      }}
+                      className="w-5 h-5 border border-black/10 rounded-full text-[10px] disabled:opacity-30"
+                    >+</button>
                   </div>
+                  {hasKnownStockLimit && (availableStock as number) < 20 && (
+                    <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
+                      Only {Math.max(0, availableStock as number)} in stock
+                    </p>
+                  )}
                 </div>
                 <p className="text-[10px] font-bold">LKR {(item.price * item.quantity).toLocaleString()}</p>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mb-10 pb-10 border-b border-black/5">

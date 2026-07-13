@@ -14,6 +14,7 @@ import {
     sortFilterOptions,
 } from "@/utils/productFilters";
 import { validatePriceRange } from "@/utils/formValidation";
+import { collectVariationIds, isProductSoldOut, useVariationStockMap } from "@/lib/client/productStock";
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -36,6 +37,7 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const facets = getProductFacets(products);
+    const stockByVariationId = useVariationStockMap(collectVariationIds(filteredProducts));
 
     useEffect(() => {
         if (!isOpen || products.length > 0) return;
@@ -250,7 +252,10 @@ export const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                             {filteredProducts.map((product) => (
                                                 <div key={product._id} onClick={onClose}>
-                                                    <ProductListingCard product={product} />
+                                                    <ProductListingCard
+                                                        product={product}
+                                                        isSoldOut={isProductSoldOut(product, stockByVariationId)}
+                                                    />
                                                 </div>
                                             ))}
                                         </div>

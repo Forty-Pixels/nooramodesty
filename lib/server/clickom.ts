@@ -5,6 +5,7 @@ const TOKEN_CACHE_TTL_MS = 10 * 60 * 1000;
 const TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
+let inFlightTokenRequest: Promise<string> | null = null;
 
 export type ClickomStatusCode = "pd" | "pc" | "oh" | "cp" | "cn" | "rf" | "fl" | "sp";
 
@@ -109,11 +110,7 @@ function readJwtExpiry(token: string): number | null {
   }
 }
 
-async function getClickomToken(forceRefresh = false): Promise<string> {
-  if (!forceRefresh && cachedToken && cachedToken.expiresAt > Date.now()) {
-    return cachedToken.token;
-  }
-
+async function requestClickomToken(): Promise<string> {
   const { baseUrl, clientId, clientSecret, username, password } = getClickomConfig();
   const formData = new FormData();
   formData.append("client_id", clientId);
@@ -148,6 +145,20 @@ async function getClickomToken(forceRefresh = false): Promise<string> {
   };
 
   return token;
+}
+
+async function getClickomToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh && cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.token;
+  }
+
+  if (!inFlightTokenRequest) {
+    inFlightTokenRequest = requestClickomToken().finally(() => {
+      inFlightTokenRequest = null;
+    });
+  }
+
+  return inFlightTokenRequest;
 }
 
 async function clickomFetch(path: string, init?: RequestInit, retry = true): Promise<Response> {
@@ -276,7 +287,11 @@ export async function updateClickomSale(payload: ClickomSalePayload): Promise<Cl
   };
 }
 
-export async function getClickomStock(variationId: string): Promise<ClickomStockResult> {
+const STOCK_CACHE_TTL_MS = 5 * 60 * 1000;
+const stockCache = new Map<string, { result: ClickomStockResult; expiresAt: number }>();
+const inFlightStockRequests = new Map<string, Promise<ClickomStockResult>>();
+
+async function fetchClickomStock(variationId: string): Promise<ClickomStockResult> {
   const response = await clickomFetch(`/stocks/${encodeURIComponent(variationId)}`);
   const data = await response.json().catch(() => null);
 
@@ -302,6 +317,30 @@ export async function getClickomStock(variationId: string): Promise<ClickomStock
     inStock: stock > 0,
     raw: data,
   };
+}
+
+export async function getClickomStock(variationId: string): Promise<ClickomStockResult> {
+  const cached = stockCache.get(variationId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.result;
+  }
+
+  const inFlight = inFlightStockRequests.get(variationId);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const request = fetchClickomStock(variationId)
+    .then((result) => {
+      stockCache.set(variationId, { result, expiresAt: Date.now() + STOCK_CACHE_TTL_MS });
+      return result;
+    })
+    .finally(() => {
+      inFlightStockRequests.delete(variationId);
+    });
+
+  inFlightStockRequests.set(variationId, request);
+  return request;
 }
 
 export async function getClickomSaleStatus(orderId: string): Promise<string> {

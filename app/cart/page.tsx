@@ -10,6 +10,7 @@ import { siteLinks } from "@/data/siteLinks";
 import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import { PublicSiteSettings } from "@/types/siteSettings";
 import { isStoreLocatorActive } from "@/utils/featureFlags";
+import { useVariationStockMap } from "@/lib/client/productStock";
 
 function formatCartItemSize(item: { size?: string; customSize?: boolean; customNote?: string }) {
     return item.customSize && item.customNote ? item.customNote : item.size;
@@ -24,6 +25,23 @@ export default function CartPage() {
     const { items, removeItem, updateQuantity } = useCartStore();
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
     const [previewImage, setPreviewImage] = useState<ColorPreviewModalState | null>(null);
+    const stockByVariationId = useVariationStockMap(
+        items
+            .map((item) => item.clickomVariationId)
+            .filter((id): id is number => Number.isFinite(id) && Number(id) > 0),
+    );
+
+    useEffect(() => {
+        items.forEach((item) => {
+            if (!item.clickomVariationId || item.preOrder || item.customSize) return;
+            const stock = stockByVariationId[item.clickomVariationId];
+            if (typeof stock !== "number") return;
+            const maxOrderableQuantity = Math.max(1, Math.min(20, stock));
+            if (item.quantity > maxOrderableQuantity) {
+                updateQuantity(item._id, maxOrderableQuantity);
+            }
+        });
+    }, [items, stockByVariationId, updateQuantity]);
 
     const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const originalSubtotal = items.reduce((acc, item) => acc + (item.originalPrice || item.price) * item.quantity, 0);
@@ -100,9 +118,13 @@ export default function CartPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-20 items-start">
                     {/* Left: Items List */}
                     <div className="lg:col-span-8 space-y-8">
-                        {items.map((item) => (
-                            <div 
-                                key={item._id} 
+                        {items.map((item) => {
+                        const availableStock = item.clickomVariationId ? stockByVariationId[item.clickomVariationId] : undefined;
+                        const hasKnownStockLimit = !item.preOrder && !item.customSize && typeof availableStock === "number";
+                        const maxOrderableQuantity = hasKnownStockLimit ? Math.max(1, Math.min(20, availableStock as number)) : 20;
+                        return (
+                            <div
+                                key={item._id}
                                 className="flex gap-6 md:gap-10 pb-8 border-b border-black/5 animate-in fade-in duration-700"
                             >
                                 {/* Thumbnail */}
@@ -202,23 +224,30 @@ export default function CartPage() {
                                             <span className="w-10 text-center text-xs font-bold font-sans text-black">
                                                 {item.quantity}
                                             </span>
-                                            <button 
-                                                onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                            <button
+                                                onClick={() => updateQuantity(item._id, Math.min(maxOrderableQuantity, item.quantity + 1))}
+                                                disabled={item.quantity >= maxOrderableQuantity}
+                                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-30"
                                             >
                                                 <Plus size={14} className="text-black" />
                                             </button>
                                         </div>
-                                        
+
                                         <div className="hidden md:block">
                                             <p className="text-[10px] uppercase tracking-widest font-bold text-gray-400">
                                                 Subtotal: <span className="text-black ml-2">LKR {(item.price * item.quantity).toLocaleString()}</span>
                                             </p>
                                         </div>
                                     </div>
+                                    {hasKnownStockLimit && (availableStock as number) < 20 && (
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
+                                            Only {Math.max(0, availableStock as number)} in stock
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-                        ))}
+                        );
+                    })}
                     </div>
 
                     {/* Right: Summary */}

@@ -5,12 +5,15 @@ import ProductListingCard from "./ProductListingCard";
 import { Product } from "@/types/product";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { collectVariationIds, isProductSoldOut, useVariationStockMap } from "@/lib/client/productStock";
 
 interface ListingGridProps {
   products: Product[];
 }
 
 const ListingGrid: React.FC<ListingGridProps> = ({ products }) => {
+  const stockByVariationId = useVariationStockMap(collectVariationIds(products));
+
   if (products.length === 0) {
     return (
       <div className="w-full bg-white">
@@ -31,7 +34,11 @@ const ListingGrid: React.FC<ListingGridProps> = ({ products }) => {
         {/* The 4-column grid (2 on mobile) with small internal gaps */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
           {products.map((product) => (
-            <ProductListingCard key={product._id} product={product} />
+            <ProductListingCard
+              key={product._id}
+              product={product}
+              isSoldOut={isProductSoldOut(product, stockByVariationId)}
+            />
           ))}
         </div>
 

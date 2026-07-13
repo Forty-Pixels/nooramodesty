@@ -7,6 +7,7 @@ import { motion, useMotionValue, animate as animateMotionValue } from "framer-mo
 import { Product } from "@/types/product";
 import { ArrowRight, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import useCartStore from "@/store";
+import { collectVariationIds, isProductSoldOut, useVariationStockMap } from "@/lib/client/productStock";
 
 interface ProductCarouselProps {
   title: string;
@@ -46,6 +47,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
   const visibleProducts = products.filter((product) => product.mainImage && product.slug);
   const totalItems = visibleProducts.length + (viewAllHref ? 1 : 0);
   const { toggleWishlist, wishlistItems } = useCartStore();
+  const stockByVariationId = useVariationStockMap(collectVariationIds(visibleProducts));
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -118,6 +120,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
             >
               {visibleProducts.map((product, index) => {
                 const isWishlisted = wishlistItems.some(item => item._id === product._id);
+                const isSoldOut = isProductSoldOut(product, stockByVariationId);
                 return (
                   <div
                     key={`${product._id}-${index}`}
@@ -125,15 +128,28 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, viewAllHref, p
                     className="flex-shrink-0 px-1 md:px-2 block group relative"
                   >
                     <Link href={`/product/${product.slug}`} className="block">
-                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#f6f5f3]">
+                      <div className={`relative aspect-[3/4] w-full overflow-hidden ${isSoldOut ? "bg-gray-50" : "bg-[#f6f5f3]"}`}>
                         <Image
                           src={product.mainImage}
                           alt={product.title}
                           fill
                           draggable={false}
-                          className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                          className={`object-cover object-center transition-transform duration-700 group-hover:scale-105 ${
+                            isSoldOut ? "opacity-40 saturate-0 blur-[0.4px]" : ""
+                          }`}
                           sizes="(max-width: 768px) 50vw, 25vw"
                         />
+                        {isSoldOut ? (
+                          <div className="absolute bottom-0 left-0 right-0 z-20 bg-white/70 backdrop-blur-md py-3.5 text-center border-t border-black/5">
+                            <span className="text-[0.55rem] font-bold uppercase tracking-[0.5em] text-black/50 ml-[0.5em]">
+                              Sold Out
+                            </span>
+                          </div>
+                        ) : product.isNewArrival && (
+                          <div className="absolute top-0 left-0 z-10 bg-black text-white text-[0.55rem] font-bold tracking-[0.2em] px-3 py-1.5 uppercase">
+                            New Arrival
+                          </div>
+                        )}
                       </div>
                     </Link>
 
