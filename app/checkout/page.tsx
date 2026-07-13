@@ -85,10 +85,12 @@ function CheckoutContent() {
     () => (isBuyNow && buyNowItem ? [buyNowItem] : items),
     [isBuyNow, buyNowItem, items],
   );
+  const [stockRefreshToken, setStockRefreshToken] = useState(0);
   const stockByVariationId = useVariationStockMap(
     checkoutItems
       .map((item) => item.clickomVariationId)
       .filter((id): id is number => Number.isFinite(id) && Number(id) > 0),
+    stockRefreshToken,
   );
 
   const [formState, setFormState] = useState(initialFormState);
@@ -294,6 +296,9 @@ function CheckoutContent() {
 
     if (!response.ok) {
       setErrors(data.errors?.length ? data.errors : [data.error || "Unable to create order."]);
+      // The order may have been rejected because stock moved underneath us. Re-read
+      // it so the quantity steppers reflect what the error message just said.
+      setStockRefreshToken((current) => current + 1);
       return;
     }
 

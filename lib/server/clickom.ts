@@ -287,7 +287,11 @@ export async function updateClickomSale(payload: ClickomSalePayload): Promise<Cl
   };
 }
 
-const STOCK_CACHE_TTL_MS = 5 * 60 * 1000;
+// Short-lived cache for *display* reads only (browse grids, PDP badges), which
+// fan out into many concurrent lookups and will rate-limit Clickom otherwise.
+// Anything that must be authoritative — deciding whether an order can actually
+// be fulfilled — has to call getLiveClickomStock and hit Clickom directly.
+const STOCK_CACHE_TTL_MS = 45 * 1000;
 const stockCache = new Map<string, { result: ClickomStockResult; expiresAt: number }>();
 const inFlightStockRequests = new Map<string, Promise<ClickomStockResult>>();
 
@@ -319,6 +323,7 @@ async function fetchClickomStock(variationId: string): Promise<ClickomStockResul
   };
 }
 
+// Cached read. Fine for showing stock; never use it to authorise an order.
 export async function getClickomStock(variationId: string): Promise<ClickomStockResult> {
   const cached = stockCache.get(variationId);
   if (cached && cached.expiresAt > Date.now()) {
@@ -341,6 +346,15 @@ export async function getClickomStock(variationId: string): Promise<ClickomStock
 
   inFlightStockRequests.set(variationId, request);
   return request;
+}
+
+// Authoritative read: always hits Clickom, never serves a cached value. Use this
+// wherever a stale number would let an order oversell. The fresh result also
+// refreshes the display cache, so browse pages pick it up straight away.
+export async function getLiveClickomStock(variationId: string): Promise<ClickomStockResult> {
+  const result = await fetchClickomStock(variationId);
+  stockCache.set(variationId, { result, expiresAt: Date.now() + STOCK_CACHE_TTL_MS });
+  return result;
 }
 
 export async function getClickomSaleStatus(orderId: string): Promise<string> {

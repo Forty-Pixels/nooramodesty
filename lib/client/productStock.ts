@@ -15,7 +15,9 @@ export function collectVariationIds(products: Array<Pick<Product, "subVariations
   return Array.from(ids);
 }
 
-export function useVariationStockMap(variationIds: number[]): Record<number, number> {
+// `refreshToken` re-runs the lookup when it changes — bump it after an order is
+// rejected on stock so the quantities on screen match what the error message says.
+export function useVariationStockMap(variationIds: number[], refreshToken = 0): Record<number, number> {
   const key = variationIds
     .slice()
     .sort((a, b) => a - b)
@@ -49,7 +51,7 @@ export function useVariationStockMap(variationIds: number[]): Record<number, num
     return () => {
       cancelled = true;
     };
-  }, [key]);
+  }, [key, refreshToken]);
 
   return stockByVariationId;
 }

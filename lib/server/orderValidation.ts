@@ -2,7 +2,7 @@ import "server-only";
 
 import { z, ZodError } from "zod";
 import { sanityClient } from "@/lib/sanity/client";
-import { getClickomStock } from "@/lib/server/clickom";
+import { getLiveClickomStock } from "@/lib/server/clickom";
 import { calculateShippingQuote, DEFAULT_SITE_SETTINGS } from "@/lib/shipping";
 import {
   CheckoutOrderPayload,
@@ -165,11 +165,18 @@ async function validateItem(
 
   const isPreOrderEligible = input.preOrder || product.enablePreOrders || input.customSize;
 
+  // Authoritative, uncached: a stale number here would let the order oversell.
   if (!isPreOrderEligible && input.clickomVariationId) {
-    const stock = await getClickomStock(String(input.clickomVariationId));
+    const stock = await getLiveClickomStock(String(input.clickomVariationId));
 
     if (stock.stock < input.quantity) {
-      throw new Error(`${product.title} does not have enough stock for the requested quantity.`);
+      const sizeLabel = matchingSubVariation?.size ? ` (${matchingSubVariation.size})` : "";
+
+      throw new Error(
+        stock.stock <= 0
+          ? `Sorry — ${product.title}${sizeLabel} just sold out. Please remove it from your bag to continue.`
+          : `Sorry — only ${stock.stock} left of ${product.title}${sizeLabel}. Please lower the quantity to continue.`,
+      );
     }
   }
 
