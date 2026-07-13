@@ -67,9 +67,17 @@ const client = createClient({
   useCdn: false,
 });
 
+// Document IDs must not contain dots. Sanity treats a dot as a path separator,
+// and the anonymous read grant on a public dataset only covers `_id in path("*")`
+// (a single segment) — so a dotted ID like `category.abayas` lands in a nested
+// path namespace and becomes invisible to unauthenticated readers, the same way
+// `drafts.*` documents are hidden. Use hyphens instead.
+const categoryId = (slug) => `category-${slug}`;
+const subCategoryId = (categorySlug, subCategorySlug) => `subcategory-${categorySlug}-${subCategorySlug}`;
+
 for (const [index, category] of categoryStructure.entries()) {
   await client.createOrReplace({
-    _id: `category.${category.slug}`,
+    _id: categoryId(category.slug),
     _type: "category",
     title: category.title,
     slug: { _type: "slug", current: category.slug },
@@ -80,19 +88,19 @@ for (const [index, category] of categoryStructure.entries()) {
     subCategories: category.subCategories.map((subCategory) => ({
       _type: "reference",
       _key: subCategory.slug,
-      _ref: `subcategory.${category.slug}.${subCategory.slug}`,
+      _ref: subCategoryId(category.slug, subCategory.slug),
     })),
   });
 
   for (const [subIndex, subCategory] of category.subCategories.entries()) {
     await client.createOrReplace({
-      _id: `subcategory.${category.slug}.${subCategory.slug}`,
+      _id: subCategoryId(category.slug, subCategory.slug),
       _type: "subCategory",
       title: subCategory.title,
       slug: { _type: "slug", current: subCategory.slug },
       category: {
         _type: "reference",
-        _ref: `category.${category.slug}`,
+        _ref: categoryId(category.slug),
       },
       isActive: true,
       sortOrder: subIndex,

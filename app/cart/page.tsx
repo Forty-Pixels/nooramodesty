@@ -80,7 +80,7 @@ export default function CartPage() {
                         It looks like your shopping bag is empty. Explore our latest collections to find your perfect fit.
                     </p>
                     <Link
-                        href="/category/abayas"
+                        href="/"
                         className="group inline-flex items-center gap-3 bg-black text-white px-10 py-4 text-[10px] tracking-[0.4em] font-bold uppercase hover:bg-zinc-800 transition-all active:scale-95"
                     >
                         Explore Collections

@@ -325,7 +325,7 @@ function CheckoutContent() {
             <p className="text-xs uppercase tracking-widest text-gray-400 font-bold">Order Number</p>
             <p className="text-2xl font-bold tracking-widest text-black">{orderNumber}</p>
           </div>
-          <Link href="/category/abayas" className="inline-flex bg-black text-white px-10 py-4 text-[10px] tracking-[0.3em] font-bold uppercase">
+          <Link href="/" className="inline-flex bg-black text-white px-10 py-4 text-[10px] tracking-[0.3em] font-bold uppercase">
             Continue Shopping
           </Link>
         </div>
@@ -337,7 +337,7 @@ function CheckoutContent() {
     return (
       <div className="min-h-screen bg-[#f6f5f3] flex flex-col items-center justify-center">
         <p className="text-xs uppercase tracking-widest text-gray-400 mb-6">Your bag is empty</p>
-        <Link href="/category/abayas" className="text-[10px] font-bold uppercase tracking-[0.3em] underline underline-offset-8">
+        <Link href="/" className="text-[10px] font-bold uppercase tracking-[0.3em] underline underline-offset-8">
           Go Shopping
         </Link>
       </div>

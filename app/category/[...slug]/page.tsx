@@ -55,17 +55,13 @@ export default async function CategoryPage({
     );
 }
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+    const categories = await getCategoryNavigation();
+    const categorySlugs = categories.map((category) => category.slug);
+
     return [
-        { slug: ["abayas"] },
-        { slug: ["cord-sets"] },
-        { slug: ["tops"] },
-        { slug: ["occasion-wear"] },
-        { slug: ["dresses"] },
+        ...categorySlugs.map((slug) => ({ slug: [slug] })),
         { slug: ["clearance"] },
-        { slug: ["clearance", "abayas"] },
-        { slug: ["clearance", "cord-sets"] },
-        { slug: ["clearance", "tops"] },
-        { slug: ["clearance", "dresses"] },
+        ...categorySlugs.map((slug) => ({ slug: ["clearance", slug] })),
     ];
 }

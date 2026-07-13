@@ -26,8 +26,7 @@ export const siteLinks: SiteLinks = {
   ],
   site: [
     { label: "Home", href: "/" },
-    { label: "Catalog", href: "/category/abayas" },
-    { label: "Product", href: "/product/abaya-one" },
+    { label: "Catalog", href: "/shop" },
     { label: "Track Order", href: "/order-tracking" },
     { label: "Suggestions", href: "/suggestions" },
     { label: "Store Locator", href: "/store-locator" },

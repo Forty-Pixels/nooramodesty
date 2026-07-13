@@ -50,8 +50,8 @@ const SearchResults = async ({ searchParams }: SearchPageProps) => {
                         eyebrow="No results"
                         title="No Match Found"
                         message="Try a broader search term or reset your filters to browse more pieces."
-                        actionLabel="Browse Abayas"
-                        actionHref="/category/abayas"
+                        actionLabel="Browse Collections"
+                        actionHref="/"
                     />
                 )}
             </div>

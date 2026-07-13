@@ -21,8 +21,8 @@ const ListingGrid: React.FC<ListingGridProps> = ({ products }) => {
           eyebrow="No products"
           title="Nothing Here Yet"
           message="This collection is currently empty. Explore our available pieces while we update this section."
-          actionLabel="Browse Abayas"
-          actionHref="/category/abayas"
+          actionLabel="Browse Collections"
+          actionHref="/"
         />
       </div>
     );

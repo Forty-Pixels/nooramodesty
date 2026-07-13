@@ -13,44 +13,32 @@ import {
 const RELATED_PRODUCTS_LIMIT = 4;
 
 interface SanityProductResult extends Product {
-  categoryRef?: string | null;
-  subCategoryRef?: string | null;
   subCategoryParent?: string | null;
-  subCategoryParentRef?: string | null;
-}
-
-function slugFromReference(reference: string | null | undefined, prefix: string): string | undefined {
-  if (!reference?.startsWith(prefix)) {
-    return undefined;
-  }
-
-  const slugPath = reference.slice(prefix.length);
-  return slugPath.split(".").at(-1);
 }
 
 function normalizeProduct(product: SanityProductResult): Product {
-  const {
-    categoryRef,
-    subCategoryRef,
-    subCategoryParent,
-    subCategoryParentRef,
-    ...normalizedProduct
-  } = product;
+  const { subCategoryParent, ...normalizedProduct } = product;
 
   return {
     ...normalizedProduct,
-    category:
-      normalizedProduct.category ||
-      slugFromReference(categoryRef, "category.") ||
-      subCategoryParent ||
-      slugFromReference(subCategoryParentRef, "category.") ||
-      "",
-    subCategory: normalizedProduct.subCategory || slugFromReference(subCategoryRef, "subcategory."),
+    category: normalizedProduct.category || subCategoryParent || "",
   };
 }
 
 function normalizeProducts(products: SanityProductResult[]): Product[] {
   return products.map(normalizeProduct);
+}
+
+async function getCategoryDocumentId(slug: string): Promise<string> {
+  if (!sanityClient) return "";
+
+  const categoryId = await sanityClient.fetch<string | null>(
+    `*[_type == "category" && slug.current == $slug][0]._id`,
+    { slug },
+    { next: { revalidate: 60, tags: ["category"] } },
+  );
+
+  return categoryId || "";
 }
 
 export async function getAllProducts(): Promise<Product[]> {
@@ -72,12 +60,19 @@ export async function getProductsByCategory(category: string): Promise<Product[]
     return [];
   }
 
-  const query = category === "clearance" ? SALE_PRODUCTS_QUERY : PRODUCTS_BY_CATEGORY_QUERY;
-  const params = category === "clearance" ? {} : { category, categoryRef: `category.${category}` };
+  if (category === "clearance") {
+    const products = await sanityClient.fetch<SanityProductResult[]>(
+      SALE_PRODUCTS_QUERY,
+      {},
+      { next: { revalidate: 60, tags: ["product"] } },
+    );
+    return normalizeProducts(products);
+  }
 
+  const categoryRef = await getCategoryDocumentId(category);
   const products = await sanityClient.fetch<SanityProductResult[]>(
-    query,
-    params,
+    PRODUCTS_BY_CATEGORY_QUERY,
+    { category, categoryRef },
     { next: { revalidate: 60, tags: ["product"] } },
   );
 
@@ -116,9 +111,10 @@ export async function getRelatedProducts(product: Product): Promise<Product[]> {
   }
 
   const excludeSlugs = [product.slug, ...styleMatches.map((item) => item.slug)];
+  const categoryRef = await getCategoryDocumentId(product.category);
   const categoryMatches = await sanityClient.fetch<SanityProductResult[]>(
     RELATED_PRODUCTS_QUERY,
-    { category: product.category, categoryRef: `category.${product.category}`, excludeSlugs },
+    { category: product.category, categoryRef, excludeSlugs },
     { next: { revalidate: 60, tags: ["product"] } },
   );
 
@@ -130,9 +126,10 @@ export async function getCompleteTheLookProducts(product: Product): Promise<Prod
     return [];
   }
 
+  const categoryRef = await getCategoryDocumentId(product.category);
   const accessories = await sanityClient.fetch<SanityProductResult[]>(
     ACCESSORIES_FOR_CATEGORY_QUERY,
-    { category: product.category, categoryRef: `category.${product.category}`, excludeSlugs: [product.slug] },
+    { category: product.category, categoryRef, excludeSlugs: [product.slug] },
     { next: { revalidate: 60, tags: ["product"] } },
   );
 
