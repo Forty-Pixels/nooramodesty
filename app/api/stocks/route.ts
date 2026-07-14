@@ -3,8 +3,12 @@ import { getClickomStock } from "@/lib/server/clickom";
 export const runtime = "nodejs";
 export const revalidate = 60;
 
-const STOCK_LOOKUP_CONCURRENCY = 3;
-const STOCK_LOOKUP_STAGGER_MS = 120;
+// Clickom serves 24 concurrent stock lookups without complaint, so the old
+// 3-at-a-time-with-a-stagger crawl was self-inflicted latency: it put ~1s of "checking
+// stock" in front of every soft navigation. Keep a ceiling so a large listing page still
+// can't stampede it, but stop pacing requests it never struggled with.
+const STOCK_LOOKUP_CONCURRENCY = 8;
+const STOCK_LOOKUP_STAGGER_MS = 0;
 
 interface StockRequestBody {
   variationIds?: unknown;
@@ -21,7 +25,7 @@ async function fetchStocksWithLimitedConcurrency(variationIds: string[]) {
   async function worker() {
     while (nextIndex < variationIds.length) {
       const currentIndex = nextIndex++;
-      if (currentIndex > 0) await delay(STOCK_LOOKUP_STAGGER_MS);
+      if (currentIndex > 0 && STOCK_LOOKUP_STAGGER_MS > 0) await delay(STOCK_LOOKUP_STAGGER_MS);
       try {
         results[currentIndex] = { status: "fulfilled", value: await getClickomStock(variationIds[currentIndex]) };
       } catch (error) {

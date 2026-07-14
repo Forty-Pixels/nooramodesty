@@ -7,9 +7,10 @@ import { ProductInfo } from "@/components/ProductDetails/ProductInfo";
 
 interface ProductDetailViewProps {
     product: Product;
+    initialStockByVariationId: Record<number, number>;
 }
 
-export const ProductDetailView = ({ product }: ProductDetailViewProps) => {
+export const ProductDetailView = ({ product, initialStockByVariationId }: ProductDetailViewProps) => {
     const [isSoldOut, setIsSoldOut] = useState(false);
 
     return (
@@ -21,7 +22,11 @@ export const ProductDetailView = ({ product }: ProductDetailViewProps) => {
 
             {/* Right: Info (6 columns) */}
             <div className="lg:col-span-6 lg:pl-8">
-                <ProductInfo product={product} onSoldOutChange={setIsSoldOut} />
+                <ProductInfo
+                    product={product}
+                    initialStockByVariationId={initialStockByVariationId}
+                    onSoldOutChange={setIsSoldOut}
+                />
             </div>
         </div>
     );

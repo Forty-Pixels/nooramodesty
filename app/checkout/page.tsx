@@ -9,7 +9,8 @@ import { CheckoutAssistance } from "@/components/CheckoutPage/CheckoutAssistance
 import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import useCartStore from "@/store";
 import { CheckoutOrderPayload, PaymentMethod } from "@/types/order";
-import { useVariationStockMap } from "@/lib/client/productStock";
+import { useVariationStockState } from "@/lib/client/productStock";
+import { StockHintSkeleton } from "@/components/ui/StockHintSkeleton";
 import { PublicSiteSettings } from "@/types/siteSettings";
 import {
   SRI_LANKA_PHONE_PREFIX,
@@ -86,7 +87,7 @@ function CheckoutContent() {
     [isBuyNow, buyNowItem, items],
   );
   const [stockRefreshToken, setStockRefreshToken] = useState(0);
-  const stockByVariationId = useVariationStockMap(
+  const { stockByVariationId, isLoadingStock } = useVariationStockState(
     checkoutItems
       .map((item) => item.clickomVariationId)
       .filter((id): id is number => Number.isFinite(id) && Number(id) > 0),
@@ -487,6 +488,14 @@ function CheckoutContent() {
               const availableStock = item.clickomVariationId ? stockByVariationId[item.clickomVariationId] : undefined;
               const hasKnownStockLimit = !item.preOrder && !item.customSize && typeof availableStock === "number";
               const maxOrderableQuantity = hasKnownStockLimit ? Math.max(1, Math.min(20, availableStock as number)) : 20;
+              // Until this item's stock lands, we have no real ceiling to enforce — hold
+              // the stepper rather than let it climb to the cap and snap back afterwards.
+              const isStockPending =
+                isLoadingStock &&
+                !item.preOrder &&
+                !item.customSize &&
+                Boolean(item.clickomVariationId) &&
+                typeof availableStock !== "number";
               return (
               <div key={item._id} className="flex gap-5">
                 <div className="relative w-20 aspect-[3/4] bg-[#f6f5f3]">
@@ -525,7 +534,7 @@ function CheckoutContent() {
                     <span className="text-[10px] font-bold">{item.quantity}</span>
                     <button
                       type="button"
-                      disabled={item.quantity >= maxOrderableQuantity}
+                      disabled={isStockPending || item.quantity >= maxOrderableQuantity}
                       onClick={() => {
                         const nextQuantity = Math.min(maxOrderableQuantity, item.quantity + 1);
                         if (isBuyNow) {
@@ -537,6 +546,11 @@ function CheckoutContent() {
                       className="w-5 h-5 border border-black/10 rounded-full text-[10px] disabled:opacity-30"
                     >+</button>
                   </div>
+                  {isStockPending && (
+                    <div className="mt-1">
+                      <StockHintSkeleton />
+                    </div>
+                  )}
                   {hasKnownStockLimit && (availableStock as number) < 20 && (
                     <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
                       Only {Math.max(0, availableStock as number)} in stock

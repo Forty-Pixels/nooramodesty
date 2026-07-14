@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getCompleteTheLookProducts, getProductBySlug, getRelatedProducts } from "@/lib/sanity/products";
+import { getStockForProduct } from "@/lib/server/productStock";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -17,9 +18,10 @@ export default async function ProductPage({ params }: PageProps) {
         notFound();
     }
 
-    const [relatedProducts, completeTheLookProducts] = await Promise.all([
+    const [relatedProducts, completeTheLookProducts, stockByVariationId] = await Promise.all([
         getRelatedProducts(product),
         getCompleteTheLookProducts(product),
+        getStockForProduct(product),
     ]);
 
     // Link to the accessories listing using the sub-category the accessories are
@@ -32,7 +34,7 @@ export default async function ProductPage({ params }: PageProps) {
     return (
         <div className="bg-white min-h-screen font-sans">
             <div className="max-w-[1440px] mx-auto px-6 md:px-12 py-6 md:py-10">
-                <ProductDetailView product={product} />
+                <ProductDetailView product={product} initialStockByVariationId={stockByVariationId} />
 
                 <CompleteTheLook
                     products={completeTheLookProducts}

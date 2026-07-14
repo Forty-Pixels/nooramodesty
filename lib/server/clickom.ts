@@ -299,6 +299,17 @@ async function fetchClickomStock(variationId: string): Promise<ClickomStockResul
   const response = await clickomFetch(`/stocks/${encodeURIComponent(variationId)}`);
   const data = await response.json().catch(() => null);
 
+  // A 404 is Clickom *answering*: it holds no stock for this variation. That is zero, and it
+  // must read as sold out — otherwise the item stays addable to the bag and only blows up at
+  // checkout, when the order write throws on the same lookup.
+  //
+  // Every other non-OK status (429 under a burst, 5xx, a timeout) is Clickom *failing to
+  // answer*. Those must keep throwing so the caller records the stock as unknown, never zero —
+  // collapsing them into "sold out" is what once flashed Sold Out across the whole catalogue.
+  if (response.status === 404) {
+    return { variationId, stock: 0, inStock: false, raw: data };
+  }
+
   if (!response.ok) {
     throw new Error(data?.message || "Clickom stock lookup failed.");
   }

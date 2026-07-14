@@ -13,12 +13,13 @@ import { uniqueMessages, validateMeasurement } from "@/utils/formValidation";
 
 interface ProductInfoProps {
     product: Product;
+    initialStockByVariationId: Record<number, number>;
     onSoldOutChange?: (isSoldOut: boolean) => void;
 }
 
 const isCustomSizeLabel = (size: string | undefined) => (size || "").trim().toLowerCase() === "custom";
 
-export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
+export const ProductInfo = ({ product, initialStockByVariationId, onSoldOutChange }: ProductInfoProps) => {
     const firstSize = product.subVariations?.find((subVariation) => !isCustomSizeLabel(subVariation.size))?.size || "";
     const materialProperties = product.materialSpecs?.properties || [];
     const hasMaterialSpecs = Boolean(
@@ -35,7 +36,9 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [isAdded, setIsAdded] = useState(false);
     const [quantity, setQuantity] = useState(1);
-    const [stockByVariationId, setStockByVariationId] = useState<Record<number, number>>({});
+    const [stockByVariationId, setStockByVariationId] = useState<Record<number, number>>(initialStockByVariationId);
+    const [hasStockLookupFailed, setHasStockLookupFailed] = useState(false);
+    const [stockRetryToken, setStockRetryToken] = useState(0);
     const [showStoreLocatorModal, setShowStoreLocatorModal] = useState(false);
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
 
@@ -58,10 +61,26 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
     const selectedSubVariation = useMemo(() => {
         return product.subVariations?.find((subVariation) => subVariation.size === selectedSize);
     }, [product.subVariations, selectedSize]);
+    const selectedAvailableStock = selectedSubVariation?.clickomVariationId
+        ? stockByVariationId[selectedSubVariation.clickomVariationId]
+        : undefined;
     const isSelectedOutOfStock = selectedSubVariation?.clickomVariationId
-        ? (stockByVariationId[selectedSubVariation.clickomVariationId] ?? Infinity) <= 0
+        ? (selectedAvailableStock ?? Infinity) <= 0
         : false;
-    const canOrderSelectedVariation = Boolean(selectedSubVariation && (!isSelectedOutOfStock || product.enablePreOrders || isCustomSize));
+
+    // A pre-order or custom-size item is never held against Clickom stock, so it has nothing to
+    // wait for. Everything else must show a real number before it can be ordered — until then the
+    // quantity has no ceiling to enforce, which is what let the stepper run to 20 unchecked.
+    const requiresStockCheck =
+        !product.enablePreOrders && !isCustomSize && Boolean(selectedSubVariation?.clickomVariationId);
+    const isStockPending =
+        requiresStockCheck && typeof selectedAvailableStock !== "number" && !hasStockLookupFailed;
+
+    const canOrderSelectedVariation = Boolean(
+        selectedSubVariation &&
+        !isStockPending &&
+        (!isSelectedOutOfStock || product.enablePreOrders || isCustomSize),
+    );
     const isProductSoldOut = Boolean(
         !product.enablePreOrders &&
         displaySizes.length > 0 &&
@@ -72,11 +91,16 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
                 : false;
         }),
     );
-    const selectedAvailableStock = selectedSubVariation?.clickomVariationId
-        ? stockByVariationId[selectedSubVariation.clickomVariationId]
-        : undefined;
     const hasKnownStockLimit = !product.enablePreOrders && !isCustomSize && typeof selectedAvailableStock === "number";
-    const maxOrderableQuantity = hasKnownStockLimit ? Math.max(1, Math.min(20, selectedAvailableStock as number)) : 20;
+    // Clickom never gave us a number for this variation. Don't pretend the ceiling is 20 —
+    // hold the quantity at 1 and say so, rather than silently reverting to the unbounded
+    // stepper this whole feature exists to prevent.
+    const couldNotConfirmStock = requiresStockCheck && hasStockLookupFailed && !hasKnownStockLimit;
+    const maxOrderableQuantity = hasKnownStockLimit
+        ? Math.max(1, Math.min(20, selectedAvailableStock as number))
+        : couldNotConfirmStock
+            ? 1
+            : 20;
     const safeQuantity = Math.min(quantity, maxOrderableQuantity);
     useEffect(() => {
         onSoldOutChange?.(isProductSoldOut);
@@ -117,24 +141,75 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
             ),
         );
 
-        if (variationIds.length === 0) return;
+        // Pre-order items are never held against Clickom stock, so don't spend a lookup on them.
+        if (product.enablePreOrders || variationIds.length === 0) return;
 
-        fetch("/api/stocks", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ variationIds }),
-        })
-            .then((response) => response.json())
-            .then((data: { stocks?: Array<{ variationId: string | number; stock?: number; error?: string }> }) => {
-                const nextStockByVariationId = Object.fromEntries(
-                    (data.stocks || [])
-                        .filter((stock) => !stock.error && typeof stock.stock === "number")
-                        .map((stock) => [Number(stock.variationId), stock.stock as number]),
-                );
-                setStockByVariationId(nextStockByVariationId);
-            })
-            .catch(() => {});
-    }, [product.subVariations]);
+        let cancelled = false;
+
+        // This lookup is not a nicety — on a soft navigation it is the *only* source of stock.
+        // Next serves a static shell when it prefetches a dynamic route, so a PDP opened from a
+        // listing arrives with an empty stock map no matter how well the server render works.
+        // Be patient rather than clever: keep retrying the variations still missing, crediting
+        // whatever each attempt does return, for ~15s before admitting defeat.
+        const backoffMs = [500, 1000, 2000, 4000, 8000];
+
+        async function loadStock() {
+            const resolved = new Set<number>();
+
+            for (let attempt = 0; attempt <= backoffMs.length; attempt += 1) {
+                if (cancelled) return;
+
+                const missingVariationIds = variationIds.filter((variationId) => !resolved.has(variationId));
+                if (missingVariationIds.length === 0) return;
+
+                try {
+                    const response = await fetch("/api/stocks", {
+                        method: "POST",
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ variationIds: missingVariationIds }),
+                    });
+                    const data = (await response.json()) as {
+                        stocks?: Array<{ variationId: string | number; stock?: number; error?: string }>;
+                    };
+
+                    if (cancelled) return;
+
+                    const refreshedStock = Object.fromEntries(
+                        (data.stocks || [])
+                            .filter((stock) => !stock.error && typeof stock.stock === "number")
+                            .map((stock) => [Number(stock.variationId), stock.stock as number]),
+                    );
+
+                    if (Object.keys(refreshedStock).length > 0) {
+                        Object.keys(refreshedStock).forEach((variationId) => resolved.add(Number(variationId)));
+                        // Merge, never replace: a variation this attempt failed to resolve must keep
+                        // the number the server rendered, not regress to "unknown".
+                        setStockByVariationId((current) => ({ ...current, ...refreshedStock }));
+                        setHasStockLookupFailed(false);
+                    }
+
+                    if (variationIds.every((variationId) => resolved.has(variationId))) return;
+                } catch {
+                    // Fall through to the retry.
+                }
+
+                if (attempt < backoffMs.length) {
+                    await new Promise((resolve) => setTimeout(resolve, backoffMs[attempt]));
+                }
+            }
+
+            // Out of patience. This must NOT quietly restore an unbounded stepper — that is the
+            // state the whole feature exists to prevent. The quantity stays pinned at 1 and the
+            // shopper is told the count could not be confirmed, with a way to try again.
+            if (!cancelled) setHasStockLookupFailed(true);
+        }
+
+        void loadStock();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [product.subVariations, product.enablePreOrders, stockRetryToken]);
 
     const getCustomNote = () => {
         if (!isCustomSize) return undefined;
@@ -433,33 +508,59 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
             <div className="mt-2">
                 <div className="w-full max-w-sm space-y-1.5">
                     <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Quantity</label>
-                    <div className="flex items-center border border-gray-200 w-fit">
-                        <button
-                            type="button"
-                            onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                            disabled={safeQuantity <= 1}
-                            className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
-                            aria-label="Decrease quantity"
-                        >
-                            −
-                        </button>
-                        <span className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-black">
-                            {safeQuantity}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setQuantity((current) => Math.min(maxOrderableQuantity, current + 1))}
-                            disabled={safeQuantity >= maxOrderableQuantity}
-                            className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
-                            aria-label="Increase quantity"
-                        >
-                            +
-                        </button>
-                    </div>
-                    {hasKnownStockLimit && (selectedAvailableStock as number) < 20 && (
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
-                            Only {Math.max(0, selectedAvailableStock as number)} in stock
-                        </p>
+                    {isStockPending ? (
+                        <div className="space-y-1.5" aria-live="polite" aria-busy="true">
+                            <div className="h-8 w-[6rem] animate-pulse bg-gray-100 border border-gray-200" aria-hidden="true" />
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                                Checking stock…
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center border border-gray-200 w-fit">
+                                <button
+                                    type="button"
+                                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                                    disabled={safeQuantity <= 1}
+                                    className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+                                    aria-label="Decrease quantity"
+                                >
+                                    −
+                                </button>
+                                <span className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-black">
+                                    {safeQuantity}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setQuantity((current) => Math.min(maxOrderableQuantity, current + 1))}
+                                    disabled={safeQuantity >= maxOrderableQuantity}
+                                    className="w-8 h-8 flex items-center justify-center text-sm font-bold text-black disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+                                    aria-label="Increase quantity"
+                                >
+                                    +
+                                </button>
+                            </div>
+                            {hasKnownStockLimit && (selectedAvailableStock as number) < 20 && (
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
+                                    Only {Math.max(0, selectedAvailableStock as number)} in stock
+                                </p>
+                            )}
+                            {couldNotConfirmStock && (
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-[#B21E1E]/80">
+                                    Couldn&apos;t confirm stock.{" "}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setHasStockLookupFailed(false);
+                                            setStockRetryToken((current) => current + 1);
+                                        }}
+                                        className="underline hover:text-black transition-colors cursor-pointer"
+                                    >
+                                        Retry
+                                    </button>
+                                </p>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
@@ -658,7 +759,11 @@ export const ProductInfo = ({ product, onSoldOutChange }: ProductInfoProps) => {
                         ADDED TO BAG
                     </span>
                     <span className={`${isAdded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}>
-                        {!canOrderSelectedVariation ? (isProductSoldOut ? "Sold Out" : "Unavailable") : "Add to Bag"}
+                        {isStockPending
+                            ? "Checking Stock…"
+                            : !canOrderSelectedVariation
+                                ? (isProductSoldOut ? "Sold Out" : "Unavailable")
+                                : "Add to Bag"}
                     </span>
                 </button>
                 {whatsappHref ? (

@@ -10,7 +10,8 @@ import { siteLinks } from "@/data/siteLinks";
 import { calculateShippingQuote, DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import { PublicSiteSettings } from "@/types/siteSettings";
 import { isStoreLocatorActive } from "@/utils/featureFlags";
-import { useVariationStockMap } from "@/lib/client/productStock";
+import { useVariationStockState } from "@/lib/client/productStock";
+import { StockHintSkeleton } from "@/components/ui/StockHintSkeleton";
 
 function formatCartItemSize(item: { size?: string; customSize?: boolean; customNote?: string }) {
     return item.customSize && item.customNote ? item.customNote : item.size;
@@ -25,7 +26,7 @@ export default function CartPage() {
     const { items, removeItem, updateQuantity } = useCartStore();
     const [siteSettings, setSiteSettings] = useState<PublicSiteSettings>(DEFAULT_SITE_SETTINGS);
     const [previewImage, setPreviewImage] = useState<ColorPreviewModalState | null>(null);
-    const stockByVariationId = useVariationStockMap(
+    const { stockByVariationId, isLoadingStock } = useVariationStockState(
         items
             .map((item) => item.clickomVariationId)
             .filter((id): id is number => Number.isFinite(id) && Number(id) > 0),
@@ -122,6 +123,14 @@ export default function CartPage() {
                         const availableStock = item.clickomVariationId ? stockByVariationId[item.clickomVariationId] : undefined;
                         const hasKnownStockLimit = !item.preOrder && !item.customSize && typeof availableStock === "number";
                         const maxOrderableQuantity = hasKnownStockLimit ? Math.max(1, Math.min(20, availableStock as number)) : 20;
+                        // Until this item's stock lands, we have no real ceiling to enforce — hold
+                        // the stepper rather than let it climb to the cap and snap back afterwards.
+                        const isStockPending =
+                            isLoadingStock &&
+                            !item.preOrder &&
+                            !item.customSize &&
+                            Boolean(item.clickomVariationId) &&
+                            typeof availableStock !== "number";
                         return (
                             <div
                                 key={item._id}
@@ -226,7 +235,7 @@ export default function CartPage() {
                                             </span>
                                             <button
                                                 onClick={() => updateQuantity(item._id, Math.min(maxOrderableQuantity, item.quantity + 1))}
-                                                disabled={item.quantity >= maxOrderableQuantity}
+                                                disabled={isStockPending || item.quantity >= maxOrderableQuantity}
                                                 className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-30"
                                             >
                                                 <Plus size={14} className="text-black" />
@@ -239,6 +248,7 @@ export default function CartPage() {
                                             </p>
                                         </div>
                                     </div>
+                                    {isStockPending && <StockHintSkeleton />}
                                     {hasKnownStockLimit && (availableStock as number) < 20 && (
                                         <p className="text-[9px] font-bold uppercase tracking-widest text-amber-700/80">
                                             Only {Math.max(0, availableStock as number)} in stock

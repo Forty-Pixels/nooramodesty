@@ -15,14 +15,28 @@ export function collectVariationIds(products: Array<Pick<Product, "subVariations
   return Array.from(ids);
 }
 
+export interface VariationStockState {
+  stockByVariationId: Record<number, number>;
+  // True until the first lookup settles. Callers that gate a quantity stepper must
+  // wait for this: treating "not fetched yet" as "no limit" lets a shopper wind the
+  // quantity up to the hard cap before the real stock ever lands on screen.
+  isLoadingStock: boolean;
+}
+
 // `refreshToken` re-runs the lookup when it changes — bump it after an order is
 // rejected on stock so the quantities on screen match what the error message says.
-export function useVariationStockMap(variationIds: number[], refreshToken = 0): Record<number, number> {
+export function useVariationStockState(variationIds: number[], refreshToken = 0): VariationStockState {
   const key = variationIds
     .slice()
     .sort((a, b) => a - b)
     .join(",");
+  const requestKey = `${key}|${refreshToken}`;
   const [stockByVariationId, setStockByVariationId] = useState<Record<number, number>>({});
+  const [settledRequestKey, setSettledRequestKey] = useState<string | null>(null);
+
+  // Derived, not stored: nothing to load when there are no variations, otherwise we
+  // are loading until this exact request settles.
+  const isLoadingStock = key.length > 0 && settledRequestKey !== requestKey;
 
   useEffect(() => {
     const ids = key ? key.split(",").map(Number) : [];
@@ -46,14 +60,23 @@ export function useVariationStockMap(variationIds: number[], refreshToken = 0): 
           ),
         );
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setSettledRequestKey(requestKey);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [key, refreshToken]);
+  }, [key, requestKey]);
 
-  return stockByVariationId;
+  return { stockByVariationId, isLoadingStock };
+}
+
+// Convenience wrapper for callers that only paint sold-out badges and have no
+// quantity stepper to gate — they can treat "unknown" as "not sold out" safely.
+export function useVariationStockMap(variationIds: number[], refreshToken = 0): Record<number, number> {
+  return useVariationStockState(variationIds, refreshToken).stockByVariationId;
 }
 
 export function isProductSoldOut(
