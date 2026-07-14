@@ -2,8 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
+import { MetaPixel } from "@/components/Analytics/MetaPixel";
 import Navbar from "@/components/Navbar/Navbar";
 import { Footer } from "@/components/LandingPage/Footer";
+import { analytics } from "@/data/analytics";
 import { siteLinks } from "@/data/siteLinks";
 import { fetchPublicSiteSettings } from "@/lib/server/siteSettings";
 import { getCategoryNavigation } from "@/lib/sanity/categoryNavigation";
@@ -65,6 +67,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
+        <MetaPixel pixelId={analytics.metaPixelId} />
         <ScrollToTop />
         {siteSettings.announcementEnabled && (
           <AnnouncementBar text={siteSettings.announcementText} href={siteSettings.announcementHref} />
