@@ -295,7 +295,38 @@ const STOCK_CACHE_TTL_MS = 45 * 1000;
 const stockCache = new Map<string, { result: ClickomStockResult; expiresAt: number }>();
 const inFlightStockRequests = new Map<string, Promise<ClickomStockResult>>();
 
-async function fetchClickomStock(variationId: string): Promise<ClickomStockResult> {
+// Last value Clickom ever gave us for a variation, with no expiry. This is the safety net
+// behind the display cache: if a lookup fails, a number from a minute ago beats no number
+// at all, because "no number" is what strips the ceiling off the quantity stepper.
+// Deliberately never consulted by getLiveClickomStock — see the note there.
+const lastKnownStock = new Map<string, ClickomStockResult>();
+
+// Per-request throttling is not enough: the grid, the carousel and a PDP can each open their
+// own batch at the same moment, so the only way to bound what Clickom actually sees is a gate
+// shared by every caller in the process.
+const MAX_CONCURRENT_STOCK_REQUESTS = 6;
+let activeStockRequests = 0;
+const stockRequestQueue: Array<() => void> = [];
+
+async function withStockSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (activeStockRequests >= MAX_CONCURRENT_STOCK_REQUESTS) {
+    await new Promise<void>((resolve) => stockRequestQueue.push(resolve));
+  }
+
+  activeStockRequests += 1;
+  try {
+    return await task();
+  } finally {
+    activeStockRequests -= 1;
+    stockRequestQueue.shift()?.();
+  }
+}
+
+// Retry transient failures here, at the source, instead of making every caller cope with them.
+// A 404 is not transient (Clickom answered: no stock) and returns without retrying.
+const STOCK_RETRY_DELAYS_MS = [300, 900];
+
+async function requestClickomStock(variationId: string): Promise<ClickomStockResult> {
   const response = await clickomFetch(`/stocks/${encodeURIComponent(variationId)}`);
   const data = await response.json().catch(() => null);
 
@@ -334,6 +365,25 @@ async function fetchClickomStock(variationId: string): Promise<ClickomStockResul
   };
 }
 
+async function fetchClickomStock(variationId: string): Promise<ClickomStockResult> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= STOCK_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const result = await withStockSlot(() => requestClickomStock(variationId));
+      lastKnownStock.set(variationId, result);
+      return result;
+    } catch (error) {
+      lastError = error;
+      if (attempt < STOCK_RETRY_DELAYS_MS.length) {
+        await new Promise((resolve) => setTimeout(resolve, STOCK_RETRY_DELAYS_MS[attempt]));
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Clickom stock lookup failed.");
+}
+
 // Cached read. Fine for showing stock; never use it to authorise an order.
 export async function getClickomStock(variationId: string): Promise<ClickomStockResult> {
   const cached = stockCache.get(variationId);
@@ -351,6 +401,15 @@ export async function getClickomStock(variationId: string): Promise<ClickomStock
       stockCache.set(variationId, { result, expiresAt: Date.now() + STOCK_CACHE_TTL_MS });
       return result;
     })
+    .catch((error: unknown) => {
+      // Stale-if-error. Display reads would rather show a slightly old number than none:
+      // an unknown stock is what removes the ceiling from the quantity stepper and strands
+      // the shopper on "Couldn't confirm stock". Serving the last good value cannot oversell,
+      // because placement and approval both re-check against live, uncached stock.
+      const lastKnown = lastKnownStock.get(variationId);
+      if (lastKnown) return lastKnown;
+      throw error;
+    })
     .finally(() => {
       inFlightStockRequests.delete(variationId);
     });
@@ -359,9 +418,11 @@ export async function getClickomStock(variationId: string): Promise<ClickomStock
   return request;
 }
 
-// Authoritative read: always hits Clickom, never serves a cached value. Use this
-// wherever a stale number would let an order oversell. The fresh result also
-// refreshes the display cache, so browse pages pick it up straight away.
+// Authoritative read: always hits Clickom, never serves a cached value — and, unlike
+// getClickomStock, never falls back to lastKnownStock either. It throws rather than answer
+// with a number it isn't certain of, because this is what decides whether a sale can happen.
+// Stale-if-error is a display affordance; applying it here is how you oversell.
+// The fresh result still refreshes the display cache, so browse pages pick it up immediately.
 export async function getLiveClickomStock(variationId: string): Promise<ClickomStockResult> {
   const result = await fetchClickomStock(variationId);
   stockCache.set(variationId, { result, expiresAt: Date.now() + STOCK_CACHE_TTL_MS });

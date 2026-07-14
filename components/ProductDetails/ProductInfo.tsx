@@ -149,9 +149,12 @@ export const ProductInfo = ({ product, initialStockByVariationId, onSoldOutChang
         // This lookup is not a nicety — on a soft navigation it is the *only* source of stock.
         // Next serves a static shell when it prefetches a dynamic route, so a PDP opened from a
         // listing arrives with an empty stock map no matter how well the server render works.
-        // Be patient rather than clever: keep retrying the variations still missing, crediting
-        // whatever each attempt does return, for ~15s before admitting defeat.
-        const backoffMs = [500, 1000, 2000, 4000, 8000];
+        //
+        // The server now retries transient failures itself and falls back to the last value it
+        // saw, so by the time a response gets here it has already tried hard. Keep this window
+        // short — roughly 5s — because a shimmer nobody can escape is worse than an honest
+        // "couldn't confirm, retry".
+        const backoffMs = [400, 800, 1600, 2400];
 
         async function loadStock() {
             const resolved = new Set<number>();
