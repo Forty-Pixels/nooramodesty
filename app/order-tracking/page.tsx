@@ -208,9 +208,6 @@ function OrderTrackingContent() {
                       "Track with CityPak"
                     )}
                   </button>
-                  <Link href="/returns-and-exchanges" className="flex-1 border border-black/10 px-5 py-3 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-black">
-                    Return / Exchange
-                  </Link>
                   <Link href={supportWhatsappHref} target="_blank" className="flex items-center justify-center gap-2 border border-black/10 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-black">
                     <MessageCircle size={14} />
                     Support
@@ -221,15 +218,10 @@ function OrderTrackingContent() {
                   <p className="text-xs font-medium leading-6 tracking-wide text-black">
                     Your order is being prepared to ship. A tracking number will appear here once the courier collects it.
                   </p>
-                  <div className="flex flex-col gap-3 md:flex-row">
-                    <Link href={supportWhatsappHref} target="_blank" className="flex flex-1 items-center justify-center gap-2 bg-black px-5 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-white">
-                      <MessageCircle size={14} />
-                      Contact Support
-                    </Link>
-                    <Link href="/returns-and-exchanges" className="flex-1 border border-black/10 px-5 py-3 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-black">
-                      Return / Exchange
-                    </Link>
-                  </div>
+                  <Link href={supportWhatsappHref} target="_blank" className="flex items-center justify-center gap-2 bg-black px-5 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-white">
+                    <MessageCircle size={14} />
+                    Contact Support
+                  </Link>
                 </div>
               )}
             </div>
