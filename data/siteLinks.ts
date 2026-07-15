@@ -2,7 +2,7 @@ import type { SiteLinks } from "@/types/siteLinks";
 
 const whatsappNumber = "94777828836";
 
-const whatsappHref = (message: string) =>
+export const whatsappHref = (message: string) =>
   `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
 export const siteLinks: SiteLinks = {

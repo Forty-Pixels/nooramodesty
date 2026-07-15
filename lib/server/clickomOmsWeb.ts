@@ -540,3 +540,96 @@ export async function createClickomOmsWebOrder(order: SanityOrder): Promise<Clic
     },
   };
 }
+
+export interface ClickomOmsTracking {
+  waybillNumber?: string;
+  waybillPrintStatus?: string;
+  deliveryStatus?: string;
+  callStatus?: string;
+}
+
+function stripHtmlToText(value: string) {
+  return value
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// The OMS order list is rendered server-side as an HTML table. Column positions are read from
+// the <thead> rather than hardcoded, so a reordered or newly inserted column doesn't quietly
+// make us read the wrong cell — the whole reason to anchor on header text.
+function readOrderListColumnIndexes(html: string) {
+  const theadStart = html.indexOf("<thead");
+  const theadEnd = html.indexOf("</thead>", theadStart);
+  if (theadStart < 0 || theadEnd < 0) return {};
+
+  const headers = [...html.slice(theadStart, theadEnd).matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((match) =>
+    stripHtmlToText(match[1]).toLowerCase(),
+  );
+  const find = (predicate: (header: string) => boolean) => {
+    const index = headers.findIndex(predicate);
+    return index >= 0 ? index : undefined;
+  };
+
+  return {
+    waybill: find((header) => header.includes("waybill") && !header.includes("print")),
+    waybillPrint: find((header) => header.includes("waybill") && header.includes("print")),
+    deliveryStatus: find((header) => header.includes("delivery") && header.includes("status")),
+    callStatus: find((header) => header.includes("call") && header.includes("status")),
+  };
+}
+
+// The exact invoice string only appears inside its own order row, so the enclosing <tr> is the
+// order we searched for.
+function extractOrderRow(html: string, invoiceNo: string) {
+  const invoiceIndex = html.indexOf(invoiceNo);
+  if (invoiceIndex < 0) return null;
+
+  const rowStart = html.lastIndexOf("<tr", invoiceIndex);
+  const rowEnd = html.indexOf("</tr>", invoiceIndex);
+  if (rowStart < 0 || rowEnd < 0) return null;
+
+  return html.slice(rowStart, rowEnd + "</tr>".length);
+}
+
+function cleanCellValue(value: string | undefined) {
+  const trimmed = (value || "").trim();
+  return trimmed && trimmed !== "-" ? trimmed : undefined;
+}
+
+/**
+ * Reads courier tracking for a web-created OMS order by scraping the order management list.
+ *
+ * Orders placed through the OMS web flow are not indexed by the REST `sales_status` endpoint
+ * (it 404s on their custom_order_id), and the waybill Citypak assigns is only ever surfaced in
+ * this list. Returns null when the order can't be found; an order without a waybill yet returns
+ * a result with `waybillNumber` undefined.
+ */
+export async function getClickomOmsTracking(invoiceNo: string): Promise<ClickomOmsTracking | null> {
+  const trimmedInvoice = invoiceNo.trim();
+  if (!trimmedInvoice) return null;
+
+  const session = await loginToClickom();
+  const response = await clickomFetch(
+    session,
+    `/ordermanagement/order?search=${encodeURIComponent(trimmedInvoice)}`,
+  );
+  if (!response.ok) return null;
+
+  const html = await response.text();
+  const row = extractOrderRow(html, trimmedInvoice);
+  if (!row) return null;
+
+  const columns = readOrderListColumnIndexes(html);
+  const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((match) => stripHtmlToText(match[1]));
+  const cellAt = (index: number | undefined) => (typeof index === "number" ? cells[index] : undefined);
+
+  return {
+    waybillNumber: cleanCellValue(cellAt(columns.waybill)),
+    waybillPrintStatus: cleanCellValue(cellAt(columns.waybillPrint)),
+    deliveryStatus: cleanCellValue(cellAt(columns.deliveryStatus)),
+    callStatus: cleanCellValue(cellAt(columns.callStatus)),
+  };
+}

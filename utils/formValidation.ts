@@ -43,6 +43,30 @@ export function validatePhone(value: string, label = "Phone number") {
 
 export const SRI_LANKA_PHONE_PREFIX = "+94";
 
+// Website order numbers look like NM-20260715-7109 (prefix-YYYYMMDD-NNNN). The prefix is
+// configurable server-side, so accept any 2–6 letter prefix rather than hardcoding "NM".
+export const ORDER_NUMBER_PATTERN = /^[A-Z]{2,6}-\d{8}-\d{4}$/;
+
+export function normalizeOrderNumber(value: string) {
+  return value.trim().replace(/^#/, "").replace(/\s+/g, "").toUpperCase();
+}
+
+export function validateOrderNumber(value: string, label = "Order number") {
+  const normalized = normalizeOrderNumber(value);
+  if (!normalized) return [`${label} is required.`];
+  if (!ORDER_NUMBER_PATTERN.test(normalized)) {
+    return [`${label} must look like NM-20260715-7109.`];
+  }
+  return [];
+}
+
+// Sri Lankan subscriber numbers are 9 digits (7XXXXXXXX). Stored order phone numbers are a mess
+// of formats — "+94771234567", "0771234567", "+94 77 123 4567", even a stray leading zero after
+// the country code — so match on the last 9 digits, which is the one part they all share.
+export function sriLankaMobileKey(value: string) {
+  return value.replace(/\D/g, "").slice(-9);
+}
+
 export function validateSriLankaLocalNumber(value: string, label = "Phone number") {
   const digitsOnly = value.trim().replace(/\D/g, "");
 
