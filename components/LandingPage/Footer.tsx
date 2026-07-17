@@ -143,7 +143,7 @@ export const Footer = ({ links }: FooterProps) => {
               href="https://fortypixels.com"
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#BEBEBE] hover:text-white transition-colors whitespace-nowrap"
+              className="group flex items-center gap-2 cursor-pointer text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#BEBEBE] hover:text-white transition-colors whitespace-nowrap"
             >
               Built by
               <Image
@@ -151,7 +151,7 @@ export const Footer = ({ links }: FooterProps) => {
                 alt="Forty Pixels"
                 width={480}
                 height={105}
-                className="h-3 md:h-3.5 w-auto object-contain -translate-y-[3px] opacity-80 group-hover:opacity-100 transition-opacity"
+                className="h-3 md:h-3.5 w-auto object-contain origin-center -translate-y-[3px] md:-translate-y-[4px] opacity-80 group-hover:opacity-100 group-hover:scale-110 transition duration-300 ease-out"
               />
             </a>
           </div>
