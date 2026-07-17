@@ -135,8 +135,18 @@ export const Footer = ({ links }: FooterProps) => {
               className="w-full h-auto object-contain object-left max-w-[820px]"
             />
           </div>
-          <div className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-white whitespace-nowrap mb-2">
-            © Copyright 2026 NOORA MODESTY
+          <div className="flex flex-col items-end gap-2 mb-2">
+            <div className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-white whitespace-nowrap">
+              © Copyright 2026 NOORA MODESTY
+            </div>
+            <a
+              href="https://fortypixels.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#BEBEBE] hover:text-white transition-colors whitespace-nowrap"
+            >
+              Built by Fortypixels
+            </a>
           </div>
         </div>
       </div>
