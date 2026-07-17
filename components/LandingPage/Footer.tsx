@@ -145,7 +145,7 @@ export const Footer = ({ links }: FooterProps) => {
               rel="noreferrer"
               className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#BEBEBE] hover:text-white transition-colors whitespace-nowrap"
             >
-              Built by Fortypixels
+              Built by <span className="underline underline-offset-2">Fortypixels</span>
             </a>
           </div>
         </div>
