@@ -51,6 +51,8 @@ export function renderOrderApprovedEmail(params: OrderApprovedEmailParams): { su
       ${renderSummaryRow("Total", `LKR ${params.totalAmount.toLocaleString()}`, { bold: true })}
     </table>
 
+    ${renderParagraph(`You can track your order anytime at <strong>${SITE_URL}/order-tracking</strong> using your order number and the phone number on your order. Once your parcel is dispatched, your courier tracking link will appear there.`)}
+
     <div style="margin-top:32px;">
       ${renderButton("Track Your Order", trackingUrl)}
     </div>

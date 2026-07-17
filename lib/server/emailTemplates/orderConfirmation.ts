@@ -85,6 +85,8 @@ export function renderOrderConfirmationEmail(params: OrderConfirmationEmailParam
 
     ${bankTransferSection}
 
+    ${renderParagraph(`Track your order anytime at <strong>${SITE_URL}/order-tracking</strong> using your order number and the phone number on your order.`)}
+
     <div style="margin-top:32px;">
       ${ctaButtons}
     </div>
