@@ -151,7 +151,7 @@ export const Footer = ({ links }: FooterProps) => {
                 alt="Forty Pixels"
                 width={480}
                 height={105}
-                className="h-3 md:h-3.5 w-auto object-contain origin-center -translate-y-[3px] md:-translate-y-[4px] opacity-80 group-hover:opacity-100 group-hover:scale-110 transition duration-300 ease-out"
+                className="h-3 md:h-3.5 w-auto object-contain origin-center -translate-y-[2.5px] md:-translate-y-[4px] opacity-80 group-hover:opacity-100 group-hover:scale-110 transition duration-300 ease-out"
               />
             </a>
           </div>
