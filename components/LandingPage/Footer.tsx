@@ -143,9 +143,16 @@ export const Footer = ({ links }: FooterProps) => {
               href="https://fortypixels.com"
               target="_blank"
               rel="noreferrer"
-              className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#BEBEBE] hover:text-white transition-colors whitespace-nowrap"
+              className="group flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#BEBEBE] hover:text-white transition-colors whitespace-nowrap"
             >
-              Built by <span className="underline underline-offset-2">Fortypixels</span>
+              Built by
+              <Image
+                src="/forty-pixels-wordmark.png"
+                alt="Forty Pixels"
+                width={480}
+                height={105}
+                className="h-3 md:h-3.5 w-auto object-contain -translate-y-[3px] opacity-80 group-hover:opacity-100 transition-opacity"
+              />
             </a>
           </div>
         </div>
