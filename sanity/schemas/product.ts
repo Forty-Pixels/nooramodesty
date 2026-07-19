@@ -82,10 +82,10 @@ export const product = defineType({
     }),
     defineField({
       name: "sizeGuideImage",
-      title: "Size guide image",
+      title: "Size chart image",
       type: "image",
       options: { hotspot: true },
-      description: "Optional size guide shown on the product page. Upload the finished chart/image here instead of using a hardcoded table.",
+      description: "Optional size chart shown on the product page. Upload the finished chart/image here instead of using a hardcoded table.",
     }),
     defineField({
       name: "category",

@@ -134,9 +134,7 @@ function CheckoutContent() {
     customer: {
       fullName: formState.fullName,
       mobile: `${SRI_LANKA_PHONE_PREFIX}${formState.mobileLocal.replace(/\D/g, "")}`,
-      whatsapp: formState.whatsappLocal.trim()
-        ? `${SRI_LANKA_PHONE_PREFIX}${formState.whatsappLocal.replace(/\D/g, "")}`
-        : undefined,
+      whatsapp: `${SRI_LANKA_PHONE_PREFIX}${formState.whatsappLocal.replace(/\D/g, "")}`,
       email: formState.email.trim() || undefined,
       addressLine1: formState.addressLine1,
       addressLine2: formState.addressLine2,
@@ -203,7 +201,7 @@ function CheckoutContent() {
     const fieldValidators: Array<[keyof CheckoutFormState, string[]]> = [
       ["fullName", validateRequiredText(formState.fullName, FIELD_LABELS.fullName, { minLength: 2, maxLength: 80 })],
       ["mobileLocal", validateSriLankaLocalNumber(formState.mobileLocal, FIELD_LABELS.mobileLocal)],
-      ["whatsappLocal", formState.whatsappLocal.trim() ? validateSriLankaLocalNumber(formState.whatsappLocal, FIELD_LABELS.whatsappLocal) : []],
+      ["whatsappLocal", validateSriLankaLocalNumber(formState.whatsappLocal, FIELD_LABELS.whatsappLocal)],
       ["email", formState.email.trim() ? validateEmail(formState.email) : []],
       ["addressLine1", validateRequiredText(formState.addressLine1, FIELD_LABELS.addressLine1, { minLength: 3, maxLength: 160 })],
       ["city", validateRequiredText(formState.city, FIELD_LABELS.city, { minLength: 2, maxLength: 80 })],
@@ -402,7 +400,7 @@ function CheckoutContent() {
                 <input
                   value={formState.whatsappLocal}
                   onChange={(e) => updateField("whatsappLocal", e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  placeholder="WhatsApp Number (optional)"
+                  placeholder="WhatsApp Number"
                   inputMode="numeric"
                   className="w-full bg-transparent pr-5 py-4 text-xs font-medium focus:outline-none placeholder:text-gray-300"
                 />

@@ -52,12 +52,9 @@ export const checkoutOrderSchema = z.object({
     mobile: z.string({ error: "Phone number is required." }).trim().refine(isValidPhoneNumber, {
       error: "Phone number must contain 7 to 15 digits and no letters.",
     }),
-    whatsapp: z.preprocess(
-      (value) => (value === null || value === "" ? undefined : value),
-      z.string().trim().refine(isValidPhoneNumber, {
-        error: "WhatsApp number must contain 7 to 15 digits and no letters.",
-      }).optional(),
-    ),
+    whatsapp: z.string({ error: "WhatsApp number is required." }).trim().refine(isValidPhoneNumber, {
+      error: "WhatsApp number must contain 7 to 15 digits and no letters.",
+    }),
     email: optionalEmail,
     addressLine1: z.string({ error: "Address is required." }).trim().min(3, { error: "Address must be at least 3 characters." }),
     addressLine2: z.string().trim().optional(),

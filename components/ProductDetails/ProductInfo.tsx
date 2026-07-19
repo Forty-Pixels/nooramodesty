@@ -708,14 +708,14 @@ export const ProductInfo = ({ product, initialStockByVariationId, onSoldOutChang
                 </div>
             )}
 
-            {/* Size Guide */}
+            {/* Size Chart */}
             {product.sizeGuideImage && <div className="mt-4 border-t border-b border-gray-100">
                 <button
                     onClick={() => toggleAccordion('measurements')}
                     className="w-full py-3.5 flex items-center justify-between group"
                 >
                     <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-black group-hover:text-[#8B8378] transition-colors">
-                        Size Guide {openAccordion === 'measurements' ? '−' : '+'}
+                        Size Chart {openAccordion === 'measurements' ? '−' : '+'}
                     </span>
                 </button>
                 <div className={`grid transition-all duration-300 ease-in-out ${openAccordion === 'measurements' ? 'grid-rows-[1fr] pb-4' : 'grid-rows-[0fr]'}`}>
@@ -723,7 +723,7 @@ export const ProductInfo = ({ product, initialStockByVariationId, onSoldOutChang
                         <div className="relative w-full aspect-[4/3] bg-gray-50 border border-gray-100">
                             <Image
                                 src={product.sizeGuideImage}
-                                alt={`Size guide for ${product.title}`}
+                                alt={`Size chart for ${product.title}`}
                                 fill
                                 className="object-contain"
                                 sizes="(max-width: 768px) 100vw, 420px"
