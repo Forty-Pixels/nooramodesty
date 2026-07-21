@@ -56,7 +56,7 @@ export default function CartPage() {
         let isMounted = true;
 
         async function loadSiteSettings() {
-            const response = await fetch("/api/site-settings", { cache: "no-store" });
+            const response = await fetch("/api/site-settings");
             const data = (await response.json().catch(() => null)) as Partial<PublicSiteSettings> | null;
             if (isMounted && response.ok) {
                 setSiteSettings(normalizeSiteSettings(data));
