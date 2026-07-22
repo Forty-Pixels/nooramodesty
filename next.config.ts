@@ -3,6 +3,10 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   images: {
+    // Resize through Sanity's CDN (see lib/sanity/imageLoader.ts) so images are
+    // served straight from cdn.sanity.io and never hit Netlify's `/_next/image`.
+    loader: "custom",
+    loaderFile: "./lib/sanity/imageLoader.ts",
     remotePatterns: [
       {
         protocol: "https",

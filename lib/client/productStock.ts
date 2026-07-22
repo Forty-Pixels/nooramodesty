@@ -15,6 +15,67 @@ export function collectVariationIds(products: Array<Pick<Product, "subVariations
   return Array.from(ids);
 }
 
+export interface StockEntry {
+  variationId: number;
+  stock: number;
+}
+
+// Cacheable GET has a URL length ceiling, and smaller batches recur more often across
+// pages (better edge-cache hit rate), so fan a large lookup out into fixed-size chunks.
+const STOCK_ID_CHUNK_SIZE = 40;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+interface RawStockEntry {
+  variationId: string | number;
+  stock?: number;
+  error?: string;
+}
+
+// A page mounts several stock-aware components at once (PDP: ProductInfo +
+// CompleteTheLook), and React StrictMode fires every effect twice in dev — so the
+// same chunk URL is requested concurrently many times over. Coalesce those into one
+// in-flight request. The entry is dropped as soon as it settles, so a later forced
+// refresh (retry after a stock rejection) still hits the network for fresh numbers.
+const inFlightChunks = new Map<string, Promise<RawStockEntry[]>>();
+
+function fetchChunk(idsCsv: string): Promise<RawStockEntry[]> {
+  const existing = inFlightChunks.get(idsCsv);
+  if (existing) return existing;
+
+  const request = fetch(`/api/stocks?ids=${idsCsv}`)
+    .then((response) => response.json())
+    .then((data: { stocks?: RawStockEntry[] }) => data.stocks || [])
+    .finally(() => {
+      inFlightChunks.delete(idsCsv);
+    });
+
+  inFlightChunks.set(idsCsv, request);
+  return request;
+}
+
+// Shared stock fetcher for every client caller. Sorts + dedupes so identical lookups
+// produce identical URLs (stable cache key), chunks to bound URL length, and merges
+// the results. Only entries with a real number are returned — an absent variation must
+// stay distinguishable from a zero-stock one, or a Clickom hiccup reads as "sold out".
+export async function fetchStocks(variationIds: number[]): Promise<StockEntry[]> {
+  const ids = Array.from(new Set(variationIds.filter((id) => Number.isFinite(id) && id > 0))).sort((a, b) => a - b);
+  if (ids.length === 0) return [];
+
+  const responses = await Promise.all(chunk(ids, STOCK_ID_CHUNK_SIZE).map((idChunk) => fetchChunk(idChunk.join(","))));
+
+  return responses
+    .flat()
+    .filter((entry) => !entry.error && typeof entry.stock === "number")
+    .map((entry) => ({ variationId: Number(entry.variationId), stock: entry.stock as number }));
+}
+
 export interface VariationStockState {
   stockByVariationId: Record<number, number>;
   // True until the first lookup settles. Callers that gate a quantity stepper must
@@ -44,21 +105,10 @@ export function useVariationStockState(variationIds: number[], refreshToken = 0)
 
     let cancelled = false;
 
-    fetch("/api/stocks", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ variationIds: ids }),
-    })
-      .then((response) => response.json())
-      .then((data: { stocks?: Array<{ variationId: string | number; stock?: number; error?: string }> }) => {
+    fetchStocks(ids)
+      .then((entries) => {
         if (cancelled) return;
-        setStockByVariationId(
-          Object.fromEntries(
-            (data.stocks || [])
-              .filter((stock) => !stock.error && typeof stock.stock === "number")
-              .map((stock) => [Number(stock.variationId), stock.stock as number]),
-          ),
-        );
+        setStockByVariationId(Object.fromEntries(entries.map((entry) => [entry.variationId, entry.stock])));
       })
       .catch(() => {})
       .finally(() => {

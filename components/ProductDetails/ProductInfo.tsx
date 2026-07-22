@@ -10,6 +10,7 @@ import { isStoreLocatorActive } from "@/utils/featureFlags";
 import { DEFAULT_SITE_SETTINGS, normalizeSiteSettings } from "@/lib/shipping";
 import { PublicSiteSettings } from "@/types/siteSettings";
 import { uniqueMessages, validateMeasurement } from "@/utils/formValidation";
+import { fetchStocks } from "@/lib/client/productStock";
 
 interface ProductInfoProps {
     product: Product;
@@ -166,22 +167,11 @@ export const ProductInfo = ({ product, initialStockByVariationId, onSoldOutChang
                 if (missingVariationIds.length === 0) return;
 
                 try {
-                    const response = await fetch("/api/stocks", {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
-                        body: JSON.stringify({ variationIds: missingVariationIds }),
-                    });
-                    const data = (await response.json()) as {
-                        stocks?: Array<{ variationId: string | number; stock?: number; error?: string }>;
-                    };
+                    const entries = await fetchStocks(missingVariationIds);
 
                     if (cancelled) return;
 
-                    const refreshedStock = Object.fromEntries(
-                        (data.stocks || [])
-                            .filter((stock) => !stock.error && typeof stock.stock === "number")
-                            .map((stock) => [Number(stock.variationId), stock.stock as number]),
-                    );
+                    const refreshedStock = Object.fromEntries(entries.map((entry) => [entry.variationId, entry.stock]));
 
                     if (Object.keys(refreshedStock).length > 0) {
                         Object.keys(refreshedStock).forEach((variationId) => resolved.add(Number(variationId)));

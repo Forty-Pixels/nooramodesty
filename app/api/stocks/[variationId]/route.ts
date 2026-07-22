@@ -24,7 +24,10 @@ export async function GET(
       },
       {
         headers: {
-          "Cache-Control": "public, max-age=60, s-maxage=60",
+          "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+          // Lets Netlify's edge cache this across nodes/deploys, so a repeat lookup
+          // for the same variation is served without invoking the function.
+          "Netlify-CDN-Cache-Control": "public, durable, s-maxage=60, stale-while-revalidate=300",
         },
       },
     );
