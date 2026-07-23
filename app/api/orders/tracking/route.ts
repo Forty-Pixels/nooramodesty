@@ -1,5 +1,5 @@
 import { getClickomSaleStatusDetails } from "@/lib/server/clickom";
-import { ClickomOmsTracking, getClickomOmsTracking } from "@/lib/server/clickomOmsWeb";
+import { ClickomOmsOrderDetail, ClickomOmsTracking, getClickomOmsOrderDetail, getClickomOmsTracking } from "@/lib/server/clickomOmsWeb";
 import { sanityClient } from "@/lib/sanity/client";
 import { SanityOrder } from "@/types/sanityOrder";
 import { normalizeOrderNumber, sriLankaMobileKey, validateOrderNumber } from "@/utils/formValidation";
@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 // user-triggered and a shopper refreshing the page shouldn't re-run the login handshake each time.
 const OMS_TRACKING_TTL_MS = 60 * 1000;
 const omsTrackingCache = new Map<string, { result: ClickomOmsTracking | null; expiresAt: number }>();
+const orderDetailCache = new Map<string, { result: ClickomOmsOrderDetail | null; expiresAt: number }>();
 
 async function loadOmsTracking(invoiceNo: string): Promise<ClickomOmsTracking | null> {
   const cached = omsTrackingCache.get(invoiceNo);
@@ -18,6 +19,21 @@ async function loadOmsTracking(invoiceNo: string): Promise<ClickomOmsTracking | 
   try {
     const result = await getClickomOmsTracking(invoiceNo);
     omsTrackingCache.set(invoiceNo, { result, expiresAt: Date.now() + OMS_TRACKING_TTL_MS });
+    return result;
+  } catch {
+    return cached?.result ?? null;
+  }
+}
+
+// Falls back to null (never throws) — callers treat that as "use the Sanity snapshot instead,"
+// since this parses an internal admin page that isn't a stable contract.
+async function loadOrderDetail(invoiceNo: string): Promise<ClickomOmsOrderDetail | null> {
+  const cached = orderDetailCache.get(invoiceNo);
+  if (cached && cached.expiresAt > Date.now()) return cached.result;
+
+  try {
+    const result = await getClickomOmsOrderDetail(invoiceNo);
+    orderDetailCache.set(invoiceNo, { result, expiresAt: Date.now() + OMS_TRACKING_TTL_MS });
     return result;
   } catch {
     return cached?.result ?? null;
@@ -73,8 +89,13 @@ export async function POST(request: Request) {
       return Response.json({ error: "No matching order found." }, { status: 404 });
     }
 
+    const invoiceNo = order.clickomInvoiceNo || order.orderNumber;
+
     // Primary source: the OMS order list, which is where the Citypak waybill actually surfaces.
-    const omsTracking = await loadOmsTracking(order.clickomInvoiceNo || order.orderNumber);
+    const [omsTracking, orderDetail] = await Promise.all([
+      loadOmsTracking(invoiceNo),
+      loadOrderDetail(invoiceNo),
+    ]);
 
     // Fallback only when the OMS scrape yielded no waybill — the REST sales_status endpoint does
     // not index web-created orders, so it's a last resort rather than the primary read.
@@ -89,10 +110,17 @@ export async function POST(request: Request) {
 
     const waybillNumber = omsTracking?.waybillNumber || clickomStatus?.waybillNumber || order.waybillNumber;
 
+    // orderDetail comes straight off the live OMS invoice, so it reflects any items staff merged
+    // into it after checkout — the Sanity snapshot below never learns about those merges.
+    const amountPayable = orderDetail?.amountPayable ?? order.totalAmount;
+    const items = orderDetail?.items?.length
+      ? orderDetail.items.map((item) => ({ title: item.title, quantity: item.quantity }))
+      : order.items;
+
     return Response.json({
       order: {
         orderNumber: order.orderNumber,
-        invoiceNo: order.clickomInvoiceNo || order.orderNumber,
+        invoiceNo,
         placedAt: order.placedAt,
         adminStatus: order.adminStatus,
         status: order.status,
@@ -102,8 +130,8 @@ export async function POST(request: Request) {
         courierStatus: omsTracking?.deliveryStatus || clickomStatus?.shippingStatus || order.courierStatus,
         waybillNumber,
         cityPakTrackingUrl: waybillNumber ? cityPakTrackingUrl(waybillNumber) : undefined,
-        totalAmount: order.totalAmount,
-        items: order.items,
+        amountPayable,
+        items,
       },
     });
   } catch (error) {
