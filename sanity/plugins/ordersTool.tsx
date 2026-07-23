@@ -66,6 +66,8 @@ const actionButtonStyle: React.CSSProperties = {
   fontWeight: 700,
 };
 
+const orderStatusOptions = ["pending", "confirmed", "processing", "dispatched", "shipped", "completed", "cancelled"] as const;
+
 function OrdersTool() {
   const client = useClient({ apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-03-01" });
   const [orders, setOrders] = useState<SanityOrder[]>([]);
@@ -112,6 +114,20 @@ function OrdersTool() {
 
   const approveOrder = async (order: SanityOrder) => {
     await callAdminRoute("/api/orders/approve", { orderId: order._id });
+  };
+
+  // Deliberately bypasses /api/orders/status: that route also pushes the change to
+  // Clickom, which is no use when the reason we're overriding is that Clickom sync
+  // itself can't be trusted for this order (e.g. an invoice staff merged manually in
+  // the OMS). This is a Sanity-only override for the tracking page to read back.
+  const overrideStatus = async (order: SanityOrder, status: string) => {
+    setError("");
+    try {
+      await client.patch(order._id).set({ status }).commit();
+      await loadOrders();
+    } catch (patchError) {
+      setError(patchError instanceof Error ? patchError.message : "Unable to update status.");
+    }
   };
 
   return (
@@ -237,8 +253,18 @@ function OrdersTool() {
                     </div>
                   )}
                   {order.adminStatus === "approved" && (
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <small style={{ color: "#111" }}>{order.clickomSaleId ? "Synced to OMS Orders" : "Approved locally"}</small>
+                      <select
+                        value={order.status || ""}
+                        onChange={(event) => overrideStatus(order, event.target.value)}
+                        style={{ padding: "6px 8px", border: "1px solid #ddd", color: "#111" }}
+                      >
+                        {orderStatusOptions.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <small style={{ color: "#666" }}>Manual override — does not push to Clickom</small>
                     </div>
                   )}
                 </td>

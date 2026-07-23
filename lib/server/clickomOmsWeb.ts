@@ -548,6 +548,32 @@ export interface ClickomOmsTracking {
   callStatus?: string;
 }
 
+export interface ClickomOmsOrderDetail {
+  amountPayable: number;
+  items: Array<{
+    title: string;
+    sku?: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
+}
+
+// Attribute order isn't consistent across this form's inputs (some put `value` before `name`,
+// some after), so both orders are tried rather than assuming one.
+function extractInputValue(html: string, name: string) {
+  const escaped = name.replace(/[[\]]/g, (char) => `\\${char}`);
+  const forward = new RegExp(`name=["']${escaped}["'][^>]*value=["']([^"']*)["']`, "i");
+  const backward = new RegExp(`value=["']([^"']*)["'][^>]*name=["']${escaped}["']`, "i");
+  return html.match(forward)?.[1] ?? html.match(backward)?.[1];
+}
+
+function parseMoney(value: string | undefined) {
+  if (!value) return 0;
+  const parsed = Number.parseFloat(value.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function stripHtmlToText(value: string) {
   return value
     .replace(/<[^>]+>/g, " ")
@@ -632,4 +658,49 @@ export async function getClickomOmsTracking(invoiceNo: string): Promise<ClickomO
     deliveryStatus: cleanCellValue(cellAt(columns.deliveryStatus)),
     callStatus: cleanCellValue(cellAt(columns.callStatus)),
   };
+}
+
+/**
+ * Reads the authoritative order state directly off the Clickom OMS "Edit Order" page — line
+ * items and the amount still payable — rather than the Sanity snapshot taken at checkout.
+ *
+ * This exists because staff can merge a customer's follow-up phone order into an existing
+ * invoice directly in the OMS, which Sanity never learns about. The "Customer Due" figure on
+ * this page is order-scoped and already nets off delivery fee and any payments recorded against
+ * the invoice, so it doubles as "amount payable" without us re-deriving totals ourselves.
+ *
+ * Fragile by nature: this parses an internal admin-panel template Clickom could change without
+ * notice. Callers should treat a null/thrown result as "fall back to the Sanity snapshot."
+ */
+export async function getClickomOmsOrderDetail(invoiceNo: string): Promise<ClickomOmsOrderDetail | null> {
+  const trimmedInvoice = invoiceNo.trim();
+  if (!trimmedInvoice) return null;
+
+  const session = await loginToClickom();
+  const orderId = await findOmsOrderId(session, trimmedInvoice);
+  if (!orderId) return null;
+
+  const response = await clickomFetch(session, `/ordermanagement/order/${orderId}/edit`);
+  if (!response.ok) return null;
+
+  const html = await response.text();
+  const dueMatch = html.match(/contact_due_text[\s\S]{0,200}?<span>([^<]+)<\/span>/i);
+  const amountPayable = parseMoney(dueMatch?.[1]);
+
+  const items = [...html.matchAll(/<tr class="product_row" data-row_index="(\d+)"[^>]*>([\s\S]*?)<\/tr>/g)].map(
+    ([, rowIndex, rowHtml]) => {
+      const nameBlock = rowHtml.match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1] || "";
+      const [titlePart, skuPart] = nameBlock.split(/<br\s*\/?>/i);
+
+      return {
+        title: stripHtmlToText(titlePart || ""),
+        sku: stripHtmlToText(skuPart || "") || undefined,
+        quantity: parseMoney(extractInputValue(rowHtml, `products[${rowIndex}][quantity]`)) || 1,
+        unitPrice: parseMoney(extractInputValue(rowHtml, `products[${rowIndex}][unit_price]`)),
+        lineTotal: parseMoney(rowHtml.match(/pos_line_total_text[^>]*>([^<]+)</i)?.[1]),
+      };
+    },
+  );
+
+  return { amountPayable, items };
 }
