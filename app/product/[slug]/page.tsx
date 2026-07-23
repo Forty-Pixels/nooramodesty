@@ -3,8 +3,19 @@ import { CompleteTheLook } from "@/components/ProductDetails/CompleteTheLook";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getCompleteTheLookProducts, getProductBySlug, getRelatedProducts } from "@/lib/sanity/products";
+import { getAllProducts, getCompleteTheLookProducts, getProductBySlug, getRelatedProducts } from "@/lib/sanity/products";
 import { getStockForProduct } from "@/lib/server/productStock";
+
+// ISR: stock is resolved through a 60s-cached boundary (see getStockForProduct),
+// so the page can be served from cache instead of invoking the function per view.
+export const revalidate = 60;
+
+// Prerender every product page at build so each is served from the CDN. New slugs
+// added after a deploy are generated on demand the first time, then cached.
+export async function generateStaticParams() {
+    const products = await getAllProducts();
+    return products.map((product) => ({ slug: product.slug }));
+}
 
 interface PageProps {
     params: Promise<{ slug: string }>;

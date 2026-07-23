@@ -10,6 +10,9 @@ export async function GET() {
       {
         headers: {
           "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+          // Durable edge cache so the search-overlay product fetch is served from
+          // Netlify's edge instead of invoking the function on each open.
+          "Netlify-CDN-Cache-Control": "public, durable, s-maxage=60, stale-while-revalidate=300",
         },
       },
     );
