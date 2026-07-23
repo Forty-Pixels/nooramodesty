@@ -191,7 +191,17 @@ function OrderTrackingContent() {
                 ))}
               </div>
 
-              {order.cityPakTrackingUrl ? (
+              {order.status === "cancelled" ? (
+                <div className="space-y-4 border-t border-black/5 pt-6">
+                  <p className="text-xs font-medium leading-6 tracking-wide text-[#B21E1E]">
+                    This order has been cancelled. If you believe this is a mistake or need help with a replacement, please contact support.
+                  </p>
+                  <Link href={supportWhatsappHref} target="_blank" className="flex items-center justify-center gap-2 bg-black px-5 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-white">
+                    <MessageCircle size={14} />
+                    Contact Support
+                  </Link>
+                </div>
+              ) : order.cityPakTrackingUrl ? (
                 <div className="flex flex-col gap-3 border-t border-black/5 pt-6 md:flex-row">
                   <button
                     type="button"
